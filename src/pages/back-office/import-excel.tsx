@@ -1,0 +1,861 @@
+import { useMemo, useState, type ChangeEvent } from "react";
+import readXlsxFile, { type CellValue, type Sheet } from "read-excel-file/browser";
+import {
+  ArrowDownToLine,
+  ArrowRight,
+  CheckCircle2,
+  CircleAlert,
+  FileSpreadsheet,
+  RotateCcw,
+  ShieldCheck,
+  Upload,
+} from "lucide-react";
+import type { HistoriqueImportSre, LigneErreurImportSre, TypeContribuable } from "@/types/sre";
+import { utiliserAuthentificationSre } from "@/contexte/contexte-authentification-sre";
+import { utiliserSre } from "@/contexte/contexte-sre";
+import { appelerApiSre, mapperContribuable, type ContribuableApiSre } from "@/services/api-sre";
+import { REGION_SRE } from "@/utilitaires/constantes-sre";
+import { BadgeSre, BoutonSre, EntetePageSre } from "@/composants/ui/composants-sre";
+import { formaterDate } from "@/utilitaires/formatage";
+
+type ChampMapping =
+  | "type"
+  | "nom"
+  | "prenom"
+  | "raisonSociale"
+  | "nomCommercial"
+  | "nif"
+  | "stat"
+  | "courriel"
+  | "telephone"
+  | "adresse"
+  | "region"
+  | "ville"
+  | "representantLegal";
+type Mappings = Record<ChampMapping, string>;
+interface ProfilImportSre {
+  type: TypeContribuable;
+  nom: string;
+  prenom?: string;
+  raisonSociale?: string;
+  nomCommercial?: string;
+  nif?: string;
+  stat?: string;
+  adresse: string;
+  region: typeof REGION_SRE;
+  ville: string;
+  courriel: string;
+  telephone: string;
+  representantLegal?: string;
+}
+interface AnalyseLigne {
+  numero: number;
+  valeurs: string[];
+  profil?: ProfilImportSre;
+  erreurs: LigneErreurImportSre[];
+  doublon: boolean;
+}
+const champsMapping: {
+  champ: ChampMapping;
+  libelle: string;
+  obligatoire: boolean;
+  aliases: string[];
+}[] = [
+  {
+    champ: "type",
+    libelle: "Type de contribuable",
+    obligatoire: true,
+    aliases: ["type", "type contribuable", "type de contribuable", "profil"],
+  },
+  {
+    champ: "nom",
+    libelle: "Nom",
+    obligatoire: false,
+    aliases: ["nom", "nom de famille", "nom du contribuable", "nom patronymique"],
+  },
+  {
+    champ: "prenom",
+    libelle: "Prénom",
+    obligatoire: false,
+    aliases: ["prenom", "prénom", "firstname"],
+  },
+  {
+    champ: "raisonSociale",
+    libelle: "Raison sociale",
+    obligatoire: false,
+    aliases: ["raison sociale", "entreprise", "societe", "société", "company"],
+  },
+  {
+    champ: "nomCommercial",
+    libelle: "Nom commercial",
+    obligatoire: false,
+    aliases: ["nom commercial", "enseigne"],
+  },
+  {
+    champ: "nif",
+    libelle: "NIF",
+    obligatoire: false,
+    aliases: ["nif", "numero nif", "numéro nif", "identifiant fiscal"],
+  },
+  {
+    champ: "stat",
+    libelle: "STAT",
+    obligatoire: false,
+    aliases: ["stat", "numero stat", "numéro stat"],
+  },
+  {
+    champ: "courriel",
+    libelle: "Adresse e-mail",
+    obligatoire: true,
+    aliases: ["email", "e-mail", "courriel", "adresse email", "adresse e-mail"],
+  },
+  {
+    champ: "telephone",
+    libelle: "Téléphone",
+    obligatoire: true,
+    aliases: ["telephone", "téléphone", "tel", "mobile", "telephone mobile"],
+  },
+  {
+    champ: "adresse",
+    libelle: "Adresse",
+    obligatoire: true,
+    aliases: ["adresse", "adresse postale", "adresse fiscale"],
+  },
+  { champ: "region", libelle: "Région", obligatoire: true, aliases: ["region", "région"] },
+  {
+    champ: "ville",
+    libelle: "Ville / Commune",
+    obligatoire: true,
+    aliases: ["ville", "commune", "ville commune"],
+  },
+  {
+    champ: "representantLegal",
+    libelle: "Représentant légal",
+    obligatoire: false,
+    aliases: ["representant legal", "représentant légal", "gerant", "gérant"],
+  },
+];
+const mappingVide: Mappings = {
+  type: "",
+  nom: "",
+  prenom: "",
+  raisonSociale: "",
+  nomCommercial: "",
+  nif: "",
+  stat: "",
+  courriel: "",
+  telephone: "",
+  adresse: "",
+  region: "",
+  ville: "",
+  representantLegal: "",
+};
+const cleNormalisee = (valeur: string) =>
+  valeur
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+const texteCellule = (cellule: CellValue | null | undefined) =>
+  cellule == null
+    ? ""
+    : cellule instanceof Date
+      ? cellule.toISOString().slice(0, 10)
+      : String(cellule).trim();
+
+export function ImportExcelAdministrationSre() {
+  const { mettreAJourEtat, notifier } = utiliserSre();
+  const { session } = utiliserAuthentificationSre();
+  const [feuilles, definirFeuilles] = useState<Sheet[]>([]);
+  const [nomFeuille, definirNomFeuille] = useState("");
+  const [fichierNom, definirFichierNom] = useState("");
+  const [enTetes, definirEnTetes] = useState<string[]>([]);
+  const [lignesExcel, definirLignesExcel] = useState<(CellValue | null)[][]>([]);
+  const [mapping, definirMapping] = useState<Mappings>(mappingVide);
+  const [analyse, definirAnalyse] = useState<AnalyseLigne[] | null>(null);
+  const [erreur, definirErreur] = useState("");
+  const [chargement, definirChargement] = useState(false);
+  const [rapport, definirRapport] = useState<HistoriqueImportSre | null>(null);
+  const [filtreLignes, definirFiltreLignes] = useState("TOUS");
+  const feuilleActive = feuilles.find((feuille) => feuille.sheet === nomFeuille);
+  const colonnesValides = useMemo(
+    () =>
+      champsMapping
+        .filter((champ) => champ.obligatoire)
+        .every((champ) => mapping[champ.champ] !== ""),
+    [mapping],
+  );
+  const lignesAnalysees = useMemo(
+    () =>
+      (analyse ?? []).filter(
+        (ligne) =>
+          filtreLignes === "TOUS" ||
+          (filtreLignes === "VALIDES"
+            ? Boolean(ligne.profil)
+            : filtreLignes === "DOUBLONS"
+              ? ligne.doublon
+              : ligne.erreurs.length > 0),
+      ),
+    [analyse, filtreLignes],
+  );
+
+  const initialiserFeuille = (feuille: Sheet) => {
+    const lignes = feuille.data ?? [];
+    const enTetesFeuille = (lignes[0] ?? []).map(
+      (cellule, index) => texteCellule(cellule) || `Colonne ${index + 1}`,
+    );
+    const correspondances = { ...mappingVide };
+    for (const entree of champsMapping) {
+      const index = enTetesFeuille.findIndex((entete) =>
+        entree.aliases.map(cleNormalisee).includes(cleNormalisee(entete)),
+      );
+      if (index >= 0) correspondances[entree.champ] = String(index);
+    }
+    definirNomFeuille(feuille.sheet);
+    definirEnTetes(enTetesFeuille);
+    definirLignesExcel(lignes.slice(1));
+    definirMapping(correspondances);
+    definirAnalyse(null);
+    definirRapport(null);
+    definirFiltreLignes("TOUS");
+  };
+
+  const lireFichier = async (event: ChangeEvent<HTMLInputElement>) => {
+    const fichier = event.target.files?.[0];
+    if (!fichier) return;
+    definirErreur("");
+    definirRapport(null);
+    definirFichierNom(fichier.name);
+    if (!fichier.name.toLowerCase().endsWith(".xlsx")) {
+      definirErreur("Choisissez un fichier Excel .xlsx.");
+      event.target.value = "";
+      return;
+    }
+    if (fichier.size > 10 * 1024 * 1024) {
+      definirErreur("Le fichier dépasse la limite de 10 Mo.");
+      event.target.value = "";
+      return;
+    }
+    definirChargement(true);
+    try {
+      const resultat = await readXlsxFile(fichier);
+      const feuillesNonVides = resultat.filter((feuille) => feuille.data?.length);
+      if (!feuillesNonVides.length) {
+        definirErreur("Aucune feuille ou ligne lisible n’a été trouvée.");
+        definirFeuilles([]);
+        return;
+      }
+      if (feuillesNonVides.some((feuille) => feuille.data.length > 2001)) {
+        definirErreur("La limite est de 2 000 lignes de données par feuille.");
+        definirFeuilles([]);
+        return;
+      }
+      definirFeuilles(feuillesNonVides);
+      initialiserFeuille(feuillesNonVides[0]);
+    } catch (cause) {
+      definirErreur(
+        cause instanceof Error
+          ? `Lecture impossible : ${cause.message}`
+          : "Le classeur .xlsx ne peut pas être lu.",
+      );
+      definirFeuilles([]);
+    } finally {
+      definirChargement(false);
+    }
+  };
+
+  const choisirFeuille = (nom: string) => {
+    const feuille = feuilles.find((entree) => entree.sheet === nom);
+    if (feuille) initialiserFeuille(feuille);
+  };
+  const changerMapping = (champ: ChampMapping, valeur: string) => {
+    definirMapping((courant) => ({ ...courant, [champ]: valeur }));
+    definirAnalyse(null);
+    definirRapport(null);
+  };
+  const valeurMappee = (ligne: (CellValue | null)[], champ: ChampMapping) => {
+    const index = mapping[champ] === "" ? -1 : Number(mapping[champ]);
+    return index < 0 ? "" : texteCellule(ligne[index]);
+  };
+
+  const analyser = () => {
+    definirErreur("");
+    definirRapport(null);
+    if (!enTetes.length || !lignesExcel.length) {
+      definirErreur("Le classeur ne contient aucune ligne de données à analyser.");
+      return;
+    }
+    if (!colonnesValides) {
+      definirErreur(
+        "Mappez le type de contribuable, l’e-mail, le téléphone, l’adresse, la région et la ville/commune.",
+      );
+      return;
+    }
+    const emails = new Set<string>();
+    const nifs = new Set<string>();
+    const stats = new Set<string>();
+    const resultats = lignesExcel
+      .map((ligne, index): AnalyseLigne => {
+        const numero = index + 2;
+        const valeurs = ligne.map(texteCellule);
+        const erreurs: LigneErreurImportSre[] = [];
+        if (valeurs.every((valeur) => !valeur)) return { numero, valeurs, erreurs, doublon: false };
+        const typeBrut = valeurMappee(ligne, "type");
+        const typeNormalise = cleNormalisee(typeBrut);
+        const raisonSociale = valeurMappee(ligne, "raisonSociale");
+        let type: TypeContribuable;
+        if (
+          typeNormalise.includes("entreprise") ||
+          typeNormalise.includes("societe") ||
+          typeNormalise.includes("professionnel")
+        )
+          type = "ENTREPRISE";
+        else if (typeNormalise.includes("particulier") || typeNormalise.includes("personne"))
+          type = "PARTICULIER";
+        else {
+          type = "PARTICULIER";
+          erreurs.push({
+            ligne: numero,
+            champ: "Type",
+            message: "Indiquez explicitement Particulier ou Entreprise.",
+          });
+        }
+        const nom = valeurMappee(ligne, "nom");
+        const prenom = valeurMappee(ligne, "prenom");
+        const nif = valeurMappee(ligne, "nif").trim().toUpperCase();
+        const stat = valeurMappee(ligne, "stat").trim().toUpperCase();
+        const courriel = valeurMappee(ligne, "courriel").trim().toLowerCase();
+        const telephone = valeurMappee(ligne, "telephone").trim();
+        const adresse = valeurMappee(ligne, "adresse").trim();
+        const region = valeurMappee(ligne, "region").trim();
+        const ville = valeurMappee(ligne, "ville").trim();
+        if (type === "ENTREPRISE" && !(raisonSociale || nom))
+          erreurs.push({
+            ligne: numero,
+            champ: "Raison sociale",
+            message: "La raison sociale est requise.",
+          });
+        if (type === "PARTICULIER" && !nom)
+          erreurs.push({
+            ligne: numero,
+            champ: "Nom",
+            message: "Le nom du contribuable est requis.",
+          });
+        if (!courriel || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel))
+          erreurs.push({
+            ligne: numero,
+            champ: "E-mail",
+            message: "Une adresse e-mail valide est requise.",
+          });
+        if (telephone.length < 7)
+          erreurs.push({
+            ligne: numero,
+            champ: "Téléphone",
+            message: "Un numéro de téléphone valide est requis.",
+          });
+        if (adresse.length < 3)
+          erreurs.push({ ligne: numero, champ: "Adresse", message: "Une adresse est requise." });
+        if (cleNormalisee(region) !== cleNormalisee(REGION_SRE))
+          erreurs.push({
+            ligne: numero,
+            champ: "Région",
+            message: `Le service est limité à ${REGION_SRE}.`,
+          });
+        if (!ville)
+          erreurs.push({
+            ligne: numero,
+            champ: "Ville / Commune",
+            message: "La ville ou commune est requise.",
+          });
+        let doublon = false;
+        const emailNormalise = courriel.toLowerCase();
+        if (emailNormalise && emails.has(emailNormalise)) {
+          doublon = true;
+          erreurs.push({
+            ligne: numero,
+            champ: "E-mail",
+            message: "Cette adresse apparaît plusieurs fois dans le classeur.",
+          });
+        }
+        if (nif && nifs.has(nif)) {
+          doublon = true;
+          erreurs.push({
+            ligne: numero,
+            champ: "NIF",
+            message: "Ce NIF apparaît plusieurs fois dans le classeur.",
+          });
+        }
+        if (stat && stats.has(stat)) {
+          doublon = true;
+          erreurs.push({
+            ligne: numero,
+            champ: "STAT",
+            message: "Ce STAT apparaît plusieurs fois dans le classeur.",
+          });
+        }
+        if (emailNormalise) emails.add(emailNormalise);
+        if (nif) nifs.add(nif);
+        if (stat) stats.add(stat);
+        const profil: ProfilImportSre | undefined = erreurs.length
+          ? undefined
+          : {
+              type,
+              nom: (nom || raisonSociale).trim(),
+              ...(prenom.trim() ? { prenom: prenom.trim() } : {}),
+              ...(raisonSociale.trim() ? { raisonSociale: raisonSociale.trim() } : {}),
+              ...(valeurMappee(ligne, "nomCommercial").trim()
+                ? { nomCommercial: valeurMappee(ligne, "nomCommercial").trim() }
+                : {}),
+              ...(nif ? { nif } : {}),
+              ...(stat ? { stat } : {}),
+              adresse,
+              region: REGION_SRE,
+              ville,
+              courriel,
+              telephone,
+              ...(valeurMappee(ligne, "representantLegal").trim()
+                ? { representantLegal: valeurMappee(ligne, "representantLegal").trim() }
+                : {}),
+            };
+        return { numero, valeurs, profil, erreurs, doublon };
+      })
+      .filter((ligne) => ligne.valeurs.some((valeur) => valeur));
+    definirAnalyse(resultats);
+    definirFiltreLignes("TOUS");
+    if (!resultats.length) definirErreur("Aucune ligne de données sous l’en-tête.");
+  };
+
+  const lancerImport = async () => {
+    if (!analyse) return;
+    if (!session?.jetonApi) {
+      definirErreur("Session serveur introuvable. Reconnectez-vous.");
+      return;
+    }
+    const profils = analyse.flatMap((ligne) =>
+      ligne.profil && !ligne.doublon && !ligne.erreurs.length ? [ligne.profil] : [],
+    );
+    if (!profils.length) {
+      definirErreur("Aucune ligne valide à importer.");
+      return;
+    }
+    definirErreur("");
+    definirChargement(true);
+    try {
+      const resultat = await appelerApiSre<{
+        donnees: ContribuableApiSre[];
+        creees: number;
+        ignorees: number;
+      }>("contribuables/import", { method: "POST", token: session.jetonApi, body: { profils } });
+      const profilsCrees = resultat.donnees.map((entree) => mapperContribuable(entree));
+      mettreAJourEtat((courant) => ({
+        ...courant,
+        contribuables: [...profilsCrees, ...courant.contribuables],
+      }));
+      const lignesLocalesIgnorees = analyse.filter(
+        (ligne) => !ligne.profil || ligne.doublon || ligne.erreurs.length,
+      ).length;
+      const erreurs = analyse.flatMap((ligne) => ligne.erreurs);
+      if (resultat.ignorees)
+        erreurs.push({
+          ligne: 0,
+          message: `${resultat.ignorees} profil(s) ignoré(s) par le serveur car déjà présent(s).`,
+        });
+      const nouveauxDoublons = analyse.filter((ligne) => ligne.doublon).length;
+      const totalIgnores = lignesLocalesIgnorees + resultat.ignorees;
+      const rapportImport: HistoriqueImportSre = {
+        id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
+        nomFichier: fichierNom,
+        date: new Date().toISOString(),
+        analysees: analyse.length,
+        creees: resultat.creees,
+        ignorees: totalIgnores,
+        doublons: nouveauxDoublons + resultat.ignorees,
+        erreurs,
+        statut: totalIgnores === 0 ? "TERMINE" : resultat.creees > 0 ? "PARTIEL" : "ERREUR",
+      };
+      definirRapport(rapportImport);
+      notifier(
+        `${resultat.creees} profil(s) créé(s), ${totalIgnores} ligne(s) ignorée(s). Aucun compte ni mot de passe n’a été créé.`,
+        resultat.creees ? "succes" : "avertissement",
+      );
+    } catch (cause) {
+      definirErreur(
+        cause instanceof Error ? cause.message : "Le serveur n’a pas effectué l’import.",
+      );
+    } finally {
+      definirChargement(false);
+    }
+  };
+
+  const reinitialiser = () => {
+    definirFeuilles([]);
+    definirNomFeuille("");
+    definirFichierNom("");
+    definirEnTetes([]);
+    definirLignesExcel([]);
+    definirMapping(mappingVide);
+    definirAnalyse(null);
+    definirErreur("");
+    definirRapport(null);
+  };
+
+  return (
+    <div className="page-contenu-sre">
+      <EntetePageSre
+        titre="Import Excel"
+        description={`Importez des profils contribuables de ${REGION_SRE} après aperçu et validation des lignes.`}
+        filAriane={["Back-office", "Import Excel"]}
+      />
+      <div className="bandeau-alerte-securite-sre">
+        <ShieldCheck size={18} />
+        <div>
+          <strong>L’import crée des profils, pas des comptes utilisateurs.</strong>
+          <p>
+            Le serveur vérifie les doublons et persiste les lignes valides. Aucun mot de passe
+            temporaire, email ou notification n’est généré.
+          </p>
+        </div>
+      </div>
+      {!feuilles.length ? (
+        <section className="carte-sre zone-depot-excel-sre">
+          <span className="zone-depot-excel-sre__icone">
+            <FileSpreadsheet size={26} />
+          </span>
+          <h2>Sélectionner un classeur Excel</h2>
+          <p>
+            Importez un fichier .xlsx avec une ligne d’en-tête. Vous pourrez choisir la feuille,
+            mapper les colonnes et valider les lignes avant l’enregistrement serveur.
+          </p>
+          <label className="bouton-sre bouton-sre--primaire">
+            <Upload size={15} /> Choisir un fichier .xlsx
+            <input
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={lireFichier}
+            />
+          </label>
+          <a
+            className="lien-modele-import-sre"
+            href="/modele-import-contribuables-sre.xlsx"
+            download
+          >
+            <ArrowDownToLine size={14} /> Télécharger le modèle vierge (sans exemple)
+          </a>
+          {chargement && <p className="texte-secondaire-sre">Lecture du classeur…</p>}
+          {erreur && (
+            <p className="message-erreur-sre" role="alert">
+              {erreur}
+            </p>
+          )}
+          <div className="aide-import-sre">
+            <strong>Colonnes à mapper :</strong>
+            <p>
+              Nom ou raison sociale, e-mail, téléphone, adresse, région {REGION_SRE} et
+              ville/commune. NIF et STAT restent facultatifs.
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="carte-sre import-fichier-sre">
+            <div>
+              <span className="icone-fichier-sre">
+                <FileSpreadsheet size={19} />
+              </span>
+              <div>
+                <strong>{fichierNom}</strong>
+                <small>
+                  {lignesExcel.length} ligne(s) de données · {feuilles.length} feuille(s)
+                </small>
+              </div>
+            </div>
+            <div className="actions-tableau-sre">
+              {feuilles.length > 1 && (
+                <label className="filtre-compact-sre">
+                  Feuille
+                  <select
+                    value={nomFeuille}
+                    onChange={(event) => choisirFeuille(event.target.value)}
+                  >
+                    {feuilles.map((feuille) => (
+                      <option key={feuille.sheet} value={feuille.sheet}>
+                        {feuille.sheet}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <BoutonSre variante="contour" taille="petit" onClick={reinitialiser}>
+                <RotateCcw size={14} /> Remplacer le fichier
+              </BoutonSre>
+            </div>
+          </section>
+          {erreur && (
+            <p className="message-erreur-sre" role="alert">
+              {erreur}
+            </p>
+          )}
+          <section className="carte-sre">
+            <div className="carte-sre__entete">
+              <div>
+                <h2>1. Mapper les colonnes</h2>
+                <p>Les champs requis sont indiqués. La région doit correspondre à {REGION_SRE}.</p>
+              </div>
+              <span className="etape-import-badge-sre">1 / 3</span>
+            </div>
+            <div className="grille-mapping-excel-sre">
+              {champsMapping.map(({ champ, libelle, obligatoire }) => (
+                <label key={champ}>
+                  {libelle}
+                  {obligatoire && <em> requis</em>}
+                  <select
+                    className="champ-simple-sre"
+                    value={mapping[champ]}
+                    onChange={(event) => changerMapping(champ, event.target.value)}
+                  >
+                    <option value="">Non mappé</option>
+                    {enTetes.map((entete, index) => (
+                      <option key={`${index}-${entete}`} value={String(index)}>
+                        {entete}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </section>
+          <section className="carte-sre">
+            <div className="carte-sre__entete">
+              <div>
+                <h2>2. Aperçu des données</h2>
+                <p>Les premières lignes de la feuille « {nomFeuille} »</p>
+              </div>
+              <span className="etape-import-badge-sre">
+                {Math.min(5, lignesExcel.length)} / {lignesExcel.length}
+              </span>
+            </div>
+            <div className="tableau-defilement-sre">
+              <table className="tableau-sre tableau-apercu-excel-sre">
+                <thead>
+                  <tr>
+                    <th>Ligne</th>
+                    {enTetes.slice(0, 8).map((entete, index) => (
+                      <th key={`${index}-${entete}`}>{entete}</th>
+                    ))}
+                    {enTetes.length > 8 && <th>…</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(feuilleActive?.data.slice(1, 6) ?? []).map((ligne, index) => (
+                    <tr key={index}>
+                      <td>{index + 2}</td>
+                      {enTetes.slice(0, 8).map((_, cellule) => (
+                        <td key={cellule}>{texteCellule(ligne[cellule]) || "—"}</td>
+                      ))}
+                      {enTetes.length > 8 && <td>…</td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="actions-bas-page-sre">
+              <BoutonSre onClick={analyser} disabled={chargement || !colonnesValides}>
+                <CheckCircle2 size={15} /> 3. Analyser et valider
+              </BoutonSre>
+            </div>
+          </section>
+          {analyse && (
+            <section className="carte-sre resultat-analyse-sre">
+              <div className="carte-sre__entete">
+                <div>
+                  <h2>Résultat de l’analyse</h2>
+                  <p>
+                    {analyse.length} ligne(s) non vides examinées. Rien n’est enregistré avant
+                    confirmation.
+                  </p>
+                </div>
+                <label className="filtre-compact-sre">
+                  Afficher
+                  <select
+                    value={filtreLignes}
+                    onChange={(event) => definirFiltreLignes(event.target.value)}
+                  >
+                    <option value="TOUS">Toutes</option>
+                    <option value="VALIDES">Valides</option>
+                    <option value="DOUBLONS">Doublons</option>
+                    <option value="ERREURS">Erreurs</option>
+                  </select>
+                </label>
+              </div>
+              <div className="resume-analyse-import-sre">
+                <div className="resume-analyse-import-sre__valide">
+                  <strong>{analyse.filter((ligne) => ligne.profil).length}</strong>
+                  <span>Prêtes à importer</span>
+                </div>
+                <div className="resume-analyse-import-sre__doublon">
+                  <strong>{analyse.filter((ligne) => ligne.doublon).length}</strong>
+                  <span>Doublons dans le fichier</span>
+                </div>
+                <div className="resume-analyse-import-sre__erreur">
+                  <strong>
+                    {analyse.filter((ligne) => ligne.erreurs.length && !ligne.doublon).length}
+                  </strong>
+                  <span>Lignes en erreur</span>
+                </div>
+              </div>
+              <div className="tableau-defilement-sre">
+                <table className="tableau-sre">
+                  <thead>
+                    <tr>
+                      <th>Ligne Excel</th>
+                      <th>Type</th>
+                      <th>Nom / raison sociale</th>
+                      <th>NIF</th>
+                      <th>E-mail</th>
+                      <th>Résultat</th>
+                      <th>Motif</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lignesAnalysees.slice(0, 100).map((ligne) => (
+                      <tr key={ligne.numero}>
+                        <td>{ligne.numero}</td>
+                        <td>{ligne.profil ? <BadgeSre statut={ligne.profil.type} /> : "—"}</td>
+                        <td>
+                          {ligne.profil?.raisonSociale ||
+                            `${ligne.profil?.prenom ?? ""} ${ligne.profil?.nom ?? ""}`.trim() ||
+                            "—"}
+                        </td>
+                        <td>{ligne.profil?.nif ?? "—"}</td>
+                        <td>{ligne.profil?.courriel ?? "—"}</td>
+                        <td>
+                          {ligne.doublon ? (
+                            <BadgeSre statut="REJETE" />
+                          ) : ligne.erreurs.length ? (
+                            <BadgeSre statut="ERREUR" />
+                          ) : (
+                            <BadgeSre statut="ACTIF" />
+                          )}
+                        </td>
+                        <td>
+                          {ligne.erreurs.map((ligneErreur, index) => (
+                            <small key={index} className="erreur-import-ligne-sre">
+                              {ligneErreur.champ ? `${ligneErreur.champ} : ` : ""}
+                              {ligneErreur.message}
+                            </small>
+                          ))}
+                          {!ligne.erreurs.length && !ligne.doublon && (
+                            <span className="texte-succes-sre">Prête à enregistrer</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {lignesAnalysees.length > 100 && (
+                  <p className="texte-secondaire-sre">
+                    Les 100 premières lignes filtrées sont affichées. L’analyse porte sur toute la
+                    feuille.
+                  </p>
+                )}
+              </div>
+              <div className="actions-bas-page-sre">
+                <BoutonSre variante="contour" onClick={analyser}>
+                  Relancer la validation
+                </BoutonSre>
+                <BoutonSre
+                  onClick={() => void lancerImport()}
+                  disabled={
+                    chargement ||
+                    analyse.every(
+                      (ligne) => !ligne.profil || ligne.doublon || ligne.erreurs.length > 0,
+                    )
+                  }
+                >
+                  {chargement ? (
+                    "Enregistrement…"
+                  ) : (
+                    <>
+                      Enregistrer les profils valides (
+                      {
+                        analyse.filter(
+                          (ligne) => ligne.profil && !ligne.doublon && !ligne.erreurs.length,
+                        ).length
+                      }
+                      ) <ArrowRight size={15} />
+                    </>
+                  )}
+                </BoutonSre>
+              </div>
+              {erreur && (
+                <p className="message-erreur-sre" role="alert">
+                  {erreur}
+                </p>
+              )}
+            </section>
+          )}
+        </>
+      )}
+      {rapport && (
+        <section className="carte-sre rapport-import-sre">
+          <div className="carte-sre__entete">
+            <div>
+              <h2>Rapport de l’import</h2>
+              <p>
+                {rapport.nomFichier} · {formaterDate(rapport.date, true)}
+              </p>
+            </div>
+            <BadgeSre statut={rapport.statut} />
+          </div>
+          <div className="resume-analyse-import-sre">
+            <div className="resume-analyse-import-sre__valide">
+              <strong>{rapport.creees}</strong>
+              <span>Profils créés</span>
+            </div>
+            <div>
+              <strong>{rapport.analysees}</strong>
+              <span>Lignes analysées</span>
+            </div>
+            <div className="resume-analyse-import-sre__doublon">
+              <strong>{rapport.doublons}</strong>
+              <span>Doublons détectés</span>
+            </div>
+            <div className="resume-analyse-import-sre__erreur">
+              <strong>{rapport.ignorees}</strong>
+              <span>Lignes ignorées</span>
+            </div>
+          </div>
+          {rapport.erreurs.length > 0 && (
+            <details className="details-erreurs-import-sre">
+              <summary>
+                <CircleAlert size={15} /> Afficher les erreurs et doublons ({rapport.erreurs.length}
+                )
+              </summary>
+              <ul>
+                {rapport.erreurs.slice(0, 100).map((ligne, index) => (
+                  <li key={`${ligne.ligne}-${index}`}>
+                    {ligne.ligne > 0
+                      ? `Ligne ${ligne.ligne}${ligne.champ ? ` · ${ligne.champ}` : ""} — `
+                      : ""}
+                    {ligne.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          <div className="note-securite-sre">
+            <ShieldCheck size={16} />
+            <p>
+              <strong>Import terminé par le serveur.</strong>
+              <span>
+                Les profils enregistrés ne sont pas liés à des comptes de connexion. Aucun mot de
+                passe n’a été généré.
+              </span>
+            </p>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

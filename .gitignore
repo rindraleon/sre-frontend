@@ -1,0 +1,13 @@
+# Secrets locaux
+.env
+**/.env
+!**/.env.example
+
+# Dépendances et sorties de compilation
+**/node_modules/
+**/dist/
+**/coverage/
+**/*.tsbuildinfo
+
+# Fichiers système
+.DS_Store
