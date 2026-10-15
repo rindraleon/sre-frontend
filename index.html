@@ -12,6 +12,7 @@
         if (t !== "clair" && t !== "sombre")
           t = matchMedia("(prefers-color-scheme: dark)").matches ? "sombre" : "clair";
         document.documentElement.dataset.theme = t;
+        document.documentElement.classList.toggle("dark", t === "sombre");
         document.documentElement.style.colorScheme = t === "sombre" ? "dark" : "light";
       } catch (e) {}
     </script>

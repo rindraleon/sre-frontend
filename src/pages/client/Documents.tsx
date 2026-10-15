@@ -4,7 +4,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, PageHeader, DataTable, type TableColumn } from "@/components/ui";
-import type { PaymentDocument } from "@/types/models";
+import type { PaymentDocument } from "@/types";
 import { formatMoney, formatDate } from "@/utils/format";
 
 function titreDocument(document: PaymentDocument) {

@@ -4,41 +4,50 @@
 /* un document destiné à l'impression, pas une surface d'interface.           */
 /* -------------------------------------------------------------------------- */
 [data-theme="sombre"] {
-  --background: 203 41% 9%;
-  --foreground: 199 38% 93%;
-  --card: 201 35% 14%;
-  --card-foreground: 199 38% 93%;
-  --popover: 201 35% 14%;
-  --popover-foreground: 199 38% 93%;
-  --primary: 196 52% 58%;
-  --primary-foreground: 202 62% 10%;
-  --secondary: 201 43% 16%;
-  --secondary-foreground: 199 38% 93%;
-  --muted: 201 43% 16%;
-  --muted-foreground: 200 22% 71%;
-  --accent: 174 52% 53%;
-  --accent-foreground: 202 62% 10%;
-  --destructive: 359 65% 73%;
-  --destructive-foreground: 202 62% 10%;
-  --border: 201 30% 24%;
-  --input: 201 30% 24%;
-  --ring: 174 52% 53%;
-  --sre-ink: #e6eef2;
-  --sre-ink-2: #c7d7df;
-  --sre-blue: #5eb1c9;
-  --sre-blue-dark: #8fd0e2;
-  --sre-blue-soft: #17303d;
-  --sre-teal: #4cc2b4;
-  --sre-teal-soft: #123330;
-  --sre-gold: #dcb26a;
-  --sre-gold-soft: #3a2f18;
-  --sre-paper: #16262f;
-  --sre-bg: #0e1a22;
-  --sre-border: #2b404d;
-  --sre-muted: #a7bcc4;
-  --sre-muted-2: #7e97a1;
-  --sre-red: #e88a8c;
-  --sre-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --background: 160 24% 8%;
+  --foreground: 148 18% 93%;
+  --card: 158 22% 13%;
+  --card-foreground: 148 18% 93%;
+  --popover: 158 22% 13%;
+  --popover-foreground: 148 18% 93%;
+  --primary: 153 45% 53%;
+  --primary-foreground: 160 38% 9%;
+  --secondary: 157 22% 18%;
+  --secondary-foreground: 148 18% 93%;
+  --muted: 157 22% 18%;
+  --muted-foreground: 150 14% 70%;
+  --accent: 153 48% 49%;
+  --accent-foreground: 160 38% 9%;
+  --destructive: 358 58% 70%;
+  --destructive-foreground: 160 38% 9%;
+  --success: 151 42% 52%;
+  --success-foreground: 160 38% 9%;
+  --warning: 38 75% 66%;
+  --warning-foreground: 30 65% 12%;
+  --info: 200 70% 68%;
+  --info-foreground: 205 55% 10%;
+  --border: 155 18% 24%;
+  --input: 155 18% 27%;
+  --ring: 153 45% 55%;
+  --sre-ink: #e5efe8;
+  --sre-ink-2: #c1d4c8;
+  --sre-blue: #67c19d;
+  --sre-blue-dark: #9bd7bb;
+  --sre-blue-soft: #18382b;
+  --sre-teal: #55c8a3;
+  --sre-teal-soft: #12372b;
+  --sre-gold: #d9b36d;
+  --sre-gold-soft: #3a301d;
+  --sre-paper: #14221b;
+  --sre-bg: #0e1913;
+  --sre-border: #2a4034;
+  --sre-muted: #a5bbae;
+  --sre-muted-2: #7d9484;
+  --sre-red: #ee989e;
+  --sre-success: #89d5ad;
+  --sre-warning: #e6c177;
+  --sre-info: #87c5df;
+  --sre-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
   color-scheme: dark;
 }
 [data-theme="sombre"] body { background: var(--sre-bg); color: var(--sre-ink); }
@@ -59,7 +68,7 @@
 }
 [data-theme="sombre"] .auth-entete-sre,
 [data-theme="sombre"] .entete-public-sre {
-  background: rgba(14, 26, 34, 0.92);
+  background: color-mix(in srgb, var(--sre-paper) 94%, transparent);
   border-color: var(--sre-border);
 }
 [data-theme="sombre"] .page-auth-sre,
@@ -72,7 +81,7 @@
 [data-theme="sombre"] .select-recherchable-sre__champ,
 [data-theme="sombre"] select.champ-simple-sre,
 [data-theme="sombre"] textarea.champ-simple-sre {
-  background: #101f28;
+  background: var(--sre-paper);
   border-color: var(--sre-border);
   color: var(--sre-ink);
 }
@@ -101,7 +110,7 @@
 [data-theme="sombre"] .note-securite-sre,
 [data-theme="sombre"] .bandeau-info-sre,
 [data-theme="sombre"] .bandeau-conseil-sre {
-  background: #12222b;
+  background: #172a20;
   border-color: var(--sre-border);
   color: var(--sre-ink-2);
 }
@@ -111,6 +120,18 @@
   color: #f0b6b8;
 }
 [data-theme="sombre"] .champ-erreur-sre { color: #f0a3a5; }
+[data-theme="sombre"] .champ-formulaire-sre > label,
+[data-theme="sombre"] .formulaire-sre label,
+[data-theme="sombre"] .grille-formulaire-sre label { color: var(--sre-muted); }
+[data-theme="sombre"] .champ-aide-sre,
+[data-theme="sombre"] .champ-formulaire-sre small { color: var(--sre-muted-2); }
+[data-theme="sombre"] .toast-sre > button:hover,
+[data-theme="sombre"] .champ-mot-de-passe-sre > button:hover { background: var(--sre-blue-soft); color: var(--sre-ink); }
+[data-theme="sombre"] .bouton-sre--contour {
+  background: transparent;
+  border-color: var(--sre-border);
+  color: var(--sre-ink);
+}
 [data-theme="sombre"] h1,
 [data-theme="sombre"] h2,
 [data-theme="sombre"] h3 { color: var(--sre-ink); }

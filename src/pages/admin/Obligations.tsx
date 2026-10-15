@@ -1,9 +1,10 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { CalendarDays, CirclePlus, FileText } from "lucide-react";
-import type { TaxObligation } from "@/types/models";
+import type { TaxObligation } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi, mapApiObligation, type ApiObligation } from "@/services/api";
+import { callApi, mapApiObligation, type ApiObligation } from "@/services/api-client";
 import {
   StatusBadge,
   Button,
@@ -17,8 +18,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { obligationFormSchema, type ObligationFormValues } from "@/validation/admin.schema";
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
-import { FormField, SubmitButton, FormError } from "@/components/forms/FormField";
-import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export function AdminObligationsPage() {
   const { etat, mettreAJourEtat, notifier } = useSre();
@@ -207,7 +208,7 @@ export function AdminObligationsPage() {
         actionsEntete={
           <label className="filtre-compact-sre">
             Statut
-            <select
+            <Select
               value={statut}
               onChange={(event) => {
                 definirStatut(event.target.value);
@@ -222,7 +223,7 @@ export function AdminObligationsPage() {
               <option value="EN_RETARD">En retard</option>
               <option value="REJETE">Rejeté</option>
               <option value="CORRECTION_DEMANDEE">Correction demandée</option>
-            </select>
+            </Select>
           </label>
         }
         espaceVide="Aucune obligation"
@@ -237,6 +238,7 @@ export function AdminObligationsPage() {
         titre="Créer une obligation"
         description="Les valeurs seront persistées par le serveur et doivent correspondre aux règles validées."
         fermer={() => definirModal(false)}
+        fermetureBloquee={isSubmitting}
         largeur="large"
         pied={
           <>
@@ -290,7 +292,7 @@ export function AdminObligationsPage() {
             classeSupplementaire="champ-sre-large"
           >
             {(p) => (
-              <select {...p} className="champ-simple-sre" {...register("typeImpotId")}>
+              <Select {...p} className="champ-simple-sre" {...register("typeImpotId")}>
                 <option value="">Choisir un type actif</option>
                 {etat.typesImpots
                   .filter((type) => type.actif)
@@ -299,7 +301,7 @@ export function AdminObligationsPage() {
                       {type.nom} · {type.categorie}
                     </option>
                   ))}
-              </select>
+              </Select>
             )}
           </FormField>
           <FormField libelle="Période" erreur={errors.periode} requis>

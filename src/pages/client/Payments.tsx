@@ -1,7 +1,8 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CircleDollarSign } from "lucide-react";
-import type { Payment } from "@/types/models";
+import type { Payment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, PageHeader, DataTable, type TableColumn } from "@/components/ui";
@@ -106,7 +107,7 @@ export function ClientPaymentsPage() {
         actionsEntete={
           <label className="filtre-compact-sre">
             Statut
-            <select
+            <Select
               value={statut}
               onChange={(event) => {
                 definirStatut(event.target.value);
@@ -118,7 +119,7 @@ export function ClientPaymentsPage() {
               <option value="CONFIRME">Confirmé par l’administration</option>
               <option value="REJETE">Rejeté</option>
               <option value="CORRECTION_DEMANDEE">Correction demandée</option>
-            </select>
+            </Select>
           </label>
         }
         espaceVide="Aucune déclaration"

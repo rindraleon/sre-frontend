@@ -28,7 +28,7 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  font-size: 12px;
+  font-size: 14px;
 }
 button,
 input,
@@ -45,7 +45,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(8, 127, 122, 0.23);
+  outline: 3px solid var(--sre-focus, rgba(20, 106, 80, 0.34));
   outline-offset: 2px;
 }
 ::selection {
@@ -68,41 +68,51 @@ textarea:focus-visible {
 /* -------------------------------------------------------------------------- */
 :root {
   /* Variables shadcn/ui alignées sur la palette SRE (ne pas les désynchroniser). */
-  --background: 204 18% 96%;
-  --foreground: 210 48% 18%;
+  --background: 150 18% 97%;
+  --foreground: 156 28% 14%;
   --card: 0 0% 100%;
-  --card-foreground: 210 48% 18%;
+  --card-foreground: 156 28% 14%;
   --popover: 0 0% 100%;
-  --popover-foreground: 210 48% 18%;
-  --primary: 198 70% 27%;
+  --popover-foreground: 156 28% 14%;
+  --primary: 156 52% 27%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 197 43% 94%;
-  --secondary-foreground: 198 70% 27%;
-  --muted: 197 43% 94%;
-  --muted-foreground: 204 13% 49%;
-  --accent: 177 90% 26%;
+  --secondary: 145 32% 93%;
+  --secondary-foreground: 156 52% 24%;
+  --muted: 150 22% 94%;
+  --muted-foreground: 155 13% 41%;
+  --accent: 158 62% 33%;
   --accent-foreground: 0 0% 100%;
-  --destructive: 359 41% 50%;
+  --destructive: 358 55% 44%;
   --destructive-foreground: 0 0% 100%;
-  --border: 200 20% 90%;
-  --input: 200 20% 90%;
-  --ring: 177 90% 26%;
+  --success: 152 55% 32%;
+  --success-foreground: 0 0% 100%;
+  --warning: 35 74% 41%;
+  --warning-foreground: 0 0% 100%;
+  --info: 204 66% 37%;
+  --info-foreground: 0 0% 100%;
+  --border: 148 15% 87%;
+  --input: 148 15% 84%;
+  --ring: 156 52% 35%;
   --radius: 0.5rem;
-  --sre-ink: #162d43;
-  --sre-ink-2: #29445a;
-  --sre-blue: #155674;
-  --sre-blue-dark: #103c55;
-  --sre-blue-soft: #eaf3f6;
-  --sre-teal: #087f7a;
-  --sre-teal-soft: #e9f6f3;
-  --sre-gold: #c99c48;
+  --radius-button: 0.375rem;
+  --sre-ink: #172e25;
+  --sre-ink-2: #314d40;
+  --sre-blue: #1d6a50;
+  --sre-blue-dark: #155440;
+  --sre-blue-soft: #eaf4ee;
+  --sre-teal: #147f62;
+  --sre-teal-soft: #e8f5ef;
+  --sre-gold: #9a6a24;
   --sre-gold-soft: #fbf4e8;
   --sre-paper: #fff;
-  --sre-bg: #f3f6f7;
-  --sre-border: #e1e8eb;
-  --sre-muted: #6e7f8a;
-  --sre-muted-2: #92a0a8;
-  --sre-red: #b8494b;
-  --sre-shadow: 0 12px 32px rgba(20, 46, 63, 0.06);
+  --sre-bg: #f4f7f5;
+  --sre-border: #dce7df;
+  --sre-muted: #62766a;
+  --sre-muted-2: #87988e;
+  --sre-red: #aa3f45;
+  --sre-success: #176342;
+  --sre-warning: #80530f;
+  --sre-info: #1b5874;
+  --sre-shadow: 0 12px 32px rgba(23, 46, 37, 0.06);
 }
 

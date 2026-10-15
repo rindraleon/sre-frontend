@@ -1,9 +1,10 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { KeyRound, UserRoundCog } from "lucide-react";
-import type { AppUser } from "@/types/models";
+import type { AppUser } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi, mapApiUser, type ApiUser } from "@/services/api";
+import { callApi, mapApiUser, type ApiUser } from "@/services/api-client";
 import {
   StatusBadge,
   Button,
@@ -23,6 +24,7 @@ export function AdminUsersPage() {
   const [parPage, definirParPage] = useState(10);
   const [compteCible, definirCompteCible] = useState<AppUser | null>(null);
   const [traitement, definirTraitement] = useState(false);
+  const [erreurAction, definirErreurAction] = useState("");
   const utilisateurs = useMemo(
     () =>
       etat.utilisateurs.filter(
@@ -109,6 +111,7 @@ export function AdminUsersPage() {
   const confirmerChangementStatut = async () => {
     if (!compteCible || !session?.jetonApi) return;
     const statut = compteCible.statut === "ACTIF" ? "INACTIF" : "ACTIF";
+    definirErreurAction("");
     definirTraitement(true);
     try {
       const reponse = await callApi<ApiUser>(
@@ -135,10 +138,9 @@ export function AdminUsersPage() {
       );
       definirCompteCible(null);
     } catch (cause) {
-      notifier(
-        cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le compte.",
-        "erreur",
-      );
+      const message = cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le compte.";
+      definirErreurAction(message);
+      notifier(message, "erreur");
     } finally {
       definirTraitement(false);
     }
@@ -162,7 +164,7 @@ export function AdminUsersPage() {
         actionsEntete={
           <label className="filtre-compact-sre">
             Rôle
-            <select
+            <Select
               value={roleFiltre}
               onChange={(event) => {
                 definirRoleFiltre(event.target.value);
@@ -172,7 +174,7 @@ export function AdminUsersPage() {
               <option value="TOUS">Tous les rôles</option>
               <option value="ADMIN">Administrateurs</option>
               <option value="CLIENT">Contribuables</option>
-            </select>
+            </Select>
           </label>
         }
         espaceVide="Aucun utilisateur"
@@ -195,6 +197,7 @@ export function AdminUsersPage() {
         libelleConfirmer={reactiver ? "Réactiver le compte" : "Désactiver le compte"}
         danger={!reactiver}
         chargement={traitement}
+        erreur={erreurAction}
       />
     </div>
   );

@@ -1,0 +1,85 @@
+/* Ajustements transverses de la refonte — variables SRE et composants existants. */
+:root {
+  --sre-control-height: 2.5rem;
+  --sre-control-height-compact: 2.25rem;
+  --sre-icon-size: 1rem;
+  --sre-space-section: 1.25rem;
+  --sre-focus: color-mix(in srgb, hsl(var(--ring)) 34%, transparent);
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  color: var(--sre-ink);
+  background: var(--sre-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--sre-focus);
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+
+.bouton-sre,
+.bouton-sre--petit,
+.bouton-sre--grand,
+.menu-utilisateur-sre__panneau button,
+.champ-mot-de-passe-sre > button,
+.pagination-sre button,
+.fermer-menu-mobile-sre,
+.bouton-menu-sre {
+  border-radius: var(--radius-button);
+}
+
+.bouton-sre {
+  min-height: var(--sre-control-height);
+  box-shadow: none;
+}
+
+.bouton-sre:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.carte-sre,
+.carte-tableau-sre {
+  border-color: var(--sre-border);
+  background: var(--sre-paper);
+}
+
+.page-contenu-sre {
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.tableau-defilement-sre,
+.overflow-x-auto {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 720px) {
+  .bouton-sre,
+  .bouton-sre--petit,
+  .bouton-sre--grand {
+    min-height: 44px;
+  }
+
+  .zone-contenu-sre {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .carte-sre,
+  .carte-tableau-sre {
+    padding: 16px;
+  }
+}

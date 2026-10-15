@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Mail } from "lucide-react";
 import { useAuth, roleHomePath } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { isApiConfigured } from "@/services/api";
-import { AuthHeader } from "@/components/layout/AuthHeader";
+import { isApiConfigured } from "@/services/api-client";
+import { AuthHeader } from "@/components/layout/auth-header";
 import { loginSchema, type LoginFormValues } from "@/validation/auth.schema";
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
-import { FormField, PasswordField, SubmitButton, FormError } from "@/components/forms/FormField";
+import { FormField, PasswordField, SubmitButton, FormError } from "@/components/forms/form-field";
 
 export function LoginPage() {
   const [erreur, definirErreur] = useState("");

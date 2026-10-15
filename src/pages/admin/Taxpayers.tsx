@@ -1,10 +1,11 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, CirclePlus, Trash2, UserRound } from "lucide-react";
-import type { Taxpayer } from "@/types/models";
+import type { Taxpayer } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api";
+import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api-client";
 import { SRE_REGION } from "@/utils/constants";
 import {
   StatusBadge,
@@ -20,7 +21,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { taxpayerFormSchema, type TaxpayerFormValues } from "@/validation/profile.schema";
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
-import { FormField, SubmitButton, FormError } from "@/components/forms/FormField";
+import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
 
 const profilVide: TaxpayerFormValues = {
   nom: "",
@@ -283,7 +284,7 @@ export function AdminTaxpayersPage({
         actionsEntete={
           <label className="filtre-compact-sre">
             Type
-            <select
+            <Select
               value={typeFiltre}
               onChange={(event) => {
                 definirTypeFiltre(event.target.value);
@@ -293,7 +294,7 @@ export function AdminTaxpayersPage({
               <option value="TOUS">Tous</option>
               <option value="PARTICULIER">Particuliers</option>
               <option value="ENTREPRISE">Entreprises</option>
-            </select>
+            </Select>
           </label>
         }
         espaceVide="Aucun contribuable"
@@ -309,6 +310,7 @@ export function AdminTaxpayersPage({
         titre="Ajouter un profil contribuable"
         description={`Dossier rattaché à ${SRE_REGION}. Aucun compte ou mot de passe ne sera créé.`}
         fermer={fermer}
+        fermetureBloquee={isSubmitting}
         largeur="large"
         pied={
           <>
@@ -333,10 +335,10 @@ export function AdminTaxpayersPage({
         >
           <FormField libelle="Type" erreur={errors.type} requis>
             {(p) => (
-              <select {...p} className="champ-simple-sre" {...register("type")}>
+              <Select {...p} className="champ-simple-sre" {...register("type")}>
                 <option value="PARTICULIER">Particulier</option>
                 <option value="ENTREPRISE">Entreprise</option>
-              </select>
+              </Select>
             )}
           </FormField>
           {typeProfil === "ENTREPRISE" ? (

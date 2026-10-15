@@ -1,3 +1,4 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { ArrowDownToLine, ChartNoAxesCombined, CircleDollarSign, Users } from "lucide-react";
 import { useSre } from "@/context/SreContext";
@@ -153,7 +154,7 @@ export function AdminReportsPage() {
         </label>
         <label>
           Type de contribuable
-          <select
+          <Select
             className="champ-simple-sre"
             value={typeContribuable}
             onChange={(event) => definirTypeContribuable(event.target.value)}
@@ -161,7 +162,7 @@ export function AdminReportsPage() {
             <option value="TOUS">Tous</option>
             <option value="PARTICULIER">Particuliers</option>
             <option value="ENTREPRISE">Entreprises</option>
-          </select>
+          </Select>
         </label>
         <span>{contribuablesFiltres.length} contribuable(s) inclus</span>
       </div>

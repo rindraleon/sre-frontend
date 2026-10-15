@@ -16,6 +16,7 @@ export function Modal({
   children,
   pied,
   largeur = "standard",
+  fermetureBloquee = false,
 }: Readonly<{
   ouvert: boolean;
   titre: string;
@@ -24,12 +25,14 @@ export function Modal({
   children: ReactNode;
   pied?: ReactNode;
   largeur?: "standard" | "large";
+  /** Empêche Échap, clic extérieur et fermeture explicite pendant une mutation. */
+  fermetureBloquee?: boolean;
 }>) {
   return (
     <DialogPrimitive.Root
       open={ouvert}
       onOpenChange={(estOuvert) => {
-        if (!estOuvert) fermer();
+        if (!estOuvert && !fermetureBloquee) fermer();
       }}
     >
       <DialogPrimitive.Portal>
@@ -56,6 +59,7 @@ export function Modal({
               )}
             </div>
             <DialogPrimitive.Close
+              disabled={fermetureBloquee}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Fermer la fenêtre"
             >

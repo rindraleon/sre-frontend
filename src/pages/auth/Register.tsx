@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSre } from "@/context/SreContext";
 import { Button } from "@/components/ui";
-import { AuthHeader } from "@/components/layout/AuthHeader";
-import { isApiConfigured, getRegistrationStateApi } from "@/services/api";
+import { AuthHeader } from "@/components/layout/auth-header";
+import { isApiConfigured, getRegistrationStateApi } from "@/services/api-client";
 
 export function RegisterPage() {
   const { etat, chargementInitial, mettreAJourEtat } = useSre();
@@ -110,4 +110,4 @@ export function RegisterPage() {
   );
 }
 
-import { RegisterForm } from "@/components/auth/RegisterForm";
+import { RegisterForm } from "@/components/auth/register-form";

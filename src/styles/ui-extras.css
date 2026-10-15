@@ -120,6 +120,7 @@
 
 /* Mobile : champs >= 16px (évite le zoom automatique iOS) et cibles tactiles >= 44px */
 @media (max-width: 720px) {
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) { min-height: 44px; font-size: 16px; }
   .champ-simple-sre, .champ-sre input, .champ-sre select, .champ-sre textarea { font-size: 16px; }
   .bouton-sre { min-height: 44px; }
   .bouton-sre--petit { min-height: 38px; }
@@ -142,13 +143,93 @@ body,
 }
 
 /* -------------------------------------------------------------------------- */
-/* CoreSpin Loader + PageLoader                                                */
+/* CoreSpin : anneaux et arcs CSS, sans intervalle ni dépendance de minuterie  */
 /* -------------------------------------------------------------------------- */
 .core-spin-sre {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  width: var(--core-spin-size, 28px);
+  height: var(--core-spin-size, 28px);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   color: var(--sre-teal);
-  animation: rotation-chargement-sre 0.9s linear infinite;
+  vertical-align: middle;
+}
+.core-spin-sre__visual {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+.core-spin-sre__ring,
+.core-spin-sre__arc,
+.core-spin-sre__orbit {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+}
+.core-spin-sre__ring--outer {
+  inset: 4%;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: core-spin-rotation 1.1s linear infinite;
+}
+.core-spin-sre__ring--inner {
+  inset: 22%;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-bottom-color: currentColor;
+  animation: core-spin-rotation-inverse 1.6s linear infinite;
+}
+.core-spin-sre__arc--main {
+  inset: 10%;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 28%, transparent));
+  animation: core-spin-rotation 1.45s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+.core-spin-sre__arc--reverse {
+  inset: 30%;
+  border: 1px solid transparent;
+  border-bottom-color: color-mix(in srgb, currentColor 72%, transparent);
+  border-left-color: color-mix(in srgb, currentColor 42%, transparent);
+  animation: core-spin-rotation-inverse 1.9s linear infinite;
+}
+.core-spin-sre__orbit {
+  inset: 0;
+  animation: core-spin-rotation 1.25s linear infinite;
+}
+.core-spin-sre__point {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  width: 12%;
+  height: 12%;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px color-mix(in srgb, currentColor 55%, transparent);
+  transform: translateX(-50%);
+}
+.core-spin-sre__core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 13%;
+  height: 13%;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 12%, transparent);
+  transform: translate(-50%, -50%);
+  animation: core-spin-pulse 1.4s ease-in-out infinite;
+}
+.core-spin-sre--compact .core-spin-sre__arc--main { border-width: 1px; }
+.core-spin-sre--compact .core-spin-sre__ring--inner { border-width: 1px; }
+@keyframes core-spin-rotation { to { transform: rotate(360deg); } }
+@keyframes core-spin-rotation-inverse { to { transform: rotate(-360deg); } }
+@keyframes core-spin-pulse {
+  0%, 100% { opacity: .78; scale: .85; }
+  50% { opacity: 1; scale: 1.15; }
 }
 .page-loader-sre {
   display: flex;

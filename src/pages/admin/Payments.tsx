@@ -1,7 +1,8 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Clock3, ShieldCheck } from "lucide-react";
-import type { Payment } from "@/types/models";
+import type { Payment } from "@/types";
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, PageHeader, DataTable, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
@@ -145,7 +146,7 @@ export function AdminPaymentsPage({ verificationSeule = false }: { verificationS
           !verificationSeule ? (
             <label className="filtre-compact-sre">
               Statut
-              <select
+              <Select
                 value={statut}
                 onChange={(event) => {
                   definirStatut(event.target.value);
@@ -157,7 +158,7 @@ export function AdminPaymentsPage({ verificationSeule = false }: { verificationS
                 <option value="CONFIRME">Confirmé par l’administration</option>
                 <option value="REJETE">Rejeté</option>
                 <option value="CORRECTION_DEMANDEE">Correction demandée</option>
-              </select>
+              </Select>
             </label>
           ) : undefined
         }

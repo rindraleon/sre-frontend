@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api";
+import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api-client";
 import { SRE_REGION } from "@/utils/constants";
 import { StatusBadge, PageHeader, EmptyState } from "@/components/ui";
 import { formatDate } from "@/utils/format";
@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clientProfileSchema, type ClientProfileFormValues } from "@/validation/profile.schema";
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
-import { FormField, SubmitButton, FormError } from "@/components/forms/FormField";
+import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
 
 export function ClientProfilePage() {
   const { session } = useAuth();

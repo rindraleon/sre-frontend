@@ -1,10 +1,11 @@
+import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, FileText } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, PageHeader, DataTable, type TableColumn } from "@/components/ui";
-import type { TaxObligation } from "@/types/models";
+import type { TaxObligation } from "@/types";
 import { formatMoney, formatDate } from "@/utils/format";
 
 export function ClientObligationsPage() {
@@ -115,7 +116,7 @@ export function ClientObligationsPage() {
         actionsEntete={
           <label className="filtre-compact-sre">
             Statut
-            <select
+            <Select
               value={statut}
               onChange={(event) => {
                 definirStatut(event.target.value);
@@ -129,7 +130,7 @@ export function ClientObligationsPage() {
               <option value="EN_VERIFICATION">En vérification</option>
               <option value="REJETE">Rejeté</option>
               <option value="PAYE">Décision confirmée en interne</option>
-            </select>
+            </Select>
           </label>
         }
         espaceVide="Aucune obligation"

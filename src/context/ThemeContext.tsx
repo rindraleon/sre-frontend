@@ -4,14 +4,19 @@ export type Theme = "clair" | "sombre";
 
 const cleTheme = "sre-theme";
 
-/** Thème initial : préférence conservée, sinon préférence système, sinon clair. */
-export function getInitialTheme(): Theme {
+function lireThemePersistant(): Theme | null {
   try {
     const conserve = window.localStorage.getItem(cleTheme);
-    if (conserve === "clair" || conserve === "sombre") return conserve;
+    return conserve === "clair" || conserve === "sombre" ? conserve : null;
   } catch {
-    /* stockage indisponible : on retombe sur la préférence système */
+    return null;
   }
+}
+
+/** Thème initial : préférence explicite, sinon préférence système, sinon clair. */
+export function getInitialTheme(): Theme {
+  const conserve = lireThemePersistant();
+  if (conserve) return conserve;
   try {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "sombre" : "clair";
   } catch {
@@ -21,6 +26,7 @@ export function getInitialTheme(): Theme {
 
 function appliquerTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
+  document.documentElement.classList.toggle("dark", theme === "sombre");
   document.documentElement.style.colorScheme = theme === "sombre" ? "dark" : "light";
 }
 
@@ -34,21 +40,38 @@ const Contexte = createContext<ContexteThemeSre | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, definirThemeEtat] = useState<Theme>(() => getInitialTheme());
+  const [preferenceExplicite, definirPreferenceExplicite] = useState(
+    () => lireThemePersistant() !== null,
+  );
 
   useEffect(() => {
     appliquerTheme(theme);
+    if (!preferenceExplicite) return;
     try {
       window.localStorage.setItem(cleTheme, theme);
     } catch {
       /* le thème reste appliqué pour la session en cours */
     }
-  }, [theme]);
+  }, [theme, preferenceExplicite]);
 
-  const definirTheme = useCallback((nouveau: Theme) => definirThemeEtat(nouveau), []);
-  const basculerTheme = useCallback(
-    () => definirThemeEtat((courant) => (courant === "sombre" ? "clair" : "sombre")),
-    [],
-  );
+  useEffect(() => {
+    if (preferenceExplicite) return;
+    const requeteMedia = window.matchMedia("(prefers-color-scheme: dark)");
+    const suivrePreferenceSysteme = (event: MediaQueryListEvent) => {
+      definirThemeEtat(event.matches ? "sombre" : "clair");
+    };
+    requeteMedia.addEventListener("change", suivrePreferenceSysteme);
+    return () => requeteMedia.removeEventListener("change", suivrePreferenceSysteme);
+  }, [preferenceExplicite]);
+
+  const definirTheme = useCallback((nouveau: Theme) => {
+    definirPreferenceExplicite(true);
+    definirThemeEtat(nouveau);
+  }, []);
+  const basculerTheme = useCallback(() => {
+    definirPreferenceExplicite(true);
+    definirThemeEtat((courant) => (courant === "sombre" ? "clair" : "sombre"));
+  }, []);
 
   const valeur = useMemo(
     () => ({ theme, basculerTheme, definirTheme }),

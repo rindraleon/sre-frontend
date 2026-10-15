@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CoreSpinLoader } from "./core-spin-loader";
 
 /**
  * Bouton shadcn/ui (cva) — design SRE via les variables du thème.
@@ -59,7 +59,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       aria-busy={chargement || undefined}
       {...reste}
     >
-      {chargement && <LoaderCircle size={14} className="animate-spin" aria-hidden="true" />}
+      {chargement && <CoreSpinLoader libelle="Traitement en cours" taille={14} compact />}
       {children}
     </button>
   ),

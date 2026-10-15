@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi } from "@/services/api";
-import { PageHeader, EmptyState } from "@/components/ui";
+import { callApi } from "@/services/api-client";
+import { Button, PageHeader, EmptyState } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 
 export function ClientNotificationsPage() {
@@ -17,7 +17,7 @@ export function ClientNotificationsPage() {
   const nonLues = notifications.filter((notification) => !notification.lue).length;
 
   const marquerLue = async (id: string) => {
-    if (!session?.jetonApi) return;
+    if (!session?.jetonApi || enCours !== null) return;
     definirEnCours(id);
     try {
       await callApi(`notifications/${id}/lue`, { method: "PATCH", token: session.jetonApi });
@@ -35,7 +35,7 @@ export function ClientNotificationsPage() {
   };
 
   const marquerToutesLues = async () => {
-    if (!session?.jetonApi) return;
+    if (!session?.jetonApi || enCours !== null) return;
     definirEnCours("toutes");
     try {
       await callApi("notifications/toutes-lues", {
@@ -65,14 +65,16 @@ export function ClientNotificationsPage() {
         filAriane={["Mon espace", "Notifications"]}
         actions={
           nonLues > 0 ? (
-            <button
+            <Button
               type="button"
-              className="bouton-sre bouton-sre--contour bouton-sre--petit"
-              onClick={marquerToutesLues}
+              variante="contour"
+              taille="petit"
+              onClick={() => void marquerToutesLues()}
               disabled={enCours !== null}
+              chargement={enCours === "toutes"}
             >
-              Tout marquer comme lu ({nonLues})
-            </button>
+              {enCours === "toutes" ? "Mise à jour…" : `Tout marquer comme lu (${nonLues})`}
+            </Button>
           ) : undefined
         }
       />
@@ -100,13 +102,16 @@ export function ClientNotificationsPage() {
                 <div className="notification-carte-sre__pied">
                   <Link to="/client/obligations">Voir mes obligations</Link>
                   {!notification.lue && (
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => marquerLue(notification.id)}
+                      variante="fantome"
+                      taille="petit"
+                      onClick={() => void marquerLue(notification.id)}
                       disabled={enCours !== null}
+                      chargement={enCours === notification.id}
                     >
                       {enCours === notification.id ? "Mise à jour…" : "Marquer comme lue"}
-                    </button>
+                    </Button>
                   )}
                   <small>
                     {notification.statutEmail === "ENVOYE"

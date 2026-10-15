@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import type { PlatformState } from "@/types/models";
+import type { PlatformState } from "@/types";
 import { SRE_REGION } from "@/utils/constants";
 
 export type ToastType = "succes" | "erreur" | "avertissement" | "info";

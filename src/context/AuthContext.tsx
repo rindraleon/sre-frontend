@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { RegistrationProfile, UserRole, TaxpayerType, AppUser } from "@/types/models";
+import type { ApiSession, RegistrationProfile } from "@/types/auth";
+import type { UserRole, TaxpayerType, AppUser } from "@/types";
+import type { ApiAuthResponse, ApiUser } from "@/types/api";
 import { useSre, createEmptyState } from "@/context/SreContext";
 import {
   isApiConfigured,
@@ -7,25 +9,11 @@ import {
   loadApiState,
   ApiError,
   mapApiUser,
-  type ApiAuthResponse,
-  type ApiUser,
-} from "@/services/api";
+} from "@/services/api-client";
 import { SRE_REGION } from "@/utils/constants";
 
 const cleSession = "sre-session-api-v1";
 const dureeSession = 4 * 60 * 60 * 1000;
-
-export interface ApiSession {
-  utilisateurId: string;
-  nom: string;
-  courriel: string;
-  role: UserRole;
-  contribuableId?: string;
-  changementMotDePasseRequis: boolean;
-  expireLe: number;
-  modeApi: true;
-  jetonApi: string;
-}
 
 interface ResultatInscriptionSre {
   role: UserRole;
