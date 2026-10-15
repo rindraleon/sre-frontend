@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  min-height: 100%;
+}
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--sre-ink);
+  background: var(--sre-bg);
+  font-family:
+    "Manrope",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 12px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(8, 127, 122, 0.23);
+  outline-offset: 2px;
+}
+::selection {
+  color: #143c4d;
+  background: #d8ece7;
+}
+@keyframes apparition {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* SRE · portail régional                                    */
+/* -------------------------------------------------------------------------- */
+:root {
+  /* Variables shadcn/ui alignées sur la palette SRE (ne pas les désynchroniser). */
+  --background: 204 18% 96%;
+  --foreground: 210 48% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 48% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 48% 18%;
+  --primary: 198 70% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 197 43% 94%;
+  --secondary-foreground: 198 70% 27%;
+  --muted: 197 43% 94%;
+  --muted-foreground: 204 13% 49%;
+  --accent: 177 90% 26%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 359 41% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 200 20% 90%;
+  --input: 200 20% 90%;
+  --ring: 177 90% 26%;
+  --radius: 0.5rem;
+  --sre-ink: #162d43;
+  --sre-ink-2: #29445a;
+  --sre-blue: #155674;
+  --sre-blue-dark: #103c55;
+  --sre-blue-soft: #eaf3f6;
+  --sre-teal: #087f7a;
+  --sre-teal-soft: #e9f6f3;
+  --sre-gold: #c99c48;
+  --sre-gold-soft: #fbf4e8;
+  --sre-paper: #fff;
+  --sre-bg: #f3f6f7;
+  --sre-border: #e1e8eb;
+  --sre-muted: #6e7f8a;
+  --sre-muted-2: #92a0a8;
+  --sre-red: #b8494b;
+  --sre-shadow: 0 12px 32px rgba(20, 46, 63, 0.06);
+}
+

@@ -1,0 +1,120 @@
+/* -------------------------------------------------------------------------- */
+/* Thème sombre — surcharges ciblées sur les variables et surfaces du projet.  */
+/* Le document PDF (accusé/reçu) reste volontairement en fond clair : c'est   */
+/* un document destiné à l'impression, pas une surface d'interface.           */
+/* -------------------------------------------------------------------------- */
+[data-theme="sombre"] {
+  --background: 203 41% 9%;
+  --foreground: 199 38% 93%;
+  --card: 201 35% 14%;
+  --card-foreground: 199 38% 93%;
+  --popover: 201 35% 14%;
+  --popover-foreground: 199 38% 93%;
+  --primary: 196 52% 58%;
+  --primary-foreground: 202 62% 10%;
+  --secondary: 201 43% 16%;
+  --secondary-foreground: 199 38% 93%;
+  --muted: 201 43% 16%;
+  --muted-foreground: 200 22% 71%;
+  --accent: 174 52% 53%;
+  --accent-foreground: 202 62% 10%;
+  --destructive: 359 65% 73%;
+  --destructive-foreground: 202 62% 10%;
+  --border: 201 30% 24%;
+  --input: 201 30% 24%;
+  --ring: 174 52% 53%;
+  --sre-ink: #e6eef2;
+  --sre-ink-2: #c7d7df;
+  --sre-blue: #5eb1c9;
+  --sre-blue-dark: #8fd0e2;
+  --sre-blue-soft: #17303d;
+  --sre-teal: #4cc2b4;
+  --sre-teal-soft: #123330;
+  --sre-gold: #dcb26a;
+  --sre-gold-soft: #3a2f18;
+  --sre-paper: #16262f;
+  --sre-bg: #0e1a22;
+  --sre-border: #2b404d;
+  --sre-muted: #a7bcc4;
+  --sre-muted-2: #7e97a1;
+  --sre-red: #e88a8c;
+  --sre-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+[data-theme="sombre"] body { background: var(--sre-bg); color: var(--sre-ink); }
+[data-theme="sombre"] .carte-sre,
+[data-theme="sombre"] .auth-carte-sre,
+[data-theme="sombre"] .modal-sre,
+[data-theme="sombre"] .carte-stat-sre,
+[data-theme="sombre"] .carte-tableau-sre,
+[data-theme="sombre"] .toast-sre,
+[data-theme="sombre"] .barre-laterale-sre,
+[data-theme="sombre"] .entete-application-sre,
+[data-theme="sombre"] .menu-utilisateur-sre__panneau,
+[data-theme="sombre"] .select-recherchable-sre__liste,
+[data-theme="sombre"] .carte-portail-public-sre {
+  background: var(--sre-paper);
+  border-color: var(--sre-border);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .auth-entete-sre,
+[data-theme="sombre"] .entete-public-sre {
+  background: rgba(14, 26, 34, 0.92);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .page-auth-sre,
+[data-theme="sombre"] .site-public-sre { background: var(--sre-bg); color: var(--sre-ink); }
+[data-theme="sombre"] .champ-simple-sre,
+[data-theme="sombre"] .champ-sre,
+[data-theme="sombre"] .champ-sre input,
+[data-theme="sombre"] .champ-sre select,
+[data-theme="sombre"] .champ-sre textarea,
+[data-theme="sombre"] .select-recherchable-sre__champ,
+[data-theme="sombre"] select.champ-simple-sre,
+[data-theme="sombre"] textarea.champ-simple-sre {
+  background: #101f28;
+  border-color: var(--sre-border);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .champ-simple-sre::placeholder,
+[data-theme="sombre"] .champ-sre input::placeholder { color: #7e97a1; }
+[data-theme="sombre"] .tableau-sre { color: var(--sre-ink); }
+[data-theme="sombre"] .tableau-sre th { background: #101f28; border-color: var(--sre-border); color: var(--sre-muted); }
+[data-theme="sombre"] .tableau-sre td { border-color: var(--sre-border); }
+[data-theme="sombre"] .bouton-sre--contour {
+  background: transparent;
+  border-color: var(--sre-border);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .bouton-sre--fantome { color: var(--sre-ink); }
+[data-theme="sombre"] .modal-sre > footer,
+[data-theme="sombre"] .modal-sre > header { background: var(--sre-paper); border-color: var(--sre-border); }
+[data-theme="sombre"] .voile-modal-sre { background: rgba(4, 10, 14, 0.66); }
+[data-theme="sombre"] .fermer-menu-mobile-sre { background: var(--sre-paper); color: var(--sre-ink); }
+[data-theme="sombre"] .menu-utilisateur-sre__panneau a:hover,
+[data-theme="sombre"] .menu-utilisateur-sre__panneau button:hover,
+[data-theme="sombre"] .select-recherchable-sre__liste li:hover,
+[data-theme="sombre"] .select-recherchable-sre__liste li.select-recherchable-sre__option--active {
+  background: var(--sre-blue-soft);
+}
+[data-theme="sombre"] .note-fiscale-sre,
+[data-theme="sombre"] .note-securite-sre,
+[data-theme="sombre"] .bandeau-info-sre,
+[data-theme="sombre"] .bandeau-conseil-sre {
+  background: #12222b;
+  border-color: var(--sre-border);
+  color: var(--sre-ink-2);
+}
+[data-theme="sombre"] .message-erreur-sre {
+  background: #3a1d20;
+  border-color: #6e3438;
+  color: #f0b6b8;
+}
+[data-theme="sombre"] .champ-erreur-sre { color: #f0a3a5; }
+[data-theme="sombre"] h1,
+[data-theme="sombre"] h2,
+[data-theme="sombre"] h3 { color: var(--sre-ink); }
+[data-theme="sombre"] .document-paiement-sre {
+  background: #fff;
+  color: #18283c;
+}
