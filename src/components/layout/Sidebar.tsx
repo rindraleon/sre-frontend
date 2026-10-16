@@ -56,12 +56,6 @@ export const CLIENT_MENU: MenuEntry[] = [
   { titre: "Paramètres", chemin: "/client/parametres", icone: Settings },
 ];
 
-/**
- * Barre latérale de navigation (espaces authentifiés).
- * Desktop : colonne fixe ; mobile : tiroir avec fond, bouton de fermeture,
- * fermeture après navigation. Les compteurs reflètent l'état serveur chargé.
- * La déconnexion vit dans le menu utilisateur de la barre supérieure.
- */
 export function Sidebar({
   menuMobileOuvert,
   fermerMenuMobile,
@@ -86,14 +80,18 @@ export function Sidebar({
     (document) =>
       document.contribuableId === session.contribuableId && document.statut === "VALIDE",
   ).length;
-  const compteurPour = (titre: string) =>
-    titre === "Vérification des paiements"
-      ? enVerification
-      : titre === "Mes reçus"
-        ? recusValides
-        : titre === "Notifications"
-          ? notificationsNonLues
-          : 0;
+  const compteurPour = (titre: string) => {
+    switch (titre) {
+      case "Vérification des paiements":
+        return enVerification;
+      case "Mes reçus":
+        return recusValides;
+      case "Notifications":
+        return notificationsNonLues;
+      default:
+        return 0;
+    }
+  };
 
   return (
     <>
@@ -152,11 +150,6 @@ export function Sidebar({
             );
           })}
         </nav>
-        <div className="barre-laterale-sre__pied">
-          <Link className="retour-public-sre" to="/accueil">
-            <WalletCards size={14} /> Portail public
-          </Link>
-        </div>
       </aside>
     </>
   );
