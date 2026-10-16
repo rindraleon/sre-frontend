@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CirclePlus, UserRound } from "lucide-react";
 import { useSre } from "@/context/SreContext";
-import { SRE_REGION } from "@/utils/constants";
+import { ROUTES_ADMIN, SRE_REGION } from "@/constants";
 import { StatusBadge, PageHeader, EmptyState } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 
@@ -17,7 +17,7 @@ export function AdminTaxpayerDetailPage() {
           titre="Profil non trouvé"
           description="Ce profil n’existe pas dans les données accessibles à votre session."
           action={
-            <Link to="/admin/contribuables" className="bouton-sre bouton-sre--contour">
+            <Link to={ROUTES_ADMIN.contribuables} className="bouton-sre bouton-sre--contour">
               <ArrowLeft size={14} /> Retour à la liste
             </Link>
           }
@@ -38,7 +38,7 @@ export function AdminTaxpayerDetailPage() {
         description={`${contribuable.type === "ENTREPRISE" ? "Entreprise" : "Particulier"} · ${SRE_REGION}`}
         filAriane={["Back-office", "Contribuables", contribuable.nif || contribuable.id]}
         actions={
-          <Link className="bouton-sre bouton-sre--contour" to="/admin/contribuables">
+          <Link className="bouton-sre bouton-sre--contour" to={ROUTES_ADMIN.contribuables}>
             <ArrowLeft size={14} /> Retour
           </Link>
         }
@@ -144,7 +144,7 @@ export function AdminTaxpayerDetailPage() {
               <h2>Obligations associées</h2>
               <p>Selon les données renvoyées par le serveur.</p>
             </div>
-            <Link className="lien-discret-sre" to="/admin/obligations">
+            <Link className="lien-discret-sre" to={ROUTES_ADMIN.obligations}>
               Gérer <ArrowRight size={14} />
             </Link>
           </div>

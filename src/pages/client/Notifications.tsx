@@ -10,7 +10,7 @@ import { formatDate } from "@/utils/format";
 export function ClientNotificationsPage() {
   const { session } = useAuth();
   const { etat, mettreAJourEtat, notifier } = useSre();
-  const [enCours, definirEnCours] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState<string | null>(null);
   const notifications = etat.notifications.filter(
     (notification) => notification.utilisateurId === session?.utilisateurId,
   );
@@ -18,7 +18,7 @@ export function ClientNotificationsPage() {
 
   const marquerLue = async (id: string) => {
     if (!session?.jetonApi || enCours !== null) return;
-    definirEnCours(id);
+    setEnCours(id);
     try {
       await callApi(`notifications/${id}/lue`, { method: "PATCH", token: session.jetonApi });
       mettreAJourEtat((courant) => ({
@@ -30,13 +30,13 @@ export function ClientNotificationsPage() {
     } catch {
       notifier("Impossible de marquer cette notification comme lue.", "erreur");
     } finally {
-      definirEnCours(null);
+      setEnCours(null);
     }
   };
 
   const marquerToutesLues = async () => {
     if (!session?.jetonApi || enCours !== null) return;
-    definirEnCours("toutes");
+    setEnCours("toutes");
     try {
       await callApi("notifications/toutes-lues", {
         method: "PATCH",
@@ -53,7 +53,7 @@ export function ClientNotificationsPage() {
     } catch {
       notifier("Impossible de mettre à jour les notifications.", "erreur");
     } finally {
-      definirEnCours(null);
+      setEnCours(null);
     }
   };
 
@@ -129,3 +129,7 @@ export function ClientNotificationsPage() {
     </div>
   );
 }
+function definirEnCours(id: string) {
+  throw new Error("Function not implemented.");
+}
+

@@ -8,12 +8,12 @@ import type { RegistrationProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { Button } from "@/components/ui";
-import { SRE_REGION } from "@/utils/constants";
+import { SRE_REGION } from "@/constants";
 import { createRegistrationSchema, type RegistrationFormValues } from "@/validation/auth.schema";
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
 import { FormField, PasswordField, SubmitButton, FormError } from "@/components/forms/form-field";
 
-const valeursInitiales: RegistrationFormValues = {
+export const REGISTRATION_VIDE: RegistrationFormValues = {
   type: "PARTICULIER",
   nom: "",
   prenom: "",
@@ -43,7 +43,7 @@ export function RegisterForm({ premierAdministrateur }: { premierAdministrateur:
   const formulaire = useForm<RegistrationFormValues>({
     resolver: zodResolver(createRegistrationSchema(premierAdministrateur)),
     mode: "onTouched",
-    defaultValues: valeursInitiales,
+    defaultValues: REGISTRATION_VIDE,
   });
   const {
     register,

@@ -1,90 +1,36 @@
-import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CircleDollarSign } from "lucide-react";
-import type { Payment } from "@/types";
+import { CircleDollarSign } from "lucide-react";
+import { Select } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { StatusBadge, PageHeader, DataTable, type TableColumn } from "@/components/ui";
-import { formatMoney, formatDate } from "@/utils/format";
+import { PageHeader, DataTable } from "@/components/ui";
+import { OptionsSelect } from "@/components/forms/options-select";
+import { creerColonnesPaiements } from "@/components/tables/client/payments-columns";
+import { useTableState } from "@/hooks";
+import { TOUS, ROUTES_CLIENT } from "@/constants";
+import { OPTIONS_STATUT_PAIEMENT } from "@/constants/client-paiements";
 
 export function ClientPaymentsPage() {
   const { session } = useAuth();
   const { etat } = useSre();
-  const [recherche, definirRecherche] = useState("");
-  const [statut, definirStatut] = useState("TOUS");
-  const [page, definirPage] = useState(1);
-  const [parPage, definirParPage] = useState(10);
+  const table = useTableState();
+  const [statut, definirStatut] = useState<string>(TOUS);
   const paiements = useMemo(
     () =>
       etat.paiements
         .filter((paiement) => paiement.contribuableId === session?.contribuableId)
         .filter(
           (paiement) =>
-            (statut === "TOUS" || paiement.statut === statut) &&
+            (statut === TOUS || paiement.statut === statut) &&
             `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode}`
               .toLowerCase()
-              .includes(recherche.toLowerCase()),
+              .includes(table.recherche.toLowerCase()),
         )
         .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe)),
-    [etat.paiements, session?.contribuableId, statut, recherche],
+    [etat.paiements, session?.contribuableId, statut, table.recherche],
   );
-  const colonnes: TableColumn<Payment>[] = [
-    {
-      id: "ref",
-      titre: "Référence",
-      afficher: (paiement) => (
-        <Link className="reference-sre" to={`/client/paiements/${paiement.id}`}>
-          {paiement.referenceInterne}
-        </Link>
-      ),
-      valeurTri: (paiement) => paiement.referenceInterne,
-    },
-    {
-      id: "impot",
-      titre: "Impôt / période",
-      afficher: (paiement) => (
-        <>
-          <strong>{paiement.typeImpotNom}</strong>
-          <small className="sous-ligne-sre">{paiement.periode}</small>
-        </>
-      ),
-      valeurTri: (paiement) => paiement.typeImpotNom,
-    },
-    {
-      id: "montant",
-      titre: "Montant déclaré",
-      afficher: (paiement) => <span className="montant-sre">{formatMoney(paiement.montant)}</span>,
-      valeurTri: (paiement) => paiement.montant,
-    },
-    {
-      id: "mode",
-      titre: "Mode déclaré",
-      afficher: (paiement) => <StatusBadge statut={paiement.mode} />,
-      valeurTri: (paiement) => paiement.mode,
-    },
-    {
-      id: "soumis",
-      titre: "Date de déclaration",
-      afficher: (paiement) => formatDate(paiement.soumisLe),
-      valeurTri: (paiement) => paiement.soumisLe,
-    },
-    {
-      id: "statut",
-      titre: "Statut",
-      afficher: (paiement) => <StatusBadge statut={paiement.statut} />,
-      valeurTri: (paiement) => paiement.statut,
-    },
-    {
-      id: "actions",
-      titre: "",
-      afficher: (paiement) => (
-        <Link className="lien-action-sre" to={`/client/paiements/${paiement.id}`}>
-          Suivre <ArrowRight size={13} />
-        </Link>
-      ),
-    },
-  ];
+  const colonnes = creerColonnesPaiements();
   return (
     <div className="page-contenu-sre">
       <PageHeader
@@ -92,7 +38,7 @@ export function ClientPaymentsPage() {
         description="Suivez les déclarations associées à votre compte."
         filAriane={["Mon espace", "Historique des paiements"]}
         actions={
-          <Link className="bouton-sre bouton-sre--primaire" to="/client/paiements/nouveau">
+          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_CLIENT.nouveauPaiement}>
             <CircleDollarSign size={16} /> Déclarer un paiement
           </Link>
         }
@@ -101,8 +47,8 @@ export function ClientPaymentsPage() {
         lignes={paiements}
         colonnes={colonnes}
         obtenirId={(paiement) => paiement.id}
-        recherche={recherche}
-        rechercher={definirRecherche}
+        recherche={table.recherche}
+        rechercher={table.rechercher}
         placeholder="Référence, impôt, période…"
         actionsEntete={
           <label className="filtre-compact-sre">
@@ -111,23 +57,19 @@ export function ClientPaymentsPage() {
               value={statut}
               onChange={(event) => {
                 definirStatut(event.target.value);
-                definirPage(1);
+                table.reinitialiserPage();
               }}
             >
-              <option value="TOUS">Tous les statuts</option>
-              <option value="EN_VERIFICATION">En vérification</option>
-              <option value="CONFIRME">Confirmé par l’administration</option>
-              <option value="REJETE">Rejeté</option>
-              <option value="CORRECTION_DEMANDEE">Correction demandée</option>
+              <OptionsSelect options={OPTIONS_STATUT_PAIEMENT} />
             </Select>
           </label>
         }
         espaceVide="Aucune déclaration"
         messageVide="Les déclarations enregistrées apparaîtront ici."
-        page={page}
-        parPage={parPage}
-        changerPage={definirPage}
-        changerParPage={definirParPage}
+        page={table.page}
+        parPage={table.parPage}
+        changerPage={table.changerPage}
+        changerParPage={table.changerParPage}
       />
     </div>
   );

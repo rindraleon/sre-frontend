@@ -13,6 +13,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { useSre } from "@/context/SreContext";
+import { ROUTES_ADMIN } from "@/constants";
 import { StatusBadge, StatCard, PageHeader, EmptyState } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
@@ -69,7 +70,7 @@ export function AdminDashboardPage() {
         description="Suivi des données enregistrées pour le périmètre Haute Matsiatra."
         filAriane={["Back-office", "Tableau de bord"]}
         actions={
-          <Link className="bouton-sre bouton-sre--primaire" to="/admin/import-excel">
+          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_ADMIN.importExcel}>
             <FileSpreadsheet size={15} /> Importer un fichier
           </Link>
         }
@@ -118,7 +119,7 @@ export function AdminDashboardPage() {
       </section>
 
       {paiementsEnAttente.length > 0 && (
-        <Link className="alerte-action-sre" to="/admin/paiements-a-verifier">
+        <Link className="alerte-action-sre" to={ROUTES_ADMIN.paiementsAVerifier}>
           <span>
             <Clock3 size={18} />
           </span>
@@ -174,7 +175,7 @@ export function AdminDashboardPage() {
               <p>Outils de gestion</p>
             </div>
           </div>
-          <Link to="/admin/paiements-a-verifier" className="raccourci-sre">
+          <Link to={ROUTES_ADMIN.paiementsAVerifier} className="raccourci-sre">
             <span>
               <WalletCards size={17} />
             </span>
@@ -184,7 +185,7 @@ export function AdminDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/admin/contribuables" className="raccourci-sre">
+          <Link to={ROUTES_ADMIN.contribuables} className="raccourci-sre">
             <span>
               <Building2 size={17} />
             </span>
@@ -194,7 +195,7 @@ export function AdminDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/admin/import-excel" className="raccourci-sre">
+          <Link to={ROUTES_ADMIN.importExcel} className="raccourci-sre">
             <span>
               <FileSpreadsheet size={17} />
             </span>
@@ -204,7 +205,7 @@ export function AdminDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/admin/journal" className="raccourci-sre">
+          <Link to={ROUTES_ADMIN.journal} className="raccourci-sre">
             <span>
               <Activity size={17} />
             </span>
@@ -224,7 +225,7 @@ export function AdminDashboardPage() {
               <h2>Déclarations récentes</h2>
               <p>Chaque déclaration nécessite un examen explicite.</p>
             </div>
-            <Link className="lien-discret-sre" to="/admin/paiements">
+            <Link className="lien-discret-sre" to={ROUTES_ADMIN.paiements}>
               Tout afficher <ArrowRight size={14} />
             </Link>
           </div>
@@ -264,7 +265,7 @@ export function AdminDashboardPage() {
                           <StatusBadge statut={paiement.statut} />
                         </td>
                         <td>
-                          <Link className="lien-action-sre" to={`/admin/paiements/${paiement.id}`}>
+                          <Link className="lien-action-sre" to={ROUTES_ADMIN.paiement(paiement.id)}>
                             Détails <ArrowRight size={13} />
                           </Link>
                         </td>
@@ -288,7 +289,7 @@ export function AdminDashboardPage() {
               <h2>Activité récente</h2>
               <p>Événements transmis par le serveur</p>
             </div>
-            <Link className="lien-discret-sre" to="/admin/journal">
+            <Link className="lien-discret-sre" to={ROUTES_ADMIN.journal}>
               Journal <ArrowRight size={14} />
             </Link>
           </div>

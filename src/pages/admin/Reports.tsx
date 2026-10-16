@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { ArrowDownToLine, ChartNoAxesCombined, CircleDollarSign, Users } from "lucide-react";
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, Button, PageHeader, EmptyState } from "@/components/ui";
+import { OptionsSelect } from "@/components/forms/options-select";
+import { OPTIONS_TYPE_CONTRIBUABLE, TOUS } from "@/constants";
 import { formatMoney } from "@/utils/format";
 
 function protegerCsv(valeur: string | number) {
@@ -15,7 +17,7 @@ export function AdminReportsPage() {
   ilYADouzeMois.setFullYear(ilYADouzeMois.getFullYear() - 1);
   const [debut, definirDebut] = useState(ilYADouzeMois.toISOString().slice(0, 10));
   const [fin, definirFin] = useState(aujourdHui);
-  const [typeContribuable, definirTypeContribuable] = useState("TOUS");
+  const [typeContribuable, definirTypeContribuable] = useState<string>(TOUS);
   const contribuablesFiltres = useMemo(
     () =>
       etat.contribuables
@@ -159,9 +161,7 @@ export function AdminReportsPage() {
             value={typeContribuable}
             onChange={(event) => definirTypeContribuable(event.target.value)}
           >
-            <option value="TOUS">Tous</option>
-            <option value="PARTICULIER">Particuliers</option>
-            <option value="ENTREPRISE">Entreprises</option>
+            <OptionsSelect options={OPTIONS_TYPE_CONTRIBUABLE} />
           </Select>
         </label>
         <span>{contribuablesFiltres.length} contribuable(s) inclus</span>

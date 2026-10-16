@@ -9,15 +9,24 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+import type { Payment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { callApi, mapApiPaymentDocuments, mapApiPayment, type ApiPayment } from "@/services/api-client";
-import { StatusBadge, Button, ConfirmDialog, PageHeader, EmptyState, Modal, Textarea } from "@/components/ui";
+import {
+  callApi,
+  mapApiPaymentDocuments,
+  mapApiPayment,
+  type ApiPayment,
+} from "@/services/api-client";
+import { StatusBadge, Button, ConfirmDialog, PageHeader, EmptyState, Modal } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { SubmitButton } from "@/components/forms/form-field";
+import {
+  PaymentDecisionFormFields,
+  MOTIF_VIDE,
+} from "@/components/forms/admin/payment-decision-form";
+import { useApiForm, useConfirmation } from "@/hooks";
 import { decisionReasonSchema, type DecisionReasonFormValues } from "@/validation/payment.schema";
-import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
 
 export function AdminPaymentDetailPage() {
   const { id } = useParams();
@@ -26,17 +35,16 @@ export function AdminPaymentDetailPage() {
   const paiement = etat.paiements.find((entree) => entree.id === id);
   const contribuable = etat.contribuables.find((entree) => entree.id === paiement?.contribuableId);
   const obligation = etat.obligations.find((entree) => entree.id === paiement?.obligationId);
-  const [confirmationConfirmer, definirConfirmationConfirmer] = useState(false);
+  const confirmation = useConfirmation<Payment>();
   const [dialogueMotif, definirDialogueMotif] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
     null,
   );
-  const formulaireMotif = useForm<DecisionReasonFormValues>({
-    resolver: zodResolver(decisionReasonSchema),
-    mode: "onTouched",
-    defaultValues: { motif: "" },
-  });
-  const [erreur, definirErreur] = useState("");
   const [chargementDecision, definirChargementDecision] = useState(false);
+  const formulaireMotif = useApiForm<DecisionReasonFormValues>({
+    schema: decisionReasonSchema,
+    valeursInitiales: MOTIF_VIDE,
+    messageRepli: "Le serveur n’a pas enregistré la décision.",
+  });
 
   if (!paiement)
     return (
@@ -63,11 +71,10 @@ export function AdminPaymentDetailPage() {
   ) => {
     if (paiement.statut !== "EN_VERIFICATION") return;
     if (!session?.jetonApi) {
-      definirErreur("Session serveur introuvable. Reconnectez-vous.");
-      return;
+      throw new Error("Session serveur introuvable. Reconnectez-vous.");
     }
     definirChargementDecision(true);
-    definirErreur("");
+    formulaireMotif.reinitialiserErreur();
     try {
       const resultatApi = await callApi<ApiPayment>(
         `paiements/${encodeURIComponent(paiement.id)}/decision`,
@@ -107,21 +114,28 @@ export function AdminPaymentDetailPage() {
             : "Demande de correction enregistrée sur le serveur.",
         statut === "CONFIRME" ? "succes" : "avertissement",
       );
-      definirConfirmationConfirmer(false);
+      confirmation.fermer();
       definirDialogueMotif(null);
-      formulaireMotif.reset();
+      formulaireMotif.reinitialiserFormulaire();
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Le serveur n’a pas enregistré la décision.";
-      definirErreur(message);
       notifier(message, "erreur");
+      throw new Error(message);
     } finally {
       definirChargementDecision(false);
     }
   };
 
-  const soumettreMotif = formulaireMotif.handleSubmit((valeurs) => {
-    if (dialogueMotif) void enregistrerDecision(dialogueMotif, valeurs.motif.trim());
+  const soumettreMotif = formulaireMotif.handleSubmit(async (valeurs) => {
+    if (!dialogueMotif) return;
+    try {
+      await enregistrerDecision(dialogueMotif, valeurs.motif.trim());
+    } catch (cause) {
+      formulaireMotif.definirErreur(
+        cause instanceof Error ? cause.message : "Le serveur n’a pas enregistré la décision.",
+      );
+    }
   });
 
   const nomContribuable =
@@ -270,20 +284,14 @@ export function AdminPaymentDetailPage() {
           )}
           {paiement.statut === "EN_VERIFICATION" ? (
             <div className="actions-decision-paiement-sre">
-              <Button
-                onClick={() => {
-                  definirErreur("");
-                  definirConfirmationConfirmer(true);
-                }}
-              >
+              <Button onClick={() => confirmation.ouvrir(paiement)}>
                 <CheckCircle2 size={15} /> Confirmer la déclaration
               </Button>
               <Button
                 variante="danger"
                 onClick={() => {
                   definirDialogueMotif("REJETE");
-                  formulaireMotif.reset();
-                  definirErreur("");
+                  formulaireMotif.reinitialiserFormulaire();
                 }}
               >
                 <XCircle size={15} /> Rejeter avec motif
@@ -292,8 +300,7 @@ export function AdminPaymentDetailPage() {
                 variante="contour"
                 onClick={() => {
                   definirDialogueMotif("CORRECTION_DEMANDEE");
-                  formulaireMotif.reset();
-                  definirErreur("");
+                  formulaireMotif.reinitialiserFormulaire();
                 }}
               >
                 <MessageSquareWarning size={15} /> Demander une correction
@@ -353,14 +360,14 @@ export function AdminPaymentDetailPage() {
         </section>
       </div>
       <ConfirmDialog
-        ouvert={confirmationConfirmer}
+        ouvert={!!confirmation.cible}
         titre="Confirmer cette déclaration ?"
         description={`Vous allez enregistrer une décision « Confirmé par l’administration » pour ${paiement.referenceInterne}, montant déclaré ${formatMoney(paiement.montant)}. Aucun règlement bancaire n’est exécuté.`}
-        fermer={() => definirConfirmationConfirmer(false)}
-        confirmer={() => void enregistrerDecision("CONFIRME")}
+        fermer={confirmation.fermer}
+        confirmer={() => void confirmation.executer(() => enregistrerDecision("CONFIRME"))}
         libelleConfirmer="Confirmer la décision"
-        chargement={chargementDecision}
-        erreur={erreur}
+        chargement={confirmation.enCours}
+        erreur={confirmation.erreur}
       />
       <Modal
         ouvert={!!dialogueMotif}
@@ -388,22 +395,8 @@ export function AdminPaymentDetailPage() {
           </>
         }
       >
-        <form
-          id="motif-paiement-admin"
-          className="formulaire-sre formulaire-compact-sre"
-          onSubmit={soumettreMotif}
-          noValidate
-        >
-          <FormField
-            libelle="Motif détaillé"
-            erreur={formulaireMotif.formState.errors.motif}
-            requis
-          >
-            {(p) => (
-              <Textarea {...p} rows={4} {...formulaireMotif.register("motif")} />
-            )}
-          </FormField>
-          <FormError message={erreur} />
+        <form id="motif-paiement-admin" onSubmit={soumettreMotif} noValidate>
+          <PaymentDecisionFormFields formulaire={formulaireMotif} erreur={formulaireMotif.erreur} />
         </form>
       </Modal>
     </div>

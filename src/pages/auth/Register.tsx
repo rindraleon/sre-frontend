@@ -4,12 +4,15 @@ import { useSre } from "@/context/SreContext";
 import { Button } from "@/components/ui";
 import { AuthHeader } from "@/components/layout/auth-header";
 import { isApiConfigured, getRegistrationStateApi } from "@/services/api-client";
+import { RegisterForm } from "@/components/forms/auth/register-form";
+import { ROUTES } from "@/constants";
 
 export function RegisterPage() {
   const { etat, chargementInitial, mettreAJourEtat } = useSre();
   const [verificationApiTerminee, definirVerificationApiTerminee] = useState(!isApiConfigured);
   const [erreurVerificationApi, definirErreurVerificationApi] = useState<string | null>(null);
   const [tentativeVerificationApi, definirTentativeVerificationApi] = useState(0);
+
   useEffect(() => {
     if (!isApiConfigured) return;
     let actif = true;
@@ -36,6 +39,7 @@ export function RegisterPage() {
       actif = false;
     };
   }, [mettreAJourEtat, tentativeVerificationApi]);
+
   const premierAdministrateur = Boolean(
     isApiConfigured &&
     !chargementInitial &&
@@ -50,7 +54,7 @@ export function RegisterPage() {
       <AuthHeader
         surTitre="CRÉATION DE COMPTE"
         libelleLien="Déjà un compte ? Se connecter"
-        cheminLien="/connexion"
+        cheminLien={ROUTES.connexion}
       />
       <main className="auth-cadre-sre auth-cadre-sre--large">
         <section className="auth-carte-sre">
@@ -95,19 +99,15 @@ export function RegisterPage() {
             </div>
           ) : (
             <RegisterForm
-              // Remontage quand le régime (premier admin / contribuable) est connu :
-              // le schéma de validation en dépend.
               key={premierAdministrateur ? "premier-admin" : "contribuable"}
               premierAdministrateur={premierAdministrateur}
             />
           )}
           <p className="auth-lien-secondaire-sre">
-            Déjà inscrit ? <Link to="/connexion">Se connecter</Link>
+            Déjà inscrit ? <Link to={ROUTES.connexion}>Se connecter</Link>
           </p>
         </section>
       </main>
     </div>
   );
 }
-
-import { RegisterForm } from "@/components/auth/register-form";

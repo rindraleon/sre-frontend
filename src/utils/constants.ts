@@ -1,1 +1,1 @@
-export const SRE_REGION = "Haute Matsiatra" as const;
+export { SRE_REGION } from "@/constants/region";

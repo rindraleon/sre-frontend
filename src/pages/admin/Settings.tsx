@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { StatusBadge, PageHeader } from "@/components/ui";
-import { SRE_REGION } from "@/utils/constants";
+import { ROUTES_ADMIN, SRE_REGION } from "@/constants";
 
 export function AdminSettingsPage() {
   const { session } = useAuth();
@@ -43,7 +43,7 @@ export function AdminSettingsPage() {
           </p>
         </div>
         <Link
-          to="/admin/changement-mot-de-passe"
+          to={ROUTES_ADMIN.changementMotDePasse}
           className="bouton-sre bouton-sre--contour bouton-sre--petit"
         >
           Modifier <ArrowRight size={14} />

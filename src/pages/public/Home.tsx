@@ -7,10 +7,13 @@ import {
   FileCheck2,
   Landmark,
   ShieldCheck,
-  UserRound,
   WalletCards,
 } from "lucide-react";
 import { SRE_REGION } from "@/utils/constants";
+import { FEATURES, ETAPES, PROMESSES } from "@/constants/public-content";
+import { FeatureCard } from "@/components/public/feature-card";
+import { StepItem } from "@/components/public/step-item";
+import { PromiseItem } from "@/components/public/promise-item";
 
 export function PublicHomePage() {
   return (
@@ -139,27 +142,9 @@ export function PublicHomePage() {
           </div>
         </section>
         <section className="bandeau-promesse-public-sre">
-          <div>
-            <span>
-              <UserRound size={17} />
-            </span>
-            <strong>Un espace par compte</strong>
-            <small>Les données sont limitées à la session authentifiée.</small>
-          </div>
-          <div>
-            <span>
-              <FileCheck2 size={17} />
-            </span>
-            <strong>Informations consultables</strong>
-            <small>Obligations et déclarations renvoyées par le serveur.</small>
-          </div>
-          <div>
-            <span>
-              <ShieldCheck size={17} />
-            </span>
-            <strong>Accès encadré</strong>
-            <small>Les autorisations sont contrôlées par l’API.</small>
-          </div>
+          {PROMESSES.map((p, idx) => (
+            <PromiseItem key={idx} icone={p.icone} titre={p.titre} description={p.description} />
+          ))}
         </section>
         <section className="section-services-public-sre" id="services">
           <div className="section-public-entete-sre">
@@ -175,44 +160,16 @@ export function PublicHomePage() {
             </p>
           </div>
           <div className="cartes-services-public-sre">
-            <article>
-              <span className="service-icone-sre service-icone-sre--bleu">
-                <FileCheck2 size={20} />
-              </span>
-              <span className="service-index-sre">01 · CONSULTER</span>
-              <h3>Obligations</h3>
-              <p>
-                Consultez les obligations créées par l’administration et associées à votre profil.
-              </p>
-              <Link to="/connexion">
-                Se connecter <ArrowRight size={14} />
-              </Link>
-            </article>
-            <article>
-              <span className="service-icone-sre service-icone-sre--or">
-                <WalletCards size={20} />
-              </span>
-              <span className="service-index-sre">02 · DÉCLARER</span>
-              <h3>Déclaration d’opération</h3>
-              <p>
-                Soumettez les informations d’une opération déjà effectuée afin qu’elle soit
-                examinée.
-              </p>
-              <Link to="/connexion">
-                Accéder au suivi <ArrowRight size={14} />
-              </Link>
-            </article>
-            <article>
-              <span className="service-icone-sre service-icone-sre--vert">
-                <ShieldCheck size={20} />
-              </span>
-              <span className="service-index-sre">03 · SUIVRE</span>
-              <h3>Décisions et documents</h3>
-              <p>Consultez les décisions et les documents effectivement émis par le serveur.</p>
-              <Link to="/connexion">
-                Ouvrir mon espace <ArrowRight size={14} />
-              </Link>
-            </article>
+            {FEATURES.map((f) => (
+              <FeatureCard
+                key={f.titre}
+                index={f.index}
+                Icône={f.icone}
+                titre={f.titre}
+                description={f.description}
+                lienTexte={f.lienTexte}
+              />
+            ))}
           </div>
         </section>
         <section className="section-etapes-public-sre" id="etapes">
@@ -228,36 +185,14 @@ export function PublicHomePage() {
             </Link>
           </div>
           <div className="liste-etapes-public-sre">
-            <article>
-              <span>01</span>
-              <div>
-                <h3>Créez votre accès</h3>
-                <p>Votre compte est géré et vérifié par le serveur.</p>
-              </div>
-            </article>
-            <article>
-              <span>02</span>
-              <div>
-                <h3>Consultez votre dossier</h3>
-                <p>Les obligations et coordonnées proviennent des données enregistrées.</p>
-              </div>
-            </article>
-            <article>
-              <span>03</span>
-              <div>
-                <h3>Déclarez une opération</h3>
-                <p>Une référence fournie ne prouve ni le transfert ni le règlement.</p>
-              </div>
-            </article>
-            <article>
-              <span>04</span>
-              <div>
-                <h3>Suivez l’examen</h3>
-                <p>
-                  Une décision explicite de l’administration met à jour le statut de la déclaration.
-                </p>
-              </div>
-            </article>
+            {ETAPES.map((e) => (
+              <StepItem
+                key={e.numero}
+                numero={e.numero}
+                titre={e.titre}
+                description={e.description}
+              />
+            ))}
           </div>
         </section>
         <section className="section-canaux-public-sre" id="securite">
