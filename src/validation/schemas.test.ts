@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { loginSchema, createRegistrationSchema, passwordChangeSchema } from "./auth.schema";
+import {
+  loginSchema,
+  createRegistrationSchema,
+  passwordChangeSchema,
+  publicContactSchema,
+} from "./auth.schema";
 import { paymentDeclarationSchema } from "./payment.schema";
 import { taxpayerFormSchema } from "./profile.schema";
 
@@ -9,6 +14,51 @@ describe("loginSchema", () => {
     expect(resultat.success).toBe(false);
     if (!resultat.success)
       expect(resultat.error.issues[0].message).toBe("Adresse e-mail invalide.");
+  });
+
+  it("n'exige plus le numéro STAT : e-mail + mot de passe suffisent", () => {
+    expect(loginSchema.safeParse({ courriel: "a@example.mg", motDePasse: "x" }).success).toBe(true);
+  });
+
+  it("ignore le champ stat s'il est encore transmis (compatibilité)", () => {
+    const resultat = loginSchema.safeParse({
+      courriel: "a@example.mg",
+      motDePasse: "x",
+      stat: "stat invalide!!",
+    });
+    // Champ retiré du schéma : toléré sans validation, jamais requis.
+    expect(resultat.success).toBe(true);
+  });
+
+  it("exige toujours un mot de passe", () => {
+    const resultat = loginSchema.safeParse({ courriel: "a@example.mg", motDePasse: "" });
+    expect(resultat.success).toBe(false);
+  });
+});
+
+describe("publicContactSchema", () => {
+  const contactValide = {
+    nom: "Rakoto Andry",
+    courriel: "rakoto@example.mg",
+    sujet: "Question sur le portail",
+    message: "Bonjour, je souhaite obtenir une information sur le fonctionnement du portail.",
+  };
+
+  it("accepte un message de contact complet", () => {
+    expect(publicContactSchema.safeParse(contactValide).success).toBe(true);
+  });
+
+  it("rejette les coordonnées ou messages trop courts", () => {
+    const resultat = publicContactSchema.safeParse({
+      ...contactValide,
+      nom: "A",
+      message: "Bonjour",
+    });
+    expect(resultat.success).toBe(false);
+  });
+
+  it("accepte le champ honeypot vide des visiteurs légitimes", () => {
+    expect(publicContactSchema.safeParse({ ...contactValide, siteWeb: "" }).success).toBe(true);
   });
 });
 

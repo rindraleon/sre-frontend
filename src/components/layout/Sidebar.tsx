@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import {
   Activity,
+  AlarmClock,
   ArrowLeftRight,
   Bell,
   Building2,
@@ -11,7 +12,6 @@ import {
   FileText,
   Gauge,
   Settings,
-  ShieldCheck,
   Users,
   UserRound,
   WalletCards,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
+import { LogoSre } from "@/assets/icons/logo-sre";
 
 export interface MenuEntry {
   titre: string;
@@ -40,6 +41,7 @@ export const ADMIN_MENU: MenuEntry[] = [
     icone: ClipboardCheck,
   },
   { titre: "Historique des paiements", chemin: "/admin/paiements", icone: ArrowLeftRight },
+  { titre: "Retards & notifications", chemin: "/admin/retards", icone: AlarmClock },
   { titre: "Import Excel", chemin: "/admin/import-excel", icone: FileSpreadsheet },
   { titre: "Rapports & statistiques", chemin: "/admin/rapports", icone: ChartNoAxesCombined },
   { titre: "Journal d’activité", chemin: "/admin/journal", icone: Activity },
@@ -111,15 +113,7 @@ export function Sidebar({
           to={estAdmin ? "/admin" : "/client"}
           onClick={fermerMenuMobile}
         >
-          <span>
-            <ShieldCheck size={21} />
-          </span>
-          <div>
-            <strong>
-              SRE<span>·</span>Fiscale
-            </strong>
-            <small>Service Régional des Impots</small>
-          </div>
+          <LogoSre taille={32} sousTitre="Entreprise Régional" />
         </Link>
         <button
           type="button"
@@ -129,7 +123,7 @@ export function Sidebar({
         >
           <X size={18} />
         </button>
-        <div className="menu-sre__label">{estAdmin ? "GESTION FISCALE" : "MON ESPACE"}</div>
+        <div className="menu-sre__label">{estAdmin ? "MENU FISCALE" : "CLIENT FISCAL"}</div>
         <nav className="navigation-sre" aria-label="Navigation principale">
           {menus.map(({ titre, chemin, icone: Icone }) => {
             const compteur = compteurPour(titre);

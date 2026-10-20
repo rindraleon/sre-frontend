@@ -36,10 +36,10 @@ export function AdminPaymentDetailPage() {
   const contribuable = etat.contribuables.find((entree) => entree.id === paiement?.contribuableId);
   const obligation = etat.obligations.find((entree) => entree.id === paiement?.obligationId);
   const confirmation = useConfirmation<Payment>();
-  const [dialogueMotif, definirDialogueMotif] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
+  const [dialogueMotif, setDialogueMotif] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
     null,
   );
-  const [chargementDecision, definirChargementDecision] = useState(false);
+  const [chargementDecision, setChargementDecision] = useState(false);
   const formulaireMotif = useApiForm<DecisionReasonFormValues>({
     schema: decisionReasonSchema,
     valeursInitiales: MOTIF_VIDE,
@@ -51,7 +51,7 @@ export function AdminPaymentDetailPage() {
       <div className="page-contenu-sre">
         <PageHeader
           titre="Déclaration introuvable"
-          filAriane={["Back-office", "Vérification des paiements"]}
+          filAriane={["Accueil", "Historique des paiements"]}
         />
         <EmptyState
           titre="Cette déclaration n’existe pas"
@@ -73,7 +73,7 @@ export function AdminPaymentDetailPage() {
     if (!session?.jetonApi) {
       throw new Error("Session serveur introuvable. Reconnectez-vous.");
     }
-    definirChargementDecision(true);
+    setChargementDecision(true);
     formulaireMotif.reinitialiserErreur();
     try {
       const resultatApi = await callApi<ApiPayment>(
@@ -86,8 +86,14 @@ export function AdminPaymentDetailPage() {
       );
       const paiementMisAJour = mapApiPayment(resultatApi);
       const documentsApi = mapApiPaymentDocuments(resultatApi);
-      const statutObligation =
-        statut === "CONFIRME" ? "PAYE" : statut === "REJETE" ? "REJETE" : "CORRECTION_DEMANDEE";
+      let statutObligation: "PAYE" | "REJETE" | "CORRECTION_DEMANDEE";
+      if (statut === "CONFIRME") {
+        statutObligation = "PAYE";
+      } else if (statut === "REJETE") {
+        statutObligation = "REJETE";
+      } else {
+        statutObligation = "CORRECTION_DEMANDEE";
+      }
       mettreAJourEtat((courant) => ({
         ...courant,
         paiements: [
@@ -106,16 +112,18 @@ export function AdminPaymentDetailPage() {
             : entree,
         ),
       }));
-      notifier(
-        statut === "CONFIRME"
-          ? "Décision enregistrée. Le reçu est interne et ne prouve pas un transfert bancaire."
-          : statut === "REJETE"
-            ? "Rejet enregistré sur le serveur."
-            : "Demande de correction enregistrée sur le serveur.",
-        statut === "CONFIRME" ? "succes" : "avertissement",
-      );
+      let messageDecision: string;
+      if (statut === "CONFIRME") {
+        messageDecision =
+          "Décision enregistrée. Le reçu est interne et ne prouve pas un transfert bancaire.";
+      } else if (statut === "REJETE") {
+        messageDecision = "Rejet enregistré sur le serveur.";
+      } else {
+        messageDecision = "Demande de correction enregistrée sur le serveur.";
+      }
+      notifier(messageDecision, statut === "CONFIRME" ? "succes" : "avertissement");
       confirmation.fermer();
-      definirDialogueMotif(null);
+      setDialogueMotif(null);
       formulaireMotif.reinitialiserFormulaire();
     } catch (cause) {
       const message =
@@ -123,7 +131,7 @@ export function AdminPaymentDetailPage() {
       notifier(message, "erreur");
       throw new Error(message);
     } finally {
-      definirChargementDecision(false);
+      setChargementDecision(false);
     }
   };
 
@@ -150,7 +158,13 @@ export function AdminPaymentDetailPage() {
       <PageHeader
         titre="Examen d’une déclaration"
         description={`Référence interne ${paiement.referenceInterne}`}
-        filAriane={["Back-office", "Paiements", paiement.referenceInterne]}
+        filAriane={[
+          "Accueil",
+          paiement.statut === "EN_VERIFICATION"
+            ? "Vérification des paiements"
+            : "Historique des paiements",
+          paiement.referenceInterne,
+        ]}
         actions={
           <Link
             className="bouton-sre bouton-sre--contour"
@@ -164,16 +178,6 @@ export function AdminPaymentDetailPage() {
           </Link>
         }
       />
-      <div className="bandeau-alerte-securite-sre">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>Référence déclarée ≠ règlement confirmé.</strong>
-          <p>
-            Cette décision est administrative. Le portail ne traite aucun mouvement de fonds et
-            n’interroge aucun prestataire de paiement.
-          </p>
-        </div>
-      </div>
       <div className="grille-detail-paiement-sre">
         <section className="carte-sre">
           <div className="carte-sre__entete">
@@ -290,7 +294,7 @@ export function AdminPaymentDetailPage() {
               <Button
                 variante="danger"
                 onClick={() => {
-                  definirDialogueMotif("REJETE");
+                  setDialogueMotif("REJETE");
                   formulaireMotif.reinitialiserFormulaire();
                 }}
               >
@@ -299,7 +303,7 @@ export function AdminPaymentDetailPage() {
               <Button
                 variante="contour"
                 onClick={() => {
-                  definirDialogueMotif("CORRECTION_DEMANDEE");
+                  setDialogueMotif("CORRECTION_DEMANDEE");
                   formulaireMotif.reinitialiserFormulaire();
                 }}
               >
@@ -373,13 +377,13 @@ export function AdminPaymentDetailPage() {
         ouvert={!!dialogueMotif}
         titre={dialogueMotif === "REJETE" ? "Rejeter la déclaration" : "Demander une correction"}
         description="Le motif sera enregistré avec la décision et consultable dans l’espace contribuable. Aucun email ne sera simulé."
-        fermer={() => definirDialogueMotif(null)}
+        fermer={() => setDialogueMotif(null)}
         fermetureBloquee={chargementDecision}
         pied={
           <>
             <Button
               variante="contour"
-              onClick={() => definirDialogueMotif(null)}
+              onClick={() => setDialogueMotif(null)}
               disabled={chargementDecision}
             >
               Annuler

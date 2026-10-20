@@ -34,12 +34,12 @@ export const REGISTRATION_VIDE: RegistrationFormValues = {
   confirmation: "",
 };
 
-export function RegisterForm({ premierAdministrateur }: { premierAdministrateur: boolean }) {
+export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdministrateur: boolean }>) {
   const { inscrire } = useAuth();
   const { notifier } = useSre();
   const navigation = useNavigate();
-  const [erreur, definirErreur] = useState("");
-  const [etape, definirEtape] = useState(0);
+  const [erreur, setErreur] = useState("");
+  const [etape, setEtape] = useState(0);
   const formulaire = useForm<RegistrationFormValues>({
     resolver: zodResolver(createRegistrationSchema(premierAdministrateur)),
     mode: "onTouched",
@@ -83,11 +83,11 @@ export function RegisterForm({ premierAdministrateur }: { premierAdministrateur:
 
   const allerSuivant = async () => {
     const valide = await trigger([...etapes[etape].champs], { shouldFocus: true });
-    if (valide) definirEtape((courante) => Math.min(courante + 1, etapes.length - 1));
+    if (valide) setEtape((courante) => Math.min(courante + 1, etapes.length - 1));
   };
 
   const soumettre = handleSubmit(async (valeurs) => {
-    definirErreur("");
+    setErreur("");
     try {
       const { motDePasse, confirmation: _confirmation, ...profilValeurs } = valeurs;
       const donneesProfil: RegistrationProfile = premierAdministrateur
@@ -108,10 +108,10 @@ export function RegisterForm({ premierAdministrateur }: { premierAdministrateur:
           : "Compte contribuable créé sur le serveur.",
         "succes",
       );
-      navigation(resultat.role === "ADMIN" ? "/admin" : "/client", { replace: true });
+      void navigation(resultat.role === "ADMIN" ? "/admin" : "/client", { replace: true });
     } catch (cause) {
       const globales = applyApiErrors(formulaire, cause);
-      definirErreur(
+      setErreur(
         globales.length
           ? globales.join(" ")
           : apiErrorMessage(cause, "Impossible de créer le compte. Réessayez."),
@@ -381,7 +381,7 @@ export function RegisterForm({ premierAdministrateur }: { premierAdministrateur:
             type="button"
             variante="contour"
             disabled={isSubmitting}
-            onClick={() => definirEtape((courante) => Math.max(0, courante - 1))}
+            onClick={() => setEtape((courante) => Math.max(0, courante - 1))}
           >
             <ArrowLeft size={15} /> Précédent
           </Button>

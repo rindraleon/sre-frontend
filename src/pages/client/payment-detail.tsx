@@ -17,7 +17,7 @@ export function ClientPaymentDetailPage() {
       <div className="page-contenu-sre">
         <PageHeader
           titre="Déclaration introuvable"
-          filAriane={["Mon espace", "Historique des paiements"]}
+          filAriane={["Accueil", "Historique des paiements"]}
         />
         <EmptyState
           titre="Cette déclaration n’est pas accessible"
@@ -45,7 +45,7 @@ export function ClientPaymentDetailPage() {
       <PageHeader
         titre="Suivi de la déclaration"
         description={`Référence interne ${paiement.referenceInterne}`}
-        filAriane={["Mon espace", "Historique des paiements", paiement.referenceInterne]}
+        filAriane={["Accueil", "Historique des paiements", paiement.referenceInterne]}
         actions={
           <Link className="bouton-sre bouton-sre--contour" to="/client/paiements">
             <ArrowLeft size={14} /> Retour à l’historique

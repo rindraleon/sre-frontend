@@ -1,31 +1,28 @@
 import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
-import { Clock3, ShieldCheck } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable } from "@/components/ui";
+import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { creerColonnesPaiements } from "@/components/tables/admin/payments-columns";
 import { useTableState } from "@/hooks";
 import { OPTIONS_STATUT_PAIEMENT_FILTRE } from "@/constants/admin-payments";
 import { TOUS } from "@/constants";
 
-export function AdminPaymentsPage({ verificationSeule = false }: { verificationSeule?: boolean }) {
+export function AdminPaymentsPage({ verificationSeule = false }: Readonly<{ verificationSeule?: boolean }>) {
   const { etat } = useSre();
   const table = useTableState();
-  const [statut, definirStatut] = useState<string>(verificationSeule ? "EN_VERIFICATION" : TOUS);
+  const [statut, setStatut] = useState<string>(verificationSeule ? "EN_VERIFICATION" : TOUS);
   const paiements = useMemo(
     () =>
       etat.paiements
         .filter(
           (paiement) =>
             (statut === TOUS || paiement.statut === statut) &&
-            (!verificationSeule || paiement.statut === "EN_VERIFICATION") &&
-            `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${etat.contribuables.find((c) => c.id === paiement.contribuableId)?.raisonSociale ?? ""} ${etat.contribuables.find((c) => c.id === paiement.contribuableId)?.nif ?? ""}`
-              .toLowerCase()
-              .includes(table.recherche.toLowerCase()),
+            (!verificationSeule || paiement.statut === "EN_VERIFICATION"),
         )
         .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe)),
-    [etat.paiements, etat.contribuables, statut, table.recherche, verificationSeule],
+    [etat.paiements, statut, verificationSeule],
   );
   const colonnes = creerColonnesPaiements({ contribuables: etat.contribuables });
   return (
@@ -38,7 +35,7 @@ export function AdminPaymentsPage({ verificationSeule = false }: { verificationS
             : "Historique partagé des déclarations et décisions."
         }
         filAriane={[
-          "Back-office",
+          "Accueil",
           verificationSeule ? "Vérification des paiements" : "Historique des paiements",
         ]}
         actions={
@@ -51,31 +48,29 @@ export function AdminPaymentsPage({ verificationSeule = false }: { verificationS
           )
         }
       />
-      <div className="bandeau-alerte-securite-sre">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>Une référence déclarée ne confirme pas un paiement.</strong>
-          <p>
-            Le portail ne communique avec aucun établissement financier. Les décisions doivent
-            reposer sur les contrôles administratifs applicables.
-          </p>
-        </div>
-      </div>
+
       <DataTable
-        lignes={paiements}
-        colonnes={colonnes}
-        obtenirId={(paiement) => paiement.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Référence, contribuable ou NIF…"
-        actionsEntete={
+        data={paiements}
+        columns={convertirColonnesTanstack(colonnes)}
+        label={verificationSeule ? "Paiements à vérifier" : "Historique des paiements"}
+        getRowId={(paiement) => paiement.id}
+        getSearchText={(paiement) => {
+          const contribuable = etat.contribuables.find(
+            (entree) => entree.id === paiement.contribuableId,
+          );
+          return `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode} ${contribuable?.raisonSociale ?? ""} ${contribuable?.prenom ?? ""} ${contribuable?.nom ?? ""} ${contribuable?.nif ?? ""} ${contribuable?.courriel ?? ""}`;
+        }}
+        searchPlaceholder="Référence, contribuable ou NIF…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        toolbarActions={
           !verificationSeule ? (
             <label className="filtre-compact-sre">
               Statut
               <Select
                 value={statut}
                 onChange={(event) => {
-                  definirStatut(event.target.value);
+                  setStatut(event.target.value);
                   table.reinitialiserPage();
                 }}
               >
@@ -84,16 +79,17 @@ export function AdminPaymentsPage({ verificationSeule = false }: { verificationS
             </label>
           ) : undefined
         }
-        espaceVide={verificationSeule ? "Aucune déclaration en attente" : "Aucune déclaration"}
-        messageVide={
+        columnToggle
+        emptyTitle={verificationSeule ? "Aucune déclaration en attente" : "Aucune déclaration"}
+        emptyDescription={
           verificationSeule
             ? "La file de vérification est vide."
             : "Les déclarations enregistrées apparaîtront ici."
         }
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
     </div>
   );

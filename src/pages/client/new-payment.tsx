@@ -55,6 +55,12 @@ export function ClientNewPaymentPage() {
   const mode = formulaire.watch("mode");
   const operateur = formulaire.watch("operateur");
   const obligation = obligationsDisponibles.find((entree) => entree.id === obligationId);
+  let canalDeclare = "Non sélectionné";
+  if (mode === MODE_PAIEMENT_MOBILE_MONEY) {
+    canalDeclare = operateur || "Opérateur non choisi";
+  } else if (mode === MODE_PAIEMENT_VIREMENT) {
+    canalDeclare = "Virement / canal bancaire";
+  }
 
   const soumettre = formulaire.handleSubmit(async (valeurs) => {
     formulaire.reinitialiserErreur();
@@ -119,7 +125,7 @@ export function ClientNewPaymentPage() {
         "Déclaration enregistrée par le serveur. L’accusé prouve la soumission, pas le règlement.",
         "succes",
       );
-      navigation(ROUTES_CLIENT.paiement(paiementMappe.id), { replace: true });
+      void navigation(ROUTES_CLIENT.paiement(paiementMappe.id), { replace: true });
     } catch (cause) {
       formulaire.traiterEchec(cause);
     }
@@ -131,7 +137,7 @@ export function ClientNewPaymentPage() {
         <PageHeader
           titre="Déclarer un paiement"
           description="Déclarez une opération effectuée en dehors du portail."
-          filAriane={["Mon espace", "Déclarer un paiement"]}
+          filAriane={["Accueil", "Déclarer un paiement"]}
         />
         <EmptyState
           titre="Aucune obligation disponible"
@@ -157,7 +163,7 @@ export function ClientNewPaymentPage() {
       <PageHeader
         titre="Déclarer un paiement"
         description="Renseignez les éléments d’une opération que l’administration devra examiner."
-        filAriane={["Mon espace", "Historique des paiements", "Nouvelle déclaration"]}
+        filAriane={["Accueil", "Déclarer un paiement"]}
         actions={
           <Link className="bouton-sre bouton-sre--contour" to={ROUTES_CLIENT.obligations}>
             <ArrowLeft size={14} /> Mes obligations
@@ -216,13 +222,7 @@ export function ClientNewPaymentPage() {
                 </div>
                 <div>
                   <dt>Canal déclaré</dt>
-                  <dd>
-                    {mode === MODE_PAIEMENT_MOBILE_MONEY
-                      ? operateur || "Opérateur non choisi"
-                      : mode === MODE_PAIEMENT_VIREMENT
-                        ? "Virement / canal bancaire"
-                        : "Non sélectionné"}
-                  </dd>
+                  <dd>{canalDeclare}</dd>
                 </div>
               </dl>
               <div className="total-paiement-sre">

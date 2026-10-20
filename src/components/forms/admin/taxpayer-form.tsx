@@ -2,6 +2,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { Select } from "@/components/ui/select";
 import { SRE_REGION } from "@/constants";
 import { FormField, FormError } from "@/components/forms/form-field";
+import { FormStepIndicator } from "@/components/forms/form-step-indicator";
 import type { TaxpayerFormValues } from "@/validation/profile.schema";
 
 /** Valeurs par défaut du formulaire « profil contribuable ». */
@@ -24,131 +25,153 @@ export const PROFIL_VIDE: TaxpayerFormValues = {
   fonctionContact: "",
 };
 
-/** Champs du formulaire de création d'un profil contribuable (sans le <form> ni sa soumission). */
+/** Champs de création d'un profil, organisés en étapes courtes dans la modale. */
 export function TaxpayerFormFields({
   formulaire,
   erreur,
-}: Readonly<{ formulaire: UseFormReturn<TaxpayerFormValues>; erreur?: string }>) {
+  etape,
+}: Readonly<{
+  formulaire: UseFormReturn<TaxpayerFormValues>;
+  erreur?: string;
+  etape: number;
+}>) {
   const {
     register,
     watch,
     formState: { errors },
   } = formulaire;
   const typeProfil = watch("type");
+  const etapes =
+    typeProfil === "ENTREPRISE"
+      ? ["Identité", "Identification", "Coordonnées"]
+      : ["Identité", "Coordonnées"];
+  const etapeIndicateur = typeProfil === "ENTREPRISE" || etape === 0 ? etape : 1;
   return (
     <div className="formulaire-sre grille-formulaire-sre formulaire-compact-sre">
-      <FormField libelle="Type" erreur={errors.type} requis>
-        {(p) => (
-          <Select {...p} className="champ-simple-sre" {...register("type")}>
-            <option value="PARTICULIER">Particulier</option>
-            <option value="ENTREPRISE">Entreprise</option>
-          </Select>
-        )}
-      </FormField>
-      {typeProfil === "ENTREPRISE" ? (
+      <FormStepIndicator etape={etapeIndicateur} etapes={etapes} />
+      {etape === 0 && (
         <>
-          <FormField libelle="Raison sociale" erreur={errors.raisonSociale} requis>
-            {(p) => <input {...p} className="champ-simple-sre" {...register("raisonSociale")} />}
-          </FormField>
-          <FormField libelle="Nom commercial" erreur={errors.nomCommercial} aide="Facultatif">
-            {(p) => <input {...p} className="champ-simple-sre" {...register("nomCommercial")} />}
-          </FormField>
-          <FormField libelle="NIF" erreur={errors.nif} aide="Facultatif">
-            {(p) => <input {...p} className="champ-simple-sre" {...register("nif")} />}
-          </FormField>
-          <FormField libelle="STAT" erreur={errors.stat} aide="Facultatif">
-            {(p) => <input {...p} className="champ-simple-sre" {...register("stat")} />}
-          </FormField>
-          <FormField
-            libelle="Représentant légal"
-            erreur={errors.representantLegal}
-            aide="Facultatif"
-            classeSupplementaire="champ-sre-large"
-          >
+          <FormField libelle="Type" erreur={errors.type} requis>
             {(p) => (
-              <input {...p} className="champ-simple-sre" {...register("representantLegal")} />
+              <Select {...p} className="champ-simple-sre" {...register("type")}>
+                <option value="PARTICULIER">Particulier</option>
+                <option value="ENTREPRISE">Entreprise</option>
+              </Select>
             )}
           </FormField>
+          {typeProfil === "ENTREPRISE" ? (
+            <>
+              <FormField libelle="Raison sociale" erreur={errors.raisonSociale} requis>
+                {(p) => (
+                  <input {...p} className="champ-simple-sre" {...register("raisonSociale")} />
+                )}
+              </FormField>
+              <FormField libelle="Nom commercial" erreur={errors.nomCommercial} aide="Facultatif">
+                {(p) => (
+                  <input {...p} className="champ-simple-sre" {...register("nomCommercial")} />
+                )}
+              </FormField>
+            </>
+          ) : (
+            <>
+              <FormField libelle="Nom" erreur={errors.nom} requis>
+                {(p) => (
+                  <input
+                    {...p}
+                    className="champ-simple-sre"
+                    autoComplete="family-name"
+                    {...register("nom")}
+                  />
+                )}
+              </FormField>
+              <FormField libelle="Prénom" erreur={errors.prenom}>
+                {(p) => (
+                  <input
+                    {...p}
+                    className="champ-simple-sre"
+                    autoComplete="given-name"
+                    {...register("prenom")}
+                  />
+                )}
+              </FormField>
+            </>
+          )}
         </>
-      ) : (
+      )}
+      {etape === 1 && (
         <>
-          <FormField libelle="Nom" erreur={errors.nom} requis>
-            {(p) => (
-              <input
-                {...p}
-                className="champ-simple-sre"
-                autoComplete="family-name"
-                {...register("nom")}
-              />
-            )}
-          </FormField>
-          <FormField libelle="Prénom" erreur={errors.prenom}>
-            {(p) => (
-              <input
-                {...p}
-                className="champ-simple-sre"
-                autoComplete="given-name"
-                {...register("prenom")}
-              />
-            )}
-          </FormField>
           <FormField libelle="NIF" erreur={errors.nif} aide="Facultatif">
             {(p) => <input {...p} className="champ-simple-sre" {...register("nif")} />}
+          </FormField>
+          {typeProfil === "ENTREPRISE" && (
+            <>
+              <FormField libelle="STAT" erreur={errors.stat} aide="Facultatif">
+                {(p) => <input {...p} className="champ-simple-sre" {...register("stat")} />}
+              </FormField>
+              <FormField
+                libelle="Représentant légal"
+                erreur={errors.representantLegal}
+                aide="Facultatif"
+              >
+                {(p) => (
+                  <input {...p} className="champ-simple-sre" {...register("representantLegal")} />
+                )}
+              </FormField>
+            </>
+          )}
+        </>
+      )}
+      {etape === 2 && (
+        <>
+          <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
+            {(p) => (
+              <input
+                {...p}
+                className="champ-simple-sre"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                {...register("courriel")}
+              />
+            )}
+          </FormField>
+          <FormField libelle="Téléphone" erreur={errors.telephone} requis>
+            {(p) => (
+              <input
+                {...p}
+                className="champ-simple-sre"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                {...register("telephone")}
+              />
+            )}
+          </FormField>
+          <FormField libelle="Adresse" erreur={errors.adresse} requis>
+            {(p) => (
+              <input
+                {...p}
+                className="champ-simple-sre"
+                autoComplete="street-address"
+                {...register("adresse")}
+              />
+            )}
+          </FormField>
+          <FormField libelle="Région">
+            {(p) => <input {...p} className="champ-simple-sre" value={SRE_REGION} readOnly />}
+          </FormField>
+          <FormField libelle="Ville / Commune" erreur={errors.ville} requis>
+            {(p) => (
+              <input
+                {...p}
+                className="champ-simple-sre"
+                autoComplete="address-level2"
+                {...register("ville")}
+              />
+            )}
           </FormField>
         </>
       )}
-      <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
-        {(p) => (
-          <input
-            {...p}
-            className="champ-simple-sre"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            {...register("courriel")}
-          />
-        )}
-      </FormField>
-      <FormField libelle="Téléphone" erreur={errors.telephone} requis>
-        {(p) => (
-          <input
-            {...p}
-            className="champ-simple-sre"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            {...register("telephone")}
-          />
-        )}
-      </FormField>
-      <FormField
-        libelle="Adresse"
-        erreur={errors.adresse}
-        requis
-        classeSupplementaire="champ-sre-large"
-      >
-        {(p) => (
-          <input
-            {...p}
-            className="champ-simple-sre"
-            autoComplete="street-address"
-            {...register("adresse")}
-          />
-        )}
-      </FormField>
-      <FormField libelle="Région">
-        {(p) => <input {...p} className="champ-simple-sre" value={SRE_REGION} readOnly />}
-      </FormField>
-      <FormField libelle="Ville / Commune" erreur={errors.ville} requis>
-        {(p) => (
-          <input
-            {...p}
-            className="champ-simple-sre"
-            autoComplete="address-level2"
-            {...register("ville")}
-          />
-        )}
-      </FormField>
       <div className="champ-sre-large">
         <FormError message={erreur} />
       </div>

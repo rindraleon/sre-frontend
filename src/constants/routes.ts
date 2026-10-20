@@ -1,5 +1,3 @@
-/** Chemins de navigation du portail, centralisés (les segments dynamiques sont des fonctions). */
-
 export const ROUTES = {
   accueil: "/accueil",
   connexion: "/connexion",

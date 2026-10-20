@@ -1,40 +1,36 @@
 import { useState } from "react";
 
-/**
- * État réutilisable d'une boîte de confirmation (ConfirmDialog) : cible, chargement,
- * erreur et exécution sécurisée de l'action (fermeture seulement en cas de succès).
- */
 export function useConfirmation<T>() {
-  const [cible, definirCible] = useState<T | null>(null);
-  const [enCours, definirEnCours] = useState(false);
-  const [erreur, definirErreur] = useState("");
+  const [cible, setCible] = useState<T | null>(null);
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState("");
 
   return {
     cible,
     enCours,
     erreur,
     ouvrir: (valeur: T) => {
-      definirCible(valeur);
-      definirErreur("");
+      setCible(valeur);
+      setErreur("");
     },
     fermer: () => {
-      definirCible(null);
-      definirErreur("");
+      setCible(null);
+      setErreur("");
     },
     executer: async (
       action: (valeur: T) => Promise<void>,
       messageRepli = "Le serveur n’a pas effectué l’action. Réessayez.",
     ) => {
       if (!cible) return;
-      definirEnCours(true);
-      definirErreur("");
+      setEnCours(true);
+      setErreur("");
       try {
         await action(cible);
-        definirCible(null);
+        setCible(null);
       } catch (cause) {
-        definirErreur(cause instanceof Error ? cause.message : messageRepli);
+        setErreur(cause instanceof Error ? cause.message : messageRepli);
       } finally {
-        definirEnCours(false);
+        setEnCours(false);
       }
     },
   };

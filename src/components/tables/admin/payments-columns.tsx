@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { Payment, Taxpayer } from "@/types";
 import { ROUTES_ADMIN } from "@/constants";
-import { StatusBadge, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 export function creerColonnesPaiements({
@@ -75,11 +75,20 @@ export function creerColonnesPaiements({
     },
     {
       id: "action",
-      titre: "",
+      titre: "Actions",
       afficher: (paiement) => (
-        <Link className="lien-action-sre" to={ROUTES_ADMIN.paiement(paiement.id)}>
-          {paiement.statut === "EN_VERIFICATION" ? "Examiner" : "Détails"} <ArrowRight size={13} />
-        </Link>
+        <ActionGroup>
+          <ActionIcon
+            titre={
+              paiement.statut === "EN_VERIFICATION"
+                ? "Examiner la déclaration"
+                : "Consulter la déclaration"
+            }
+            href={ROUTES_ADMIN.paiement(paiement.id)}
+          >
+            <Eye size={15} />
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

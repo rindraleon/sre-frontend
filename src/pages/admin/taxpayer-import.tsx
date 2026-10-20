@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   CircleAlert,
   FileSpreadsheet,
+  MailCheck,
   RotateCcw,
   ShieldCheck,
   Upload,
@@ -31,17 +32,26 @@ import {
 export function AdminTaxpayerImportPage() {
   const { mettreAJourEtat, notifier } = useSre();
   const { session } = useAuth();
-  const [feuilles, definirFeuilles] = useState<Sheet[]>([]);
-  const [nomFeuille, definirNomFeuille] = useState("");
-  const [fichierNom, definirFichierNom] = useState("");
-  const [enTetes, definirEnTetes] = useState<string[]>([]);
-  const [lignesExcel, definirLignesExcel] = useState<(CellValue | null)[][]>([]);
-  const [mapping, definirMapping] = useState<Mappings>(mappingVide);
-  const [analyse, definirAnalyse] = useState<AnalyseLigne[] | null>(null);
-  const [erreur, definirErreur] = useState("");
-  const [chargement, definirChargement] = useState(false);
-  const [rapport, definirRapport] = useState<ImportHistoryEntry | null>(null);
-  const [filtreLignes, definirFiltreLignes] = useState("TOUS");
+  const [feuilles, setFeuilles] = useState<Sheet[]>([]);
+  const [nomFeuille, setNomFeuille] = useState("");
+  const [fichierNom, setFichierNom] = useState("");
+  const [enTetes, setEnTetes] = useState<string[]>([]);
+  const [lignesExcel, setLignesExcel] = useState<(CellValue | null)[][]>([]);
+  const [mapping, setMapping] = useState<Mappings>(mappingVide);
+  const [analyse, setAnalyse] = useState<AnalyseLigne[] | null>(null);
+  const [erreur, setErreur] = useState("");
+  const [chargement, setChargement] = useState(false);
+  const [rapport, setRapport] = useState<ImportHistoryEntry | null>(null);
+  const [emailsImport, setEmailsImport] = useState<
+    {
+      compteId: string;
+      destinataire: string;
+      statutCourriel: string;
+      demandeId: string | null;
+    }[]
+  >([]);
+  const [renvoiEnCours, setRenvoiEnCours] = useState<string | null>(null);
+  const [filtreLignes, setFiltreLignes] = useState("TOUS");
   const feuilleActive = feuilles.find((feuille) => feuille.sheet === nomFeuille);
   const colonnesValides = useMemo(
     () =>
@@ -53,13 +63,12 @@ export function AdminTaxpayerImportPage() {
   const lignesAnalysees = useMemo(
     () =>
       (analyse ?? []).filter(
-        (ligne) =>
-          filtreLignes === "TOUS" ||
-          (filtreLignes === "VALIDES"
-            ? Boolean(ligne.profil)
-            : filtreLignes === "DOUBLONS"
-              ? ligne.doublon
-              : ligne.erreurs.length > 0),
+        (ligne) => {
+          if (filtreLignes === "TOUS") return true;
+          if (filtreLignes === "VALIDES") return Boolean(ligne.profil);
+          if (filtreLignes === "DOUBLONS") return ligne.doublon;
+          return ligne.erreurs.length > 0;
+        },
       ),
     [analyse, filtreLignes],
   );
@@ -76,54 +85,54 @@ export function AdminTaxpayerImportPage() {
       );
       if (index >= 0) correspondances[entree.champ] = String(index);
     }
-    definirNomFeuille(feuille.sheet);
-    definirEnTetes(enTetesFeuille);
-    definirLignesExcel(lignes.slice(1));
-    definirMapping(correspondances);
-    definirAnalyse(null);
-    definirRapport(null);
-    definirFiltreLignes("TOUS");
+    setNomFeuille(feuille.sheet);
+    setEnTetes(enTetesFeuille);
+    setLignesExcel(lignes.slice(1));
+    setMapping(correspondances);
+    setAnalyse(null);
+    setRapport(null);
+    setFiltreLignes("TOUS");
   };
 
   const lireFichier = async (event: ChangeEvent<HTMLInputElement>) => {
     const fichier = event.target.files?.[0];
     if (!fichier) return;
-    definirErreur("");
-    definirRapport(null);
-    definirFichierNom(fichier.name);
+    setErreur("");
+    setRapport(null);
+    setFichierNom(fichier.name);
     if (!fichier.name.toLowerCase().endsWith(".xlsx")) {
-      definirErreur("Choisissez un fichier Excel .xlsx.");
+      setErreur("Choisissez un fichier Excel .xlsx.");
       event.target.value = "";
       return;
     }
     if (fichier.size > 10 * 1024 * 1024) {
-      definirErreur("Le fichier dépasse la limite de 10 Mo.");
+      setErreur("Le fichier dépasse la limite de 10 Mo.");
       event.target.value = "";
       return;
     }
-    definirChargement(true);
+    setChargement(true);
     try {
       const resultat = await readXlsxFile(fichier);
       const feuillesNonVides = resultat.filter((feuille) => feuille.data?.length);
       if (!feuillesNonVides.length) {
-        definirErreur("Aucune feuille ou ligne lisible n’a été trouvée.");
-        definirFeuilles([]);
+        setErreur("Aucune feuille ou ligne lisible n’a été trouvée.");
+        setFeuilles([]);
         return;
       }
       if (feuillesNonVides.some((feuille) => feuille.data.length > 2001)) {
-        definirErreur("La limite est de 2 000 lignes de données par feuille.");
-        definirFeuilles([]);
+        setErreur("La limite est de 2 000 lignes de données par feuille.");
+        setFeuilles([]);
         return;
       }
-      definirFeuilles(feuillesNonVides);
+      setFeuilles(feuillesNonVides);
       initialiserFeuille(feuillesNonVides[0]);
-    } catch (cause) {
-      definirErreur(
+    } catch {
+      setErreur(
         "Impossible de lire ce classeur. Vérifiez qu’il s’agit d’un fichier .xlsx valide, puis réessayez.",
       );
-      definirFeuilles([]);
+      setFeuilles([]);
     } finally {
-      definirChargement(false);
+      setChargement(false);
     }
   };
 
@@ -132,24 +141,174 @@ export function AdminTaxpayerImportPage() {
     if (feuille) initialiserFeuille(feuille);
   };
   const changerMapping = (champ: MappingField, valeur: string) => {
-    definirMapping((courant) => ({ ...courant, [champ]: valeur }));
-    definirAnalyse(null);
-    definirRapport(null);
+    setMapping((courant) => ({ ...courant, [champ]: valeur }));
+    setAnalyse(null);
+    setRapport(null);
   };
   const valeurMappee = (ligne: (CellValue | null)[], champ: MappingField) => {
     const index = mapping[champ] === "" ? -1 : Number(mapping[champ]);
     return index < 0 ? "" : texteCellule(ligne[index]);
   };
 
+  const analyserType = (ligne: number, typeBrut: string, erreurs: ImportErrorRow[]): TaxpayerType => {
+    const typeNormalise = cleNormalisee(typeBrut);
+    if (
+      typeNormalise.includes("entreprise") ||
+      typeNormalise.includes("societe") ||
+      typeNormalise.includes("professionnel")
+    ) return "ENTREPRISE";
+    if (typeNormalise.includes("particulier") || typeNormalise.includes("personne"))
+      return "PARTICULIER";
+    erreurs.push({
+      ligne,
+      champ: "Type",
+      message: "Indiquez explicitement Particulier ou Entreprise.",
+    });
+    return "PARTICULIER";
+  };
+
+  const verifierDoublons = (
+    numero: number,
+    courriel: string,
+    nif: string,
+    stat: string,
+    ensembles: { emails: Set<string>; nifs: Set<string>; stats: Set<string> },
+    erreurs: ImportErrorRow[],
+  ) => {
+    let doublon = false;
+    if (courriel && ensembles.emails.has(courriel)) {
+      doublon = true;
+      erreurs.push({ ligne: numero, champ: "E-mail", message: "Cette adresse apparaît plusieurs fois dans le classeur." });
+    }
+    if (nif && ensembles.nifs.has(nif)) {
+      doublon = true;
+      erreurs.push({ ligne: numero, champ: "NIF", message: "Ce NIF apparaît plusieurs fois dans le classeur." });
+    }
+    if (stat && ensembles.stats.has(stat)) {
+      doublon = true;
+      erreurs.push({ ligne: numero, champ: "STAT", message: "Ce STAT apparaît plusieurs fois dans le classeur." });
+    }
+    if (courriel) ensembles.emails.add(courriel);
+    if (nif) ensembles.nifs.add(nif);
+    if (stat) ensembles.stats.add(stat);
+    return doublon;
+  };
+
+  const verifierChampsObligatoires = ({
+    numero,
+    type,
+    raisonSociale,
+    nom,
+    courriel,
+    telephone,
+    adresse,
+    region,
+    ville,
+    erreurs,
+  }: {
+    numero: number;
+    type: TaxpayerType;
+    raisonSociale: string;
+    nom: string;
+    courriel: string;
+    telephone: string;
+    adresse: string;
+    region: string;
+    ville: string;
+    erreurs: ImportErrorRow[];
+  }) => {
+    if (type === "ENTREPRISE" && !(raisonSociale || nom))
+      erreurs.push({ ligne: numero, champ: "Raison sociale", message: "La raison sociale est requise." });
+    if (type === "PARTICULIER" && !nom)
+      erreurs.push({ ligne: numero, champ: "Nom", message: "Le nom du contribuable est requis." });
+    const indexArobase = courriel.indexOf("@");
+    const domaine = courriel.slice(indexArobase + 1);
+    const indexPoint = domaine.indexOf(".");
+    if (
+      !courriel ||
+      indexArobase <= 0 ||
+      indexArobase !== courriel.lastIndexOf("@") ||
+      /\s/.test(courriel) ||
+      indexPoint <= 0 ||
+      indexPoint === domaine.length - 1
+    )
+      erreurs.push({ ligne: numero, champ: "E-mail", message: "Une adresse e-mail valide est requise." });
+    if (telephone.length < 7)
+      erreurs.push({ ligne: numero, champ: "Téléphone", message: "Un numéro de téléphone valide est requis." });
+    if (adresse.length < 3)
+      erreurs.push({ ligne: numero, champ: "Adresse", message: "Une adresse est requise." });
+    if (cleNormalisee(region) !== cleNormalisee(SRE_REGION))
+      erreurs.push({ ligne: numero, champ: "Région", message: `Le service est limité à ${SRE_REGION}.` });
+    if (!ville)
+      erreurs.push({ ligne: numero, champ: "Ville / Commune", message: "La ville ou commune est requise." });
+  };
+
+  const analyserLigne = (
+    ligne: (CellValue | null)[],
+    index: number,
+    emails: Set<string>,
+    nifs: Set<string>,
+    stats: Set<string>,
+  ): AnalyseLigne => {
+    const numero = index + 2;
+    const valeurs = ligne.map(texteCellule);
+    const erreurs: ImportErrorRow[] = [];
+    if (valeurs.every((valeur) => !valeur)) return { numero, valeurs, erreurs, doublon: false };
+    const type = analyserType(numero, valeurMappee(ligne, "type"), erreurs);
+    const raisonSociale = valeurMappee(ligne, "raisonSociale");
+    const nom = valeurMappee(ligne, "nom");
+    const prenom = valeurMappee(ligne, "prenom");
+    const nif = valeurMappee(ligne, "nif").trim().toUpperCase();
+    const stat = valeurMappee(ligne, "stat").trim().toUpperCase();
+    const courriel = valeurMappee(ligne, "courriel").trim().toLowerCase();
+    const telephone = valeurMappee(ligne, "telephone").trim();
+    const adresse = valeurMappee(ligne, "adresse").trim();
+    const region = valeurMappee(ligne, "region").trim();
+    const ville = valeurMappee(ligne, "ville").trim();
+    verifierChampsObligatoires({
+      numero,
+      type,
+      raisonSociale,
+      nom,
+      courriel,
+      telephone,
+      adresse,
+      region,
+      ville,
+      erreurs,
+    });
+    const doublon = verifierDoublons(numero, courriel, nif, stat, { emails, nifs, stats }, erreurs);
+    const nomCommercial = valeurMappee(ligne, "nomCommercial").trim();
+    const representantLegal = valeurMappee(ligne, "representantLegal").trim();
+    const profil: ImportProfile | undefined = erreurs.length
+      ? undefined
+      : {
+          type,
+          nom: (nom || raisonSociale).trim(),
+          ...(prenom.trim() ? { prenom: prenom.trim() } : {}),
+          ...(raisonSociale.trim() ? { raisonSociale: raisonSociale.trim() } : {}),
+          ...(nomCommercial ? { nomCommercial } : {}),
+          ...(nif ? { nif } : {}),
+          ...(stat ? { stat } : {}),
+          adresse,
+          region: SRE_REGION,
+          ville,
+          courriel,
+          telephone,
+          ...(representantLegal ? { representantLegal } : {}),
+        };
+    return { numero, valeurs, profil, erreurs, doublon };
+  };
+
   const analyser = () => {
-    definirErreur("");
-    definirRapport(null);
+    setErreur("");
+    setRapport(null);
     if (!enTetes.length || !lignesExcel.length) {
-      definirErreur("Le classeur ne contient aucune ligne de données à analyser.");
+      setErreur("Le classeur ne contient aucune ligne de données à analyser.");
       return;
     }
     if (!colonnesValides) {
-      definirErreur(
+      setErreur(
         "Mappez le type de contribuable, l’e-mail, le téléphone, l’adresse, la région et la ville/commune.",
       );
       return;
@@ -158,173 +317,73 @@ export function AdminTaxpayerImportPage() {
     const nifs = new Set<string>();
     const stats = new Set<string>();
     const resultats = lignesExcel
-      .map((ligne, index): AnalyseLigne => {
-        const numero = index + 2;
-        const valeurs = ligne.map(texteCellule);
-        const erreurs: ImportErrorRow[] = [];
-        if (valeurs.every((valeur) => !valeur)) return { numero, valeurs, erreurs, doublon: false };
-        const typeBrut = valeurMappee(ligne, "type");
-        const typeNormalise = cleNormalisee(typeBrut);
-        const raisonSociale = valeurMappee(ligne, "raisonSociale");
-        let type: TaxpayerType;
-        if (
-          typeNormalise.includes("entreprise") ||
-          typeNormalise.includes("societe") ||
-          typeNormalise.includes("professionnel")
-        )
-          type = "ENTREPRISE";
-        else if (typeNormalise.includes("particulier") || typeNormalise.includes("personne"))
-          type = "PARTICULIER";
-        else {
-          type = "PARTICULIER";
-          erreurs.push({
-            ligne: numero,
-            champ: "Type",
-            message: "Indiquez explicitement Particulier ou Entreprise.",
-          });
-        }
-        const nom = valeurMappee(ligne, "nom");
-        const prenom = valeurMappee(ligne, "prenom");
-        const nif = valeurMappee(ligne, "nif").trim().toUpperCase();
-        const stat = valeurMappee(ligne, "stat").trim().toUpperCase();
-        const courriel = valeurMappee(ligne, "courriel").trim().toLowerCase();
-        const telephone = valeurMappee(ligne, "telephone").trim();
-        const adresse = valeurMappee(ligne, "adresse").trim();
-        const region = valeurMappee(ligne, "region").trim();
-        const ville = valeurMappee(ligne, "ville").trim();
-        if (type === "ENTREPRISE" && !(raisonSociale || nom))
-          erreurs.push({
-            ligne: numero,
-            champ: "Raison sociale",
-            message: "La raison sociale est requise.",
-          });
-        if (type === "PARTICULIER" && !nom)
-          erreurs.push({
-            ligne: numero,
-            champ: "Nom",
-            message: "Le nom du contribuable est requis.",
-          });
-        if (!courriel || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel))
-          erreurs.push({
-            ligne: numero,
-            champ: "E-mail",
-            message: "Une adresse e-mail valide est requise.",
-          });
-        if (telephone.length < 7)
-          erreurs.push({
-            ligne: numero,
-            champ: "Téléphone",
-            message: "Un numéro de téléphone valide est requis.",
-          });
-        if (adresse.length < 3)
-          erreurs.push({ ligne: numero, champ: "Adresse", message: "Une adresse est requise." });
-        if (cleNormalisee(region) !== cleNormalisee(SRE_REGION))
-          erreurs.push({
-            ligne: numero,
-            champ: "Région",
-            message: `Le service est limité à ${SRE_REGION}.`,
-          });
-        if (!ville)
-          erreurs.push({
-            ligne: numero,
-            champ: "Ville / Commune",
-            message: "La ville ou commune est requise.",
-          });
-        let doublon = false;
-        const emailNormalise = courriel.toLowerCase();
-        if (emailNormalise && emails.has(emailNormalise)) {
-          doublon = true;
-          erreurs.push({
-            ligne: numero,
-            champ: "E-mail",
-            message: "Cette adresse apparaît plusieurs fois dans le classeur.",
-          });
-        }
-        if (nif && nifs.has(nif)) {
-          doublon = true;
-          erreurs.push({
-            ligne: numero,
-            champ: "NIF",
-            message: "Ce NIF apparaît plusieurs fois dans le classeur.",
-          });
-        }
-        if (stat && stats.has(stat)) {
-          doublon = true;
-          erreurs.push({
-            ligne: numero,
-            champ: "STAT",
-            message: "Ce STAT apparaît plusieurs fois dans le classeur.",
-          });
-        }
-        if (emailNormalise) emails.add(emailNormalise);
-        if (nif) nifs.add(nif);
-        if (stat) stats.add(stat);
-        const profil: ImportProfile | undefined = erreurs.length
-          ? undefined
-          : {
-              type,
-              nom: (nom || raisonSociale).trim(),
-              ...(prenom.trim() ? { prenom: prenom.trim() } : {}),
-              ...(raisonSociale.trim() ? { raisonSociale: raisonSociale.trim() } : {}),
-              ...(valeurMappee(ligne, "nomCommercial").trim()
-                ? { nomCommercial: valeurMappee(ligne, "nomCommercial").trim() }
-                : {}),
-              ...(nif ? { nif } : {}),
-              ...(stat ? { stat } : {}),
-              adresse,
-              region: SRE_REGION,
-              ville,
-              courriel,
-              telephone,
-              ...(valeurMappee(ligne, "representantLegal").trim()
-                ? { representantLegal: valeurMappee(ligne, "representantLegal").trim() }
-                : {}),
-            };
-        return { numero, valeurs, profil, erreurs, doublon };
-      })
-      .filter((ligne) => ligne.valeurs.some((valeur) => valeur));
-    definirAnalyse(resultats);
-    definirFiltreLignes("TOUS");
-    if (!resultats.length) definirErreur("Aucune ligne de données sous l’en-tête.");
+      .map((ligne, index) => analyserLigne(ligne, index, emails, nifs, stats))
+      .filter((ligne) => ligne.valeurs.some(Boolean));
+    setAnalyse(resultats);
+    setFiltreLignes("TOUS");
+    if (!resultats.length) setErreur("Aucune ligne de données sous l’en-tête.");
   };
 
   const lancerImport = async () => {
     if (!analyse) return;
     if (!session?.jetonApi) {
-      definirErreur("Session serveur introuvable. Reconnectez-vous.");
+      setErreur("Session serveur introuvable. Reconnectez-vous.");
       return;
     }
     const profils = analyse.flatMap((ligne) =>
       ligne.profil && !ligne.doublon && !ligne.erreurs.length ? [ligne.profil] : [],
     );
     if (!profils.length) {
-      definirErreur("Aucune ligne valide à importer.");
+      setErreur("Aucune ligne valide à importer.");
       return;
     }
-    definirErreur("");
-    definirChargement(true);
+    setErreur("");
+    setChargement(true);
     try {
       const resultat = await callApi<{
         donnees: ApiTaxpayer[];
         creees: number;
         ignorees: number;
+        comptesCrees: number;
+        doublons: number;
+        rejetees: number;
+        emails: {
+          compteId: string;
+          destinataire: string;
+          statutCourriel: string;
+          demandeId: string | null;
+        }[];
       }>("contribuables/import", { method: "POST", token: session.jetonApi, body: { profils } });
       const profilsCrees = resultat.donnees.map((entree) => mapApiTaxpayer(entree));
       mettreAJourEtat((courant) => ({
         ...courant,
         contribuables: [...profilsCrees, ...courant.contribuables],
       }));
+      setEmailsImport(resultat.emails ?? []);
       const lignesLocalesIgnorees = analyse.filter(
         (ligne) => !ligne.profil || ligne.doublon || ligne.erreurs.length,
       ).length;
       const erreurs = analyse.flatMap((ligne) => ligne.erreurs);
-      if (resultat.ignorees)
+      if (resultat.rejetees)
         erreurs.push({
           ligne: 0,
-          message: `${resultat.ignorees} profil(s) ignoré(s) par le serveur car déjà présent(s).`,
+          message: `${resultat.rejetees} ligne(s) rejetée(s) par le serveur (informations manquantes ou invalides).`,
+        });
+      if (resultat.doublons)
+        erreurs.push({
+          ligne: 0,
+          message: `${resultat.doublons} doublon(s) détecté(s) (e-mail, NIF ou STAT déjà enregistrés) — aucune création en double.`,
         });
       const nouveauxDoublons = analyse.filter((ligne) => ligne.doublon).length;
       const totalIgnores = lignesLocalesIgnorees + resultat.ignorees;
+      let statutImport: ImportHistoryEntry["statut"];
+      if (totalIgnores === 0) {
+        statutImport = "TERMINE";
+      } else if (resultat.creees > 0) {
+        statutImport = "PARTIEL";
+      } else {
+        statutImport = "ERREUR";
+      }
       const rapportImport: ImportHistoryEntry = {
         id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
         nomFichier: fichierNom,
@@ -334,32 +393,65 @@ export function AdminTaxpayerImportPage() {
         ignorees: totalIgnores,
         doublons: nouveauxDoublons + resultat.ignorees,
         erreurs,
-        statut: totalIgnores === 0 ? "TERMINE" : resultat.creees > 0 ? "PARTIEL" : "ERREUR",
+        statut: statutImport,
       };
-      definirRapport(rapportImport);
+      setRapport(rapportImport);
       notifier(
-        `${resultat.creees} profil(s) créé(s), ${totalIgnores} ligne(s) ignorée(s). Aucun compte ni mot de passe n’a été créé.`,
+        `${resultat.creees} profil(s) créé(s), dont ${resultat.comptesCrees ?? 0} compte(s) entreprise(s) avec e-mail d’activation.`,
         resultat.creees ? "succes" : "avertissement",
       );
     } catch (cause) {
-      definirErreur(
+      setErreur(
         cause instanceof Error ? cause.message : "Le serveur n’a pas effectué l’import.",
       );
     } finally {
-      definirChargement(false);
+      setChargement(false);
     }
   };
 
   const reinitialiser = () => {
-    definirFeuilles([]);
-    definirNomFeuille("");
-    definirFichierNom("");
-    definirEnTetes([]);
-    definirLignesExcel([]);
-    definirMapping(mappingVide);
-    definirAnalyse(null);
-    definirErreur("");
-    definirRapport(null);
+    setFeuilles([]);
+    setNomFeuille("");
+    setFichierNom("");
+    setEnTetes([]);
+    setLignesExcel([]);
+    setMapping(mappingVide);
+    setAnalyse(null);
+    setErreur("");
+    setRapport(null);
+    setEmailsImport([]);
+  };
+
+  /** Réessai d'envoi d'un e-mail de première connexion en échec (jeton réémis). */
+  const renvoyerEmail = async (demandeId: string, destinataire: string) => {
+    if (!session?.jetonApi) return;
+    setRenvoiEnCours(demandeId);
+    try {
+      const resultat = await callApi<{ statutCourriel: string }>(
+        `utilisateurs/emails-activation/${encodeURIComponent(demandeId)}/renvoyer`,
+        { method: "POST", token: session.jetonApi },
+      );
+      setEmailsImport((courant) =>
+        courant.map((email) =>
+          email.demandeId === demandeId
+            ? { ...email, statutCourriel: resultat.statutCourriel }
+            : email,
+        ),
+      );
+      notifier(
+        resultat.statutCourriel === "ENVOYEE"
+          ? `E-mail renvoyé à ${destinataire}.`
+          : `L'envoi à ${destinataire} a de nouveau échoué.`,
+        resultat.statutCourriel === "ENVOYEE" ? "succes" : "erreur",
+      );
+    } catch (cause) {
+      notifier(
+        cause instanceof Error ? cause.message : "Le renvoi a échoué.",
+        "erreur",
+      );
+    } finally {
+      setRenvoiEnCours(null);
+    }
   };
 
   return (
@@ -367,18 +459,8 @@ export function AdminTaxpayerImportPage() {
       <PageHeader
         titre="Import Excel"
         description={`Importez des profils contribuables de ${SRE_REGION} après aperçu et validation des lignes.`}
-        filAriane={["Back-office", "Import Excel"]}
+        filAriane={["Accueil", "Import Excel"]}
       />
-      <div className="bandeau-alerte-securite-sre">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>L’import crée des profils, pas des comptes utilisateurs.</strong>
-          <p>
-            Le serveur vérifie les doublons et persiste les lignes valides. Aucun mot de passe
-            temporaire, email ou notification n’est généré.
-          </p>
-        </div>
-      </div>
       {!feuilles.length ? (
         <section className="carte-sre zone-depot-excel-sre">
           <span className="zone-depot-excel-sre__icone">
@@ -516,12 +598,17 @@ export function AdminTaxpayerImportPage() {
                 </thead>
                 <tbody>
                   {(feuilleActive?.data.slice(1, 6) ?? []).map((ligne, index) => (
-                    <tr key={index}>
-                      <td>{index + 2}</td>
-                      {enTetes.slice(0, 8).map((_, cellule) => (
-                        <td key={cellule}>{texteCellule(ligne[cellule]) || "—"}</td>
+                    <tr key={`${index + 2}-${JSON.stringify(ligne)}`}>
+                      <td data-label="Ligne Excel">{index + 2}</td>
+                      {enTetes.slice(0, 8).map((entete, cellule) => (
+                        <td
+                          data-label={entete || `Colonne ${cellule + 1}`}
+                          key={entete || `colonne-${cellule + 1}`}
+                        >
+                          {texteCellule(ligne[cellule]) || "—"}
+                        </td>
                       ))}
-                      {enTetes.length > 8 && <td>…</td>}
+                      {enTetes.length > 8 && <td data-label="Autres colonnes">…</td>}
                     </tr>
                   ))}
                 </tbody>
@@ -547,7 +634,7 @@ export function AdminTaxpayerImportPage() {
                   Afficher
                   <Select
                     value={filtreLignes}
-                    onChange={(event) => definirFiltreLignes(event.target.value)}
+                    onChange={(event) => setFiltreLignes(event.target.value)}
                   >
                     <option value="TOUS">Toutes</option>
                     <option value="VALIDES">Valides</option>
@@ -586,29 +673,35 @@ export function AdminTaxpayerImportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lignesAnalysees.slice(0, 100).map((ligne) => (
+                    {lignesAnalysees.slice(0, 100).map((ligne) => {
+                      let statutResultat = "ACTIF";
+                      if (ligne.erreurs.length) {
+                        statutResultat = "ERREUR";
+                      }
+                      if (ligne.doublon) {
+                        statutResultat = "REJETE";
+                      }
+
+                      return (
                       <tr key={ligne.numero}>
-                        <td>{ligne.numero}</td>
-                        <td>{ligne.profil ? <StatusBadge statut={ligne.profil.type} /> : "—"}</td>
-                        <td>
+                        <td data-label="Ligne Excel">{ligne.numero}</td>
+                        <td data-label="Type">{ligne.profil ? <StatusBadge statut={ligne.profil.type} /> : "—"}</td>
+                        <td data-label="Nom / raison sociale">
                           {ligne.profil?.raisonSociale ||
                             `${ligne.profil?.prenom ?? ""} ${ligne.profil?.nom ?? ""}`.trim() ||
                             "—"}
                         </td>
-                        <td>{ligne.profil?.nif ?? "—"}</td>
-                        <td>{ligne.profil?.courriel ?? "—"}</td>
-                        <td>
-                          {ligne.doublon ? (
-                            <StatusBadge statut="REJETE" />
-                          ) : ligne.erreurs.length ? (
-                            <StatusBadge statut="ERREUR" />
-                          ) : (
-                            <StatusBadge statut="ACTIF" />
-                          )}
+                        <td data-label="NIF">{ligne.profil?.nif ?? "—"}</td>
+                        <td data-label="E-mail">{ligne.profil?.courriel ?? "—"}</td>
+                        <td data-label="Résultat">
+                          <StatusBadge statut={statutResultat} />
                         </td>
-                        <td>
-                          {ligne.erreurs.map((ligneErreur, index) => (
-                            <small key={index} className="erreur-import-ligne-sre">
+                        <td data-label="Motif">
+                          {ligne.erreurs.map((ligneErreur) => (
+                            <small
+                              key={`${ligne.numero}-${ligneErreur.champ ?? ""}-${ligneErreur.message}`}
+                              className="erreur-import-ligne-sre"
+                            >
                               {ligneErreur.champ ? `${ligneErreur.champ} : ` : ""}
                               {ligneErreur.message}
                             </small>
@@ -618,7 +711,8 @@ export function AdminTaxpayerImportPage() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
                 {lignesAnalysees.length > 100 && (
@@ -701,14 +795,20 @@ export function AdminTaxpayerImportPage() {
                 )
               </summary>
               <ul>
-                {rapport.erreurs.slice(0, 100).map((ligne, index) => (
-                  <li key={`${ligne.ligne}-${index}`}>
-                    {ligne.ligne > 0
-                      ? `Ligne ${ligne.ligne}${ligne.champ ? ` · ${ligne.champ}` : ""} — `
-                      : ""}
-                    {ligne.message}
-                  </li>
-                ))}
+                {rapport.erreurs.slice(0, 100).map((ligne, index) => {
+                  const prefixeLigne = ligne.ligne > 0 ? `Ligne ${ligne.ligne}` : "";
+                  const champ = ligne.ligne > 0 && ligne.champ ? ` · ${ligne.champ}` : "";
+                  const separateur = ligne.ligne > 0 ? " — " : "";
+
+                  return (
+                    <li key={`${ligne.ligne}-${index}`}>
+                      {prefixeLigne}
+                      {champ}
+                      {separateur}
+                      {ligne.message}
+                    </li>
+                  );
+                })}
               </ul>
             </details>
           )}
@@ -717,11 +817,54 @@ export function AdminTaxpayerImportPage() {
             <p>
               <strong>Import terminé par le serveur.</strong>
               <span>
-                Les profils enregistrés ne sont pas liés à des comptes de connexion. Aucun mot de
-                passe n’a été généré.
+                Les comptes entreprise créés doivent terminer leur configuration initiale (nouveau
+                mot de passe + profil) avant d’accéder aux fonctionnalités ; le mot de passe
+                provisoire est invalidé à cette étape.
               </span>
             </p>
           </div>
+          {emailsImport.length > 0 && (
+            <div className="rapport-emails-activation-sre">
+              <strong>
+                <MailCheck size={15} aria-hidden="true" /> E-mails de première connexion (
+                {emailsImport.filter((e) => e.statutCourriel === "ENVOYEE").length} envoyé(s),{" "}
+                {emailsImport.filter((e) => e.statutCourriel === "ECHEC").length} en échec)
+              </strong>
+              <ul>
+                {emailsImport.map((email) => {
+                  const classeBadgeCourriel =
+                    email.statutCourriel === "ENVOYEE"
+                      ? "badge-sre badge-sre--succes"
+                      : email.statutCourriel === "ECHEC"
+                        ? "badge-sre badge-sre--erreur"
+                        : "badge-sre badge-sre--attention";
+
+                  return (
+                    <li key={email.compteId}>
+                      <span>{email.destinataire}</span>
+                      <span className={classeBadgeCourriel}>
+                        {email.statutCourriel === "ENVOYEE"
+                          ? "Envoyé"
+                          : email.statutCourriel === "ECHEC"
+                            ? "Échec"
+                            : "En attente"}
+                      </span>
+                      {email.statutCourriel === "ECHEC" && email.demandeId && (
+                        <button
+                          type="button"
+                          className="bouton-sre bouton-sre--contour bouton-sre--petit"
+                          disabled={renvoiEnCours === email.demandeId}
+                          onClick={() => renvoyerEmail(email.demandeId as string, email.destinataire)}
+                        >
+                          {renvoiEnCours === email.demandeId ? "Envoi…" : "Renvoyer"}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </section>
       )}
     </div>

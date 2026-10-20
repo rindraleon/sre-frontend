@@ -1,4 +1,4 @@
-import { Bell, Mail } from "lucide-react";
+import { Bell } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
@@ -15,22 +15,9 @@ export function AdminNotificationsPage() {
       <PageHeader
         titre="Notifications & e-mails"
         description="Centre de communication administratif."
-        filAriane={["Back-office", "Notifications"]}
+        filAriane={["Accueil", "Notifications"]}
       />
-      <div className="bandeau-info-sre">
-        <span>
-          <Mail size={17} />
-        </span>
-        <div>
-          <strong>Rappels d’échéances automatisés côté serveur.</strong>
-          <p>
-            Le job quotidien génère les rappels des contribuables (J-7, J-3, J-1, jour J, retards
-            J+1/J+3/J+7 — politique configurable côté API) et tente l’e-mail uniquement si un
-            transport est configuré. Aucun envoi n’est simulé : l’état réel de chaque courriel
-            (envoyé, échec, non envoyé) est conservé avec la notification du contribuable.
-          </p>
-        </div>
-      </div>
+      
       {notifications.length === 0 ? (
         <EmptyState
           titre="Aucune notification personnelle"

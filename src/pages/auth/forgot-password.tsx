@@ -9,7 +9,8 @@ export function ForgotPasswordPage() {
         <ForgotPasswordForm />
       </main>
       <footer className="auth-pied-sre">
-        La récupération sera disponible lorsqu’un service serveur sécurisé sera configuré.
+        Lien de réinitialisation sécurisé : à usage unique, valable 24 heures, envoyé
+        uniquement aux comptes actifs.
       </footer>
     </div>
   );

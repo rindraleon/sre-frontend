@@ -4,6 +4,7 @@ import { useAuth, pathMatchesRole, roleHomePath } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { AppLayout } from "@/components/layout/app-layout";
 import { PublicHomePage } from "@/pages/public/home";
+import { MentionsLegalesPage, PolitiqueConfidentialitePage } from "@/pages/public/legal";
 import { LoginPage } from "@/pages/auth/login";
 import { RegisterPage } from "@/pages/auth/register";
 import { ChangePasswordPage } from "@/pages/auth/change-password";
@@ -28,22 +29,32 @@ import { AdminTaxTypesPage } from "@/pages/admin/tax-types";
 import { AdminObligationsPage } from "@/pages/admin/obligations";
 import { AdminPaymentsPage } from "@/pages/admin/payments";
 import { AdminPaymentDetailPage } from "@/pages/admin/payment-detail";
+import { AdminRetardsPage } from "@/pages/admin/retards";
 import { AdminTaxpayerImportPage } from "@/pages/admin/taxpayer-import";
 import { AdminNotificationsPage } from "@/pages/admin/notifications";
 import { AdminReportsPage } from "@/pages/admin/reports";
 import { AdminActivityLogPage } from "@/pages/admin/activity-log";
 import { AdminSettingsPage } from "@/pages/admin/settings";
+import { AidePage } from "@/pages/aide";
+import { ActivationPage } from "@/pages/auth/activation";
+import { ConfigurationInitialePage } from "@/pages/auth/configuration-initiale";
 import { ConfirmDialog, ToastRegion } from "@/components/ui";
 import { PageLoader } from "@/components/ui/core-spin-loader";
+import { RouteProgress } from "@/app/router/route-progress";
 
 export function App() {
   return (
     <>
+      <RouteProgress />
       <Routes>
         <Route path="/" element={<Navigate to="/accueil" replace />} />
         <Route path="/accueil" element={<PublicHomePage />} />
+        <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
+        <Route path="/politique-confidentialite" element={<PolitiqueConfidentialitePage />} />
+        <Route path="/aide" element={<AidePage />} />
         <Route path="/connexion" element={<LoginRoute />} />
         <Route path="/inscription" element={<RegisterPage />} />
+        <Route path="/activation" element={<ActivationPage />} />
         <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
         <Route path="/reinitialisation-mot-de-passe" element={<ResetPasswordPage />} />
         <Route
@@ -65,11 +76,14 @@ export function App() {
           <Route path="paiements-a-verifier" element={<AdminPaymentsPage verificationSeule />} />
           <Route path="paiements/:id" element={<AdminPaymentDetailPage />} />
           <Route path="paiements" element={<AdminPaymentsPage />} />
+          <Route path="retards" element={<AdminRetardsPage />} />
           <Route path="import-excel" element={<AdminTaxpayerImportPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="rapports" element={<AdminReportsPage />} />
           <Route path="journal" element={<AdminActivityLogPage />} />
           <Route path="parametres" element={<AdminSettingsPage />} />
+          <Route path="aide" element={<AidePage dansEspace />} />
+          <Route path="configuration-initiale" element={<ConfigurationInitialePage />} />
           <Route path="changement-mot-de-passe" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
@@ -92,6 +106,8 @@ export function App() {
           <Route path="notifications" element={<ClientNotificationsPage />} />
           <Route path="profil" element={<ClientProfilePage />} />
           <Route path="parametres" element={<ClientSettingsPage />} />
+          <Route path="aide" element={<AidePage dansEspace />} />
+          <Route path="configuration-initiale" element={<ConfigurationInitialePage />} />
           <Route path="changement-mot-de-passe" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/client" replace />} />
         </Route>
@@ -102,7 +118,7 @@ export function App() {
   );
 }
 
-function ProtectedRoute({ role, children }: { role: "ADMIN" | "CLIENT"; children: ReactNode }) {
+function ProtectedRoute({ role, children }: Readonly<{ role: "ADMIN" | "CLIENT"; children: ReactNode }>) {
   const {
     session,
     deconnecter,
@@ -112,9 +128,9 @@ function ProtectedRoute({ role, children }: { role: "ADMIN" | "CLIENT"; children
   } = useAuth();
   const { chargementInitial } = useSre();
   const emplacement = useLocation();
-  const [confirmationDeconnexion, definirConfirmationDeconnexion] = useState(false);
+  const [confirmationDeconnexion, setConfirmationDeconnexion] = useState(false);
   const confirmerDeconnexion = () => {
-    definirConfirmationDeconnexion(false);
+    setConfirmationDeconnexion(false);
     deconnecter();
   };
 
@@ -146,7 +162,7 @@ function ProtectedRoute({ role, children }: { role: "ADMIN" | "CLIENT"; children
             </button>
             <button
               className="bouton-sre bouton-sre--contour"
-              onClick={() => definirConfirmationDeconnexion(true)}
+              onClick={() => setConfirmationDeconnexion(true)}
             >
               Se déconnecter
             </button>
@@ -156,7 +172,7 @@ function ProtectedRoute({ role, children }: { role: "ADMIN" | "CLIENT"; children
           ouvert={confirmationDeconnexion}
           titre="Se déconnecter ?"
           description="Votre session sera fermée sur cet appareil. Vous devrez vous authentifier à nouveau pour accéder à votre espace."
-          fermer={() => definirConfirmationDeconnexion(false)}
+          fermer={() => setConfirmationDeconnexion(false)}
           confirmer={confirmerDeconnexion}
           libelleConfirmer="Se déconnecter"
         />
@@ -166,9 +182,10 @@ function ProtectedRoute({ role, children }: { role: "ADMIN" | "CLIENT"; children
   if (!pathMatchesRole(emplacement.pathname, role) || session.role !== role) {
     return <Navigate to={roleHomePath(session.role)} replace />;
   }
-  const cheminChangement = `${roleHomePath(role)}/changement-mot-de-passe`;
-  if (session.changementMotDePasseRequis && emplacement.pathname !== cheminChangement) {
-    return <Navigate to={cheminChangement} replace />;
+  const configurationRequise = session.changementMotDePasseRequis || !session.profilComplete;
+  const cheminConfiguration = `${roleHomePath(role)}/configuration-initiale`;
+  if (configurationRequise && emplacement.pathname !== cheminConfiguration) {
+    return <Navigate to={cheminConfiguration} replace />;
   }
   return children;
 }
@@ -177,11 +194,9 @@ function LoginRoute() {
   const { session } = useAuth();
   if (session) {
     const racine = roleHomePath(session.role);
+    const configurationRequise = session.changementMotDePasseRequis || !session.profilComplete;
     return (
-      <Navigate
-        to={session.changementMotDePasseRequis ? `${racine}/changement-mot-de-passe` : racine}
-        replace
-      />
+      <Navigate to={configurationRequise ? `${racine}/configuration-initiale` : racine} replace />
     );
   }
   return <LoginPage />;

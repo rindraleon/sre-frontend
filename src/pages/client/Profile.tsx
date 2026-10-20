@@ -36,7 +36,7 @@ export function ClientProfilePage() {
   if (!contribuable)
     return (
       <div className="page-contenu-sre">
-        <PageHeader titre="Profil fiscal" filAriane={["Mon espace", "Profil fiscal"]} />
+        <PageHeader titre="Profil fiscal" filAriane={["Accueil", "Profil fiscal"]} />
         <EmptyState
           titre="Profil non disponible"
           description="Aucun profil contribuable n’est associé à votre session."
@@ -81,7 +81,7 @@ export function ClientProfilePage() {
       <PageHeader
         titre="Profil fiscal"
         description="Consultez les données rattachées à votre compte."
-        filAriane={["Mon espace", "Profil fiscal"]}
+        filAriane={["Accueil", "Profil fiscal"]}
         actions={
           <Link className="bouton-sre bouton-sre--contour" to={ROUTES_CLIENT.changementMotDePasse}>
             <KeyRound size={15} /> Modifier le mot de passe

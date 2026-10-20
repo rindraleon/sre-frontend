@@ -6,6 +6,7 @@ import { StatusBadge, Button, PageHeader, EmptyState } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { OPTIONS_TYPE_CONTRIBUABLE, TOUS } from "@/constants";
 import { formatMoney } from "@/utils/format";
+import { correspondPeriodeFiscale, listerPeriodesFiscales } from "@/utils/fiscal-periods";
 
 function protegerCsv(valeur: string | number) {
   return `"${String(valeur).replaceAll('"', '""')}"`;
@@ -15,9 +16,14 @@ export function AdminReportsPage() {
   const aujourdHui = new Date().toISOString().slice(0, 10);
   const ilYADouzeMois = new Date();
   ilYADouzeMois.setFullYear(ilYADouzeMois.getFullYear() - 1);
-  const [debut, definirDebut] = useState(ilYADouzeMois.toISOString().slice(0, 10));
-  const [fin, definirFin] = useState(aujourdHui);
-  const [typeContribuable, definirTypeContribuable] = useState<string>(TOUS);
+  const [debut, setDebut] = useState(ilYADouzeMois.toISOString().slice(0, 10));
+  const [fin, setFin] = useState(aujourdHui);
+  const [typeContribuable, setTypeContribuable] = useState<string>(TOUS);
+  const [periodeFiscale, setPeriodeFiscale] = useState("");
+  const periodesFiscales = useMemo(
+    () => listerPeriodesFiscales(etat.paiements.map((paiement) => paiement.periode)),
+    [etat.paiements],
+  );
   const contribuablesFiltres = useMemo(
     () =>
       etat.contribuables
@@ -39,9 +45,10 @@ export function AdminReportsPage() {
             contribuable && (typeContribuable === "TOUS" || contribuable.type === typeContribuable)
           );
         })
+        .filter((paiement) => correspondPeriodeFiscale(paiement.periode, periodeFiscale))
         .filter((paiement) => !debut || paiement.soumisLe.slice(0, 10) >= debut)
         .filter((paiement) => !fin || paiement.soumisLe.slice(0, 10) <= fin),
-    [etat.paiements, etat.contribuables, typeContribuable, debut, fin],
+    [etat.paiements, etat.contribuables, typeContribuable, periodeFiscale, debut, fin],
   );
   const confirmes = paiementsFiltres.filter((paiement) => paiement.statut === "CONFIRME");
   const attente = paiementsFiltres.filter((paiement) => paiement.statut === "EN_VERIFICATION");
@@ -74,6 +81,7 @@ export function AdminReportsPage() {
     const lignes = [
       ["Période début", debut],
       ["Période fin", fin],
+      ["Période fiscale", periodeFiscale || "Toutes les périodes"],
       [],
       ["Type contribuable", "Comptes", "Déclarations", "Montant confirmé en interne (MGA)"],
       ...donneesParType.map((entree) => [
@@ -125,7 +133,7 @@ export function AdminReportsPage() {
       <PageHeader
         titre="Rapports & statistiques"
         description="Indicateurs calculés à partir des données transmises par le serveur."
-        filAriane={["Back-office", "Rapports & statistiques"]}
+        filAriane={["Accueil", "Rapports & statistiques"]}
         actions={
           <Button variante="contour" onClick={exporter}>
             <ArrowDownToLine size={15} /> Exporter CSV
@@ -140,7 +148,7 @@ export function AdminReportsPage() {
             type="date"
             value={debut}
             max={fin || aujourdHui}
-            onChange={(event) => definirDebut(event.target.value)}
+            onChange={(event) => setDebut(event.target.value)}
           />
         </label>
         <label>
@@ -151,20 +159,38 @@ export function AdminReportsPage() {
             value={fin}
             min={debut}
             max={aujourdHui}
-            onChange={(event) => definirFin(event.target.value)}
+            onChange={(event) => setFin(event.target.value)}
           />
+        </label>
+        <label>
+          Période fiscale
+          <Select
+            className="champ-simple-sre"
+            value={periodeFiscale}
+            onChange={(event) => setPeriodeFiscale(event.target.value)}
+            aria-label="Période fiscale"
+          >
+            <option value="">Toutes les périodes</option>
+            {periodesFiscales.map((periode) => (
+              <option key={periode} value={periode}>
+                {periode}
+              </option>
+            ))}
+          </Select>
         </label>
         <label>
           Type de contribuable
           <Select
             className="champ-simple-sre"
             value={typeContribuable}
-            onChange={(event) => definirTypeContribuable(event.target.value)}
+            onChange={(event) => setTypeContribuable(event.target.value)}
           >
             <OptionsSelect options={OPTIONS_TYPE_CONTRIBUABLE} />
           </Select>
         </label>
-        <span>{contribuablesFiltres.length} contribuable(s) inclus</span>
+        <span aria-live="polite">
+          {contribuablesFiltres.length} contribuable(s) · {paiementsFiltres.length} déclaration(s)
+        </span>
       </div>
       <section className="grille-statistiques-sre">
         <article className="carte-stat-sre">
@@ -267,12 +293,12 @@ export function AdminReportsPage() {
             <tbody>
               {donneesParType.map((entree) => (
                 <tr key={entree.type}>
-                  <td>
+                  <td data-label="Type de contribuable">
                     <StatusBadge statut={entree.type} />
                   </td>
-                  <td>{entree.comptes}</td>
-                  <td>{entree.paiements}</td>
-                  <td>{formatMoney(entree.confirme)}</td>
+                  <td data-label="Profils">{entree.comptes}</td>
+                  <td data-label="Déclarations">{entree.paiements}</td>
+                  <td data-label="Montant confirmé en interne">{formatMoney(entree.confirme)}</td>
                 </tr>
               ))}
             </tbody>

@@ -418,3 +418,100 @@ body,
   box-shadow: 0 16px 36px rgba(15, 34, 64, 0.1);
 }
 
+
+/* -------------------------------------------------------------------------- */
+/* Page d'aide                                                                */
+/* -------------------------------------------------------------------------- */
+.page-aide-sre { min-height: 100dvh; background: var(--sre-bg); }
+.aide-contenu-sre { max-width: 1060px; margin: 0 auto; padding: 26px 18px 60px; }
+.aide-entete-sre h1 {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 6px; font-size: 22px; color: var(--sre-ink);
+}
+.aide-entete-sre p { margin: 0 0 18px; color: var(--sre-ink-2); font-size: 13px; }
+.aide-corps-sre { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; }
+.aide-sommaire-sre {
+  position: sticky; top: 14px; align-self: start;
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 14px; border: 1px solid var(--sre-border); border-radius: 12px; background: var(--sre-paper);
+}
+.aide-sommaire-sre strong { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sre-ink-2); }
+.aide-sommaire-sre a { font-size: 12.5px; color: var(--sre-blue-dark); text-decoration: none; }
+.aide-sommaire-sre a:hover { text-decoration: underline; }
+.aide-sections-sre { display: flex; flex-direction: column; gap: 14px; }
+.aide-section-sre {
+  padding: 18px 20px; border: 1px solid var(--sre-border); border-radius: 12px; background: var(--sre-paper);
+  scroll-margin-top: 16px;
+}
+.aide-section-sre h2 {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 6px; font-size: 15.5px; color: var(--sre-ink);
+}
+.aide-resume-sre { margin: 0 0 10px; font-size: 12.5px; color: var(--sre-ink-2); }
+.aide-section-sre ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+.aide-section-sre li { font-size: 12.5px; line-height: 1.55; color: var(--sre-ink); }
+.aide-pied-sre { margin: 6px 2px 0; font-size: 12.5px; color: var(--sre-ink-2); }
+.aide-pied-sre a { color: var(--sre-blue-dark); font-weight: 650; }
+@media (max-width: 860px) {
+  .aide-corps-sre { grid-template-columns: minmax(0, 1fr); }
+  .aide-sommaire-sre { position: static; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Barre de progression de navigation                                         */
+/* -------------------------------------------------------------------------- */
+.progression-navigation-sre {
+  position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 1200;
+  background: transparent; overflow: hidden; pointer-events: none;
+}
+.progression-navigation-sre span {
+  display: block; height: 100%; width: 40%;
+  background: linear-gradient(90deg, var(--sre-teal), var(--sre-blue));
+  animation: progression-navigation 0.42s ease-out forwards;
+}
+@keyframes progression-navigation {
+  0% { transform: translateX(-30%); opacity: 1; }
+  100% { transform: translateX(260%); opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progression-navigation-sre span { animation-duration: 0.01s; width: 100%; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Animations « reveal » de la landing (IntersectionObserver + classes)        */
+/* -------------------------------------------------------------------------- */
+[data-revelation] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.62s ease-out, transform 0.62s ease-out;
+  will-change: opacity, transform;
+}
+[data-revelation].revelation-visible {
+  opacity: 1;
+  transform: none;
+}
+[data-revelation="gauche"] { transform: translateX(-28px); }
+[data-revelation="droite"] { transform: translateX(28px); }
+[data-revelation="zoom"] { transform: scale(0.94); }
+[data-revelation].revelation-visible { transform: none; }
+/* Cascade légère des cartes et étapes */
+[data-revelation][data-delai="1"] { transition-delay: 0.08s; }
+[data-revelation][data-delai="2"] { transition-delay: 0.16s; }
+[data-revelation][data-delai="3"] { transition-delay: 0.24s; }
+[data-revelation][data-delai="4"] { transition-delay: 0.32s; }
+[data-revelation][data-delai="5"] { transition-delay: 0.4s; }
+@media (prefers-reduced-motion: reduce) {
+  [data-revelation] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+}
+
+/* Aide intégrée aux espaces authentifiés (chrome sidebar + topbar) :
+   pas de hauteur plein écran ni de fond dupliqué. */
+.page-aide-sre--espace {
+  min-height: 0;
+  background: transparent;
+}

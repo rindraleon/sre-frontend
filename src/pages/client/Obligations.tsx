@@ -1,20 +1,21 @@
 import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
-import { FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CircleDollarSign, FileText } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable } from "@/components/ui";
+import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { creerColonnesObligations } from "@/components/tables/client/obligations-columns";
 import { useTableState } from "@/hooks";
-import { OPTIONS_STATUT_OBLIGATION, TOUS } from "@/constants";
+import { OPTIONS_STATUT_OBLIGATION, ROUTES_CLIENT, TOUS } from "@/constants";
 import { formatMoney } from "@/utils/format";
 
 export function ClientObligationsPage() {
   const { session } = useAuth();
   const { etat } = useSre();
   const table = useTableState();
-  const [statut, definirStatut] = useState<string>(TOUS);
+  const [statut, setStatut] = useState<string>(TOUS);
   const obligationsPersonnelles = useMemo(
     () =>
       etat.obligations.filter(
@@ -33,8 +34,8 @@ export function ClientObligationsPage() {
     <div className="page-contenu-sre">
       <PageHeader
         titre="Mes obligations fiscales"
-        description="Consultez les données enregistrées pour votre compte."
-        filAriane={["Mon espace", "Mes impôts"]}
+        description="Obligations enregistrées pour votre compte."
+        filAriane={["Accueil", "Mes impôts"]}
       />
       <div className="bandeau-info-sre">
         <span>
@@ -46,28 +47,25 @@ export function ClientObligationsPage() {
             {obligationsPersonnelles.length === 1 ? "" : "s"} · {formatMoney(montantOuvert)} à
             suivre
           </strong>
-          <p>
-            Les montants et échéances présentés sont ceux enregistrés dans le portail. Aucun barème
-            fiscal n’est calculé automatiquement.
-          </p>
         </div>
       </div>
       <DataTable
-        lignes={obligationsPersonnelles.filter(
+        data={obligationsPersonnelles.filter(
           (obligation) => statut === TOUS || obligation.statut === statut,
         )}
-        colonnes={colonnes}
-        obtenirId={(obligation) => obligation.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Référence, impôt ou période…"
-        actionsEntete={
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Mes obligations fiscales"
+        getRowId={(obligation) => obligation.id}
+        searchPlaceholder="Référence, impôt ou période…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        toolbarActions={
           <label className="filtre-compact-sre">
             Statut
             <Select
               value={statut}
               onChange={(event) => {
-                definirStatut(event.target.value);
+                setStatut(event.target.value);
                 table.reinitialiserPage();
               }}
             >
@@ -75,12 +73,18 @@ export function ClientObligationsPage() {
             </Select>
           </label>
         }
-        espaceVide="Aucune obligation"
-        messageVide="Aucune obligation ne correspond à votre recherche."
+        actionPrimary={
+          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_CLIENT.nouveauPaiement}>
+            <CircleDollarSign size={16} /> Déclarer un paiement
+          </Link>
+        }
+        columnToggle
+        emptyTitle="Aucune obligation"
+        emptyDescription="Aucune obligation ne correspond à votre recherche."
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
       <section className="note-fiscale-sre">
         <span>i</span>

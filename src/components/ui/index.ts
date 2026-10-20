@@ -1,7 +1,13 @@
+export * from "./action-icon";
 export * from "./button";
 export * from "./confirm-dialog";
 export * from "./core-spin-loader";
 export * from "./data-table";
+export {
+  DataTableBulkActions as DataTable,
+  type DataTableBulkActionsProps as DataTableProps,
+  type ColumnDef,
+} from "./data-table-bulk-actions";
 export * from "./empty-state";
 export * from "./modal";
 export * from "./page-header";
@@ -9,7 +15,6 @@ export * from "./searchable-select";
 export * from "./stat-card";
 export * from "./status-badge";
 export * from "./toast-region";
-export * from "./utils";
 export * from "./card";
 export * from "./input";
 export * from "./label";

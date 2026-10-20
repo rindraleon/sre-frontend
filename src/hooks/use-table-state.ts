@@ -1,27 +1,23 @@
 import { useState } from "react";
 
-/**
- * État partagé des tableaux (DataTable) : recherche, pagination et remise à zéro
- * automatique de la page quand la recherche ou un filtre externe change.
- */
 export function useTableState(parPageInitial = 10) {
-  const [recherche, definirRecherche] = useState("");
-  const [page, definirPage] = useState(1);
-  const [parPage, definirParPage] = useState(parPageInitial);
+  const [recherche, setRecherche] = useState("");
+  const [page, setPage] = useState(1);
+  const [parPage, setParPage] = useState(parPageInitial);
 
   return {
     recherche,
     page,
     parPage,
     rechercher: (valeur: string) => {
-      definirRecherche(valeur);
-      definirPage(1);
+      setRecherche(valeur);
+      setPage(1);
     },
-    changerPage: definirPage,
+    changerPage: setPage,
     changerParPage: (nombre: number) => {
-      definirParPage(nombre);
-      definirPage(1);
+      setParPage(nombre);
+      setPage(1);
     },
-    reinitialiserPage: () => definirPage(1),
+    reinitialiserPage: () => setPage(1),
   };
 }

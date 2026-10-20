@@ -36,6 +36,9 @@ const BADGE_LABELS: Record<string, string> = {
   CLIENT: "Contribuable",
   MOBILE_MONEY: "Mobile Money",
   VIREMENT_BANCAIRE: "Virement bancaire",
+  SUCCES: "Succès",
+  ECHEC: "Échec",
+  SYSTEME: "Système",
 };
 
 const badgeVariants = cva(
@@ -64,6 +67,8 @@ const TON_PAR_STATUT: Record<string, keyof typeof TONS> = {
   PARTICULIER: "violet",
   ADMIN: "violet",
   CLIENT: "bleu",
+  SUCCES: "succes",
+  ECHEC: "erreur",
 };
 
 export function StatusBadge({ statut }: Readonly<{ statut: string }>) {

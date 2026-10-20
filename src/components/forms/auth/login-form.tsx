@@ -36,7 +36,7 @@ export function LoginForm() {
     try {
       const session = await connecter(valeurs.courriel, valeurs.motDePasse);
       if (!session) {
-        definirErreur("Adresse e-mail ou mot de passe incorrect, ou compte inactif.");
+        definirErreur("Identifiants invalides : vérifiez votre adresse e-mail et votre mot de passe.");
         return;
       }
       notifier(
@@ -49,8 +49,10 @@ export function LoginForm() {
         retour && (cheminRetour === cheminRacine || cheminRetour.startsWith(`${cheminRacine}/`))
           ? retour
           : null;
-      const destination = session.changementMotDePasseRequis
-        ? `${cheminRacine}/changement-mot-de-passe`
+      const configurationRequise =
+        session.changementMotDePasseRequis || !session.profilComplete;
+      const destination = configurationRequise
+        ? `${cheminRacine}/configuration-initiale`
         : (retourAutorise ?? cheminRacine);
       navigation(destination, { replace: true });
     } catch (cause) {
@@ -62,7 +64,9 @@ export function LoginForm() {
     <>
       <h1 className="text-center">Se connecter</h1>
       <p className="text-center">
-        Accédez à votre espace contribuable ou au back-office avec votre compte serveur.
+        Accédez à votre espace contribuable ou au back-office avec votre compte serveur. À la
+        première connexion d’un compte créé par l’administration, saisissez le mot de passe
+        provisoire reçu pour configurer votre espace.
       </p>
       <form onSubmit={soumettre} className="formulaire-sre" noValidate>
         <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
@@ -80,14 +84,6 @@ export function LoginForm() {
             </span>
           )}
         </FormField>
-        <div className="champ-label-lien-sre">
-          <span aria-hidden="true" />
-          {isApiConfigured ? (
-            <span className="lien-reset-indisponible-sre">Réinitialisation email à configurer</span>
-          ) : (
-            <Link to={ROUTES.motDePasseOublie}>Mot de passe oublié ?</Link>
-          )}
-        </div>
         <PasswordField
           libelle="Mot de passe"
           erreur={errors.motDePasse}
@@ -96,6 +92,10 @@ export function LoginForm() {
           placeholder="Votre mot de passe"
           {...register("motDePasse")}
         />
+        <div className="champ-label-lien-sre">
+          <span aria-hidden="true" />
+          <Link to={ROUTES.motDePasseOublie}>Mot de passe oublié ?</Link>
+        </div>
         <FormError message={erreur} />
         <SubmitButton
           enCours={isSubmitting}

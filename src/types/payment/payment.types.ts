@@ -37,7 +37,6 @@ export interface Payment {
 }
 
 export type PaymentDocumentType = "ACCUSE_DECLARATION" | "RECU_PAIEMENT";
-
 export interface PaymentDocument {
   id: string;
   numero: string;
@@ -56,13 +55,4 @@ export interface PaymentDocument {
   emisLe: string;
   emisPar?: string;
   mention: string;
-}
-
-export interface PaymentFilters {
-  recherche?: string;
-  statut?: PaymentStatus | "TOUS";
-  typeImpotId?: string;
-  mode?: PaymentMethod | "TOUS";
-  debut?: string;
-  fin?: string;
 }

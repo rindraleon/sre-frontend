@@ -39,27 +39,27 @@ export function createEmptyState(): PlatformState {
   };
 }
 
-export function SreProvider({ children }: { children: React.ReactNode }) {
-  const [etat, definirEtat] = useState<PlatformState>(() => createEmptyState());
-  const [toasts, definirToasts] = useState<ToastItem[]>([]);
+export function SreProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [etat, setEtat] = useState<PlatformState>(() => createEmptyState());
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const retirerToast = useCallback((id: string) => {
-    definirToasts((courants) => courants.filter((toast) => toast.id !== id));
+    setToasts((courants) => courants.filter((toast) => toast.id !== id));
   }, []);
 
   const notifier = useCallback(
     (message: string, type: ToastType = "succes", description?: string) => {
       const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${++compteurToastSre}`;
-      definirToasts((courants) => {
-        // Déduplication : un même message du même type n'est jamais empilé deux fois.
+      setToasts((courants) => {
         if (courants.some((toast) => toast.message === message && toast.type === type))
           return courants;
         return [...courants.slice(-3), { id, message, type, description }];
       });
-      // Les erreurs restent plus longtemps pour être lues (et ferment manuellement).
-      const duree = type === "erreur" ? 8000 : type === "avertissement" ? 6000 : 4500;
+      let duree = 4500;
+      if (type === "erreur") duree = 8000;
+      else if (type === "avertissement") duree = 6000;
       window.setTimeout(
-        () => definirToasts((courants) => courants.filter((toast) => toast.id !== id)),
+        () => setToasts((courants) => courants.filter((toast) => toast.id !== id)),
         duree,
       );
     },
@@ -67,7 +67,7 @@ export function SreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const mettreAJourEtat = useCallback((miseAJour: MiseAJourSre) => {
-    definirEtat((courant) => miseAJour(courant));
+    setEtat((courant) => miseAJour(courant));
   }, []);
 
   const valeur = useMemo(

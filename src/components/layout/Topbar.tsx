@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, LogOut, Menu, Moon, Settings, Sun, UserRound } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  CircleHelp,
+  LogOut,
+  Menu,
+  Moon,
+  Settings,
+  Sun,
+  UserRound,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { useTheme } from "@/context/ThemeContext";
+import { ConfirmDialog } from "@/components/ui";
 import { getInitials } from "@/utils/format";
 
-/**
- * Barre supérieure des espaces authentifiés : bouton menu mobile, titre de
- * page, accès notifications et menu utilisateur (avatar).
- * Le menu se ferme par Échap, clic extérieur ou sélection ; la déconnexion
- * est exécutée immédiatement via le mécanisme d'authentification existant,
- * et le toast de confirmation n'est affiché qu'après sa réalisation.
- */
+
 export function Topbar({
   titrePage,
   notificationsNonLues,
@@ -26,7 +31,8 @@ export function Topbar({
   const { notifier } = useSre();
   const { theme, basculerTheme } = useTheme();
   const navigation = useNavigate();
-  const [menuOuvert, definirMenuOuvert] = useState(false);
+  const [menuOuvert, setMenuOuvert] = useState(false);
+  const [confirmationDeconnexion, setConfirmationDeconnexion] = useState(false);
   const refMenu = useRef<HTMLDivElement | null>(null);
   const refBoutonMenu = useRef<HTMLButtonElement | null>(null);
 
@@ -34,17 +40,16 @@ export function Topbar({
     if (!menuOuvert) return;
     const gererExterieur = (event: MouseEvent) => {
       if (refMenu.current && !refMenu.current.contains(event.target as Node))
-        definirMenuOuvert(false);
+        setMenuOuvert(false);
     };
     const gererClavier = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        definirMenuOuvert(false);
+        setMenuOuvert(false);
         refBoutonMenu.current?.focus();
       }
     };
     document.addEventListener("mousedown", gererExterieur);
     document.addEventListener("keydown", gererClavier);
-    // Focus sur le premier élément du menu à l'ouverture (navigation clavier).
     refMenu.current
       ?.querySelector<HTMLElement>("[role='menuitem'], [role='menuitemcheckbox']")
       ?.focus();
@@ -60,10 +65,14 @@ export function Topbar({
   const initialesUtilisateur = getInitials(session.nom) || "SRE";
 
   const seDeconnecter = () => {
-    definirMenuOuvert(false);
+    setMenuOuvert(false);
+    setConfirmationDeconnexion(true);
+  };
+
+  const confirmerDeconnexion = () => {
+    setConfirmationDeconnexion(false);
     deconnecter();
-    navigation("/accueil", { replace: true });
-    // Confirmation affichée uniquement après la fermeture effective de session.
+    void navigation("/accueil", { replace: true });
     notifier("Vous êtes déconnecté.", "info");
   };
 
@@ -74,11 +83,19 @@ export function Topbar({
           <Menu size={20} />
         </button>
         <div>
-          <span>{estAdmin ? "BACK-OFFICE" : "ESPACE CONTRIBUABLE"}</span>
-          <strong>{titrePage}</strong>
+          <span>{estAdmin ? "Espace Administrateur" : "Espace client"}</span>
+          {/* <strong>{titrePage}</strong> */}
         </div>
       </div>
       <div className="entete-application-sre__droite">
+        <Link
+          className="bouton-notification-sre"
+          to="/aide"
+          aria-label="Aide et documentation"
+          title="Aide"
+        >
+          <CircleHelp size={17} />
+        </Link>
         <Link
           className="bouton-notification-sre"
           to={estAdmin ? "/admin/notifications" : "/client/notifications"}
@@ -95,7 +112,7 @@ export function Topbar({
             aria-haspopup="menu"
             aria-expanded={menuOuvert}
             aria-label={`Menu de ${session.nom}`}
-            onClick={() => definirMenuOuvert((courant) => !courant)}
+            onClick={() => setMenuOuvert((courant) => !courant)}
           >
             <span aria-hidden="true">{initialesUtilisateur}</span>
             <div>
@@ -116,17 +133,15 @@ export function Topbar({
                 <small>{session.courriel}</small>
                 <small>{estAdmin ? "Administrateur" : "Contribuable"}</small>
               </div>
-              {/* Aucune page « profil » administrateur n'existe côté API/routes :
-                  l'entrée n'est proposée qu'au contribuable, qui en dispose. */}
               {!estAdmin && (
-                <Link role="menuitem" to="/client/profil" onClick={() => definirMenuOuvert(false)}>
+                <Link role="menuitem" to="/client/profil" onClick={() => setMenuOuvert(false)}>
                   <UserRound size={15} aria-hidden="true" /> Mon profil
                 </Link>
               )}
               <Link
                 role="menuitem"
                 to={`${racine}/parametres`}
-                onClick={() => definirMenuOuvert(false)}
+                onClick={() => setMenuOuvert(false)}
               >
                 <Settings size={15} aria-hidden="true" /> Paramètres
               </Link>
@@ -136,7 +151,7 @@ export function Topbar({
                 aria-checked={theme === "sombre"}
                 onClick={() => {
                   basculerTheme();
-                  definirMenuOuvert(false);
+                  setMenuOuvert(false);
                   refBoutonMenu.current?.focus();
                 }}
               >
@@ -147,6 +162,9 @@ export function Topbar({
                 )}
                 {theme === "sombre" ? "Thème clair" : "Thème sombre"}
               </button>
+              <Link role="menuitem" to="/aide" onClick={() => setMenuOuvert(false)}>
+                <CircleHelp size={15} aria-hidden="true" /> Aide
+              </Link>
               <button type="button" role="menuitem" onClick={seDeconnecter}>
                 <LogOut size={15} aria-hidden="true" /> Déconnexion
               </button>
@@ -154,6 +172,14 @@ export function Topbar({
           )}
         </div>
       </div>
+      <ConfirmDialog
+        ouvert={confirmationDeconnexion}
+        titre="Se déconnecter ?"
+        description="Voulez-vous vraiment vous déconnecter ?"
+        fermer={() => setConfirmationDeconnexion(false)}
+        confirmer={confirmerDeconnexion}
+        libelleConfirmer="Confirmer la déconnexion"
+      />
     </header>
   );
 }

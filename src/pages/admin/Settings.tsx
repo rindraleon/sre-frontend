@@ -1,17 +1,21 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useSre } from "@/context/SreContext";
 import { StatusBadge, PageHeader } from "@/components/ui";
+import { EmailVerificationCard } from "@/components/forms/auth/email-verification-card";
 import { ROUTES_ADMIN, SRE_REGION } from "@/constants";
 
 export function AdminSettingsPage() {
   const { session } = useAuth();
+  const { etat } = useSre();
+  const compte = etat.utilisateurs.find((utilisateur) => utilisateur.id === session?.utilisateurId);
   return (
     <div className="page-contenu-sre">
       <PageHeader
         titre="Paramètres"
         description="Périmètre de service et sécurité du compte administrateur."
-        filAriane={["Back-office", "Paramètres"]}
+        filAriane={["Accueil", "Paramètres"]}
       />
       <section className="carte-sre parametres-region-sre">
         <div className="carte-sre__entete">
@@ -49,6 +53,12 @@ export function AdminSettingsPage() {
           Modifier <ArrowRight size={14} />
         </Link>
       </section>
+      {session && (
+        <EmailVerificationCard
+          courriel={session.courriel}
+          courrielVerifie={compte?.courrielVerifie ?? false}
+        />
+      )}
       <section className="note-securite-sre">
         <ShieldCheck size={16} />
         <p>

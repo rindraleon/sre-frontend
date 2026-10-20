@@ -47,14 +47,6 @@ export function formatMoney(montant: number, devise = "MGA"): string {
   );
 }
 
-export function formatMoneyShort(montant: number, devise = "MGA"): string {
-  if (montant >= 1_000_000)
-    return `${(montant / 1_000_000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M ${devise}`;
-  if (montant >= 10_000)
-    return `${(montant / 1_000).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} k ${devise}`;
-  return formatMoney(montant, devise);
-}
-
 export function formatDate(date: string | null | undefined, detail = false): string {
   if (!date) return "—";
   const valeur = new Date(date);
@@ -65,54 +57,6 @@ export function formatDate(date: string | null | undefined, detail = false): str
       ? { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
       : { day: "2-digit", month: "short", year: "numeric" },
   ).format(valeur);
-}
-
-export function relativeTime(date: string): string {
-  const minutes = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60000));
-  if (minutes < 1) return "à l’instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const heures = Math.floor(minutes / 60);
-  if (heures < 24) return `il y a ${heures} h`;
-  const jours = Math.floor(heures / 24);
-  return jours === 1 ? "hier" : `il y a ${jours} j`;
-}
-
-export function statusClassName(statut: string): string {
-  const statutTypable = statut;
-  if (
-    ["SUCCESS", "ACTIVE", "OPERATIONAL", "RESOLVED", "MATCH", "PROCESSED", "READY"].includes(
-      statutTypable,
-    )
-  )
-    return "statut--positif";
-  if (
-    [
-      "PENDING",
-      "PROCESSING",
-      "RETRYING",
-      "DEGRADED",
-      "INVESTIGATING",
-      "AMOUNT_MISMATCH",
-      "STATUS_MISMATCH",
-      "MISSING",
-    ].includes(statutTypable)
-  )
-    return "statut--attention";
-  if (
-    [
-      "FAILED",
-      "CANCELLED",
-      "EXPIRED",
-      "REFUNDED",
-      "SUSPENDED",
-      "OUTAGE",
-      "REJECTED",
-      "DUPLICATE",
-      "CRITIQUE",
-    ].includes(statutTypable)
-  )
-    return "statut--negatif";
-  return "statut--neutre";
 }
 
 export function getInitials(nom: string): string {

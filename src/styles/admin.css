@@ -389,7 +389,7 @@
     padding: 21px 17px;
   }
   .auth-cadre-sre--large .grille-formulaire-sre {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .auth-cadre-sre--large .champ-sre-large {
     grid-column: 1 / -1;
@@ -409,11 +409,12 @@
   .actions-entete-public-sre {
     gap: 7px;
   }
+  /* « Connexion » garde son libellé sur tous les écrans (seul bouton de l'en-tête). */
   .actions-entete-public-sre .bouton-sre {
-    width: 35px;
-    overflow: hidden;
-    padding: 0;
-    font-size: 0;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    white-space: nowrap;
   }
   .actions-entete-public-sre .bouton-sre svg {
     width: 15px;

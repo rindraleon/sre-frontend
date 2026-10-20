@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { Payment } from "@/types";
 import { ROUTES_CLIENT } from "@/constants";
-import { StatusBadge, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 /** Colonnes du tableau de l'historique des paiements du contribuable (espace client). */
@@ -55,11 +55,16 @@ export function creerColonnesPaiements(): TableColumn<Payment>[] {
     },
     {
       id: "actions",
-      titre: "",
+      titre: "Actions",
       afficher: (paiement) => (
-        <Link className="lien-action-sre" to={ROUTES_CLIENT.paiement(paiement.id)}>
-          Suivre <ArrowRight size={13} />
-        </Link>
+        <ActionGroup>
+          <ActionIcon
+            titre="Suivre la déclaration"
+            href={ROUTES_CLIENT.paiement(paiement.id)}
+          >
+            <Eye size={15} />
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

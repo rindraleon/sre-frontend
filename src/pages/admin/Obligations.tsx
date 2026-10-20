@@ -1,10 +1,10 @@
 import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
-import { CirclePlus, FileText } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { callApi, mapApiObligation, type ApiObligation } from "@/services/api-client";
-import { Button, PageHeader, Modal, DataTable } from "@/components/ui";
+import { Button, PageHeader, Modal, DataTable, convertirColonnesTanstack } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { SubmitButton } from "@/components/forms/form-field";
 import { ObligationFormFields, OBLIGATION_VIDE } from "@/components/forms/admin/obligation-form";
@@ -18,8 +18,8 @@ export function AdminObligationsPage() {
   const { etat, mettreAJourEtat, notifier } = useSre();
   const { session } = useAuth();
   const table = useTableState();
-  const [statut, definirStatut] = useState<string>(TOUS);
-  const [modal, definirModal] = useState(false);
+  const [statut, setStatut] = useState<string>(TOUS);
+  const [modal, setModal] = useState(false);
   const formulaire = useApiForm<ObligationFormValues>({
     schema: obligationFormSchema,
     valeursInitiales: OBLIGATION_VIDE,
@@ -29,25 +29,19 @@ export function AdminObligationsPage() {
   const obligations = useMemo(
     () =>
       etat.obligations
-        .filter(
-          (obligation) =>
-            (statut === TOUS || obligation.statut === statut) &&
-            `${obligation.referenceFiscale} ${obligation.typeImpotNom} ${obligation.periode} ${etat.contribuables.find((c) => c.id === obligation.contribuableId)?.raisonSociale ?? ""} ${etat.contribuables.find((c) => c.id === obligation.contribuableId)?.nif ?? ""}`
-              .toLowerCase()
-              .includes(table.recherche.toLowerCase()),
-        )
+        .filter((obligation) => statut === TOUS || obligation.statut === statut)
         .sort((a, b) => b.creeLe.localeCompare(a.creeLe)),
-    [etat.obligations, etat.contribuables, table.recherche, statut],
+    [etat.obligations, statut],
   );
 
   const colonnes = creerColonnesObligations({ contribuables: etat.contribuables });
 
   const ouvrir = () => {
     formulaire.reinitialiserFormulaire();
-    definirModal(true);
+    setModal(true);
   };
   const fermer = () => {
-    definirModal(false);
+    setModal(false);
     formulaire.reinitialiserFormulaire();
   };
 
@@ -57,8 +51,8 @@ export function AdminObligationsPage() {
       formulaire.definirErreur("Session serveur introuvable. Reconnectez-vous.");
       return;
     }
-    const contribuable = etat.contribuables.find((entree) => entree.id === valeurs.contribuableId);
-    const type = etat.typesImpots.find(
+    const contribuable = etat.contribuables.some((entree) => entree.id === valeurs.contribuableId);
+    const type = etat.typesImpots.some(
       (entree) => entree.id === valeurs.typeImpotId && entree.actif,
     );
     if (!contribuable || !type) {
@@ -93,40 +87,31 @@ export function AdminObligationsPage() {
     <div className="page-contenu-sre">
       <PageHeader
         titre="Obligations fiscales"
-        description="Consultez les obligations renvoyées par le serveur et créez un enregistrement validé."
-        filAriane={["Back-office", "Obligations fiscales"]}
-        actions={
-          <Button onClick={ouvrir}>
-            <CirclePlus size={15} /> Créer une obligation
-          </Button>
-        }
+        description="Obligations enregistrées dans le périmètre du service."
+        filAriane={["Accueil", "Obligations fiscales"]}
       />
-      <div className="bandeau-info-sre">
-        <span>
-          <FileText size={17} />
-        </span>
-        <div>
-          <strong>{etat.obligations.length} obligation(s) · MGA</strong>
-          <p>
-            Les montants et échéances sont saisis par l’administration; aucun barème ou calendrier
-            n’est prérempli.
-          </p>
-        </div>
-      </div>
+      
       <DataTable
-        lignes={obligations}
-        colonnes={colonnes}
-        obtenirId={(obligation) => obligation.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Référence, nom, NIF ou impôt…"
-        actionsEntete={
+        data={obligations}
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Obligations fiscales"
+        getRowId={(obligation) => obligation.id}
+        getSearchText={(obligation) => {
+          const contribuable = etat.contribuables.find(
+            (entree) => entree.id === obligation.contribuableId,
+          );
+          return `${obligation.referenceFiscale} ${obligation.typeImpotNom} ${obligation.periode} ${contribuable?.raisonSociale ?? ""} ${contribuable?.prenom ?? ""} ${contribuable?.nom ?? ""} ${contribuable?.nif ?? ""} ${contribuable?.courriel ?? ""}`;
+        }}
+        searchPlaceholder="Référence, nom, NIF ou impôt…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        toolbarActions={
           <label className="filtre-compact-sre">
             Statut
             <Select
               value={statut}
               onChange={(event) => {
-                definirStatut(event.target.value);
+                setStatut(event.target.value);
                 table.reinitialiserPage();
               }}
             >
@@ -134,12 +119,18 @@ export function AdminObligationsPage() {
             </Select>
           </label>
         }
-        espaceVide="Aucune obligation"
-        messageVide="Aucune obligation ne correspond à vos critères."
+        actionPrimary={
+          <Button onClick={ouvrir}>
+            <CirclePlus size={15} /> Créer une obligation
+          </Button>
+        }
+        columnToggle
+        emptyTitle="Aucune obligation"
+        emptyDescription="Aucune obligation ne correspond à vos critères."
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
       <Modal
         ouvert={modal}

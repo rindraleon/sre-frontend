@@ -73,7 +73,7 @@ export function ClientDashboardPage() {
       <PageHeader
         titre={`Bonjour, ${contribuable?.type === "ENTREPRISE" ? contribuable.raisonSociale : (contribuable?.prenom ?? session?.nom ?? "Contribuable")}`}
         description="Retrouvez les obligations et déclarations enregistrées pour votre compte."
-        filAriane={["Mon espace", "Vue d’ensemble"]}
+        filAriane={["Accueil", "Vue d’ensemble"]}
         actions={
           <Link className="bouton-sre bouton-sre--primaire" to="/client/paiements/nouveau">
             <CircleDollarSign size={16} /> Déclarer une opération
@@ -81,17 +81,7 @@ export function ClientDashboardPage() {
         }
       />
 
-      <div className="bandeau-alerte-securite-sre">
-        <ShieldCheck size={18} />
-        <div>
-          <strong>Données du serveur · Région Haute Matsiatra</strong>
-          <p>
-            Les montants affichés sont issus du dossier enregistré. Le portail n’exécute aucune
-            transaction et ne vérifie pas les transferts bancaires.
-          </p>
-        </div>
-        <StatusBadge statut={contribuable?.statut ?? "EN_ATTENTE"} />
-      </div>
+      
 
       <section className="grille-statistiques-sre">
         <StatCard
@@ -223,19 +213,19 @@ export function ClientDashboardPage() {
               <tbody>
                 {paiements.slice(0, 5).map((paiement) => (
                   <tr key={paiement.id}>
-                    <td>
+                    <td data-label="Référence interne">
                       <Link className="reference-sre" to={`/client/paiements/${paiement.id}`}>
                         {paiement.referenceInterne}
                       </Link>
                     </td>
-                    <td>{paiement.typeImpotNom}</td>
-                    <td>{paiement.periode}</td>
-                    <td className="montant-sre">{formatMoney(paiement.montant)}</td>
-                    <td>
+                    <td data-label="Impôt / catégorie">{paiement.typeImpotNom}</td>
+                    <td data-label="Période">{paiement.periode}</td>
+                    <td data-label="Montant déclaré" className="montant-sre">{formatMoney(paiement.montant)}</td>
+                    <td data-label="Mode déclaré">
                       <StatusBadge statut={paiement.mode} />
                     </td>
-                    <td>{formatDate(paiement.soumisLe)}</td>
-                    <td>
+                    <td data-label="Soumis le">{formatDate(paiement.soumisLe)}</td>
+                    <td data-label="Statut">
                       <StatusBadge statut={paiement.statut} />
                     </td>
                   </tr>

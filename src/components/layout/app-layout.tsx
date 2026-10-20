@@ -7,14 +7,9 @@ import { SRE_REGION } from "@/utils/constants";
 import { Sidebar, ADMIN_MENU, CLIENT_MENU } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
-/**
- * Layout des espaces authentifiés (back-office et espace contribuable) :
- * composition Barre latérale + Barre supérieure + contenu + pied.
- * Les pages enfants ne dupliquent ni sidebar ni navbar.
- */
 export function AppLayout() {
   const emplacement = useLocation();
-  const [menuMobile, definirMenuMobile] = useState(false);
+  const [menuMobile, setMenuMobile] = useState(false);
   const { session } = useAuth();
   const { etat } = useSre();
   if (!session) return null;
@@ -28,6 +23,10 @@ export function AppLayout() {
           notification.utilisateurId === session.utilisateurId
         : notification.utilisateurId === session.utilisateurId),
   ).length;
+  const titreEspace = estAdmin ? "Administration" : "Mon espace contribuable";
+  const titrePageDefaut = emplacement.pathname.endsWith("/aide")
+    ? "Aide & documentation"
+    : titreEspace;
   const titrePage =
     menus.find(
       (element) =>
@@ -35,22 +34,24 @@ export function AppLayout() {
         (element.chemin !== "/admin" &&
           element.chemin !== "/client" &&
           emplacement.pathname.startsWith(`${element.chemin}/`)),
-    )?.titre ?? (estAdmin ? "Administration" : "Mon espace contribuable");
+    )?.titre ?? titrePageDefaut;
 
   return (
     <div className="application-sre">
-      <Sidebar menuMobileOuvert={menuMobile} fermerMenuMobile={() => definirMenuMobile(false)} />
+      <Sidebar menuMobileOuvert={menuMobile} fermerMenuMobile={() => setMenuMobile(false)} />
       <div className="contenu-application-sre">
         <Topbar
           titrePage={titrePage}
           notificationsNonLues={notificationsNonLues}
-          ouvrirMenuMobile={() => definirMenuMobile(true)}
+          ouvrirMenuMobile={() => setMenuMobile(true)}
         />
         <main className="zone-contenu-sre">
           <Outlet />
         </main>
         <footer className="pied-application-sre">
-          <span>Service régional · {SRE_REGION}</span>
+          <span>Service régional des entreprises · {SRE_REGION}</span>
+          <span> Copyright © {new Date().getFullYear()} Harena</span>
+          
           <span>
             <ShieldCheck size={13} /> Aucune opération financière n’est exécutée
           </span>

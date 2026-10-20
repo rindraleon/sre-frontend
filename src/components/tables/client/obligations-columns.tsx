@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { TaxObligation } from "@/types";
 import { ROUTES_CLIENT } from "@/constants";
-import { StatusBadge, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 /** Colonnes du tableau des obligations fiscales du contribuable (espace client). */
@@ -52,11 +52,16 @@ export function creerColonnesObligations(): TableColumn<TaxObligation>[] {
     },
     {
       id: "action",
-      titre: "Action",
+      titre: "Actions",
       afficher: (obligation) => (
-        <Link className="lien-action-sre" to={ROUTES_CLIENT.obligation(obligation.id)}>
-          Détails <ArrowRight size={13} />
-        </Link>
+        <ActionGroup>
+          <ActionIcon
+            titre="Consulter l’obligation"
+            href={ROUTES_CLIENT.obligation(obligation.id)}
+          >
+            <Eye size={15} />
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

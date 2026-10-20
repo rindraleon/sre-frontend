@@ -573,3 +573,18 @@ textarea.champ-simple-sre {
   min-width: 0;
   flex: 1;
 }
+
+/* Libellé + astérisque de requiredité : même ligne, alignés (tous les formulaires). */
+.champ-libelle-sre {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  line-height: 1.35;
+}
+.champ-obligatoire-sre {
+  color: var(--sre-rouge, #a34748);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+[data-theme="sombre"] .champ-obligatoire-sre { color: #e08a8b; }

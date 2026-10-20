@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ApiSession, RegistrationProfile } from "@/types/auth";
-import type { UserRole, TaxpayerType, AppUser } from "@/types";
+import type { UserRole, AppUser } from "@/types";
 import type { ApiAuthResponse, ApiUser } from "@/types/api";
 import { useSre, createEmptyState } from "@/context/SreContext";
 import {
@@ -28,6 +28,11 @@ interface AuthContextValue {
   inscrire: (profil: RegistrationProfile, motDePasse: string) => Promise<ResultatInscriptionSre>;
   deconnecter: () => void;
   changerMotDePasse: (ancienMotDePasse: string, nouveauMotDePasse: string) => Promise<boolean>;
+  configurerPremiereConnexion: (
+    motDePasseActuel: string,
+    nouveauMotDePasse: string,
+    profil?: { adresse?: string; ville?: string; telephone?: string; nomCommercial?: string },
+  ) => Promise<boolean>;
 }
 
 const Contexte = createContext<AuthContextValue | null>(null);
@@ -76,6 +81,7 @@ function construireSession(utilisateur: AppUser, jetonApi: string): ApiSession {
     role: utilisateur.role,
     contribuableId: utilisateur.contribuableId,
     changementMotDePasseRequis: utilisateur.changementMotDePasseRequis,
+    profilComplete: utilisateur.profilComplete ?? true,
     expireLe: Date.now() + dureeSession,
     modeApi: true,
     jetonApi,
@@ -126,29 +132,29 @@ function sessionPersistee(session: ApiSession) {
   }
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const { mettreAJourEtat, notifier } = useSre();
-  const [session, definirSession] = useState<ApiSession | null>(() => lireSession());
-  const [verificationApiEnCours, definirVerificationApiEnCours] = useState(
+  const [session, setSession] = useState<ApiSession | null>(() => lireSession());
+  const [verificationApiEnCours, setVerificationApiEnCours] = useState(
     () => isApiConfigured && Boolean(lireSession()),
   );
-  const [erreurVerificationApi, definirErreurVerificationApi] = useState<string | null>(null);
-  const [tentativeVerificationApi, definirTentativeVerificationApi] = useState(0);
+  const [erreurVerificationApi, setErreurVerificationApi] = useState<string | null>(null);
+  const [tentativeVerificationApi, setTentativeVerificationApi] = useState(0);
   const jetonApiCourant = session?.jetonApi;
 
   const reessayerVerificationApi = useCallback(() => {
-    definirErreurVerificationApi(null);
-    definirVerificationApiEnCours(true);
-    definirTentativeVerificationApi((tentative) => tentative + 1);
+    setErreurVerificationApi(null);
+    setVerificationApiEnCours(true);
+    setTentativeVerificationApi((tentative) => tentative + 1);
   }, []);
 
   useEffect(() => {
     const invaliderSession = () => {
       effacerSessionPersistante();
       mettreAJourEtat(() => createEmptyState());
-      definirSession(null);
-      definirErreurVerificationApi(null);
-      definirVerificationApiEnCours(false);
+      setSession(null);
+      setErreurVerificationApi(null);
+      setVerificationApiEnCours(false);
       notifier("Votre session serveur a expiré. Reconnectez-vous.", "avertissement");
     };
     window.addEventListener("sre:session-invalidee", invaliderSession);
@@ -157,32 +163,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isApiConfigured || !jetonApiCourant) {
-      definirVerificationApiEnCours(false);
+      setVerificationApiEnCours(false);
       return;
     }
     let actif = true;
-    definirVerificationApiEnCours(true);
-    definirErreurVerificationApi(null);
+    setVerificationApiEnCours(true);
+    setErreurVerificationApi(null);
     const rechargerSessionApi = async () => {
       try {
         const compteApi = await callApi<ApiUser>("auth/moi", {
           token: jetonApiCourant,
         });
         const utilisateur = mapApiUser(compteApi);
-        const etatApi = await loadApiState(jetonApiCourant, utilisateur.role, compteApi);
+        const configurationRequise =
+          utilisateur.changementMotDePasseRequis || utilisateur.profilComplete === false;
+        const etatApi = configurationRequise
+          ? {}
+          : await loadApiState(jetonApiCourant, utilisateur.role, compteApi);
         if (!actif) return;
         mettreAJourEtat(() => ({ ...createEmptyState(), ...etatApi }));
         const sessionMiseAJour = construireSession(utilisateur, jetonApiCourant);
         sessionPersistee(sessionMiseAJour);
-        definirSession(sessionMiseAJour);
+        setSession(sessionMiseAJour);
       } catch (cause) {
         if (!actif) return;
         if (cause instanceof ApiError && cause.statutHttp === 401) return;
-        definirErreurVerificationApi(
+        setErreurVerificationApi(
           cause instanceof Error ? cause.message : "Impossible de charger les données du serveur.",
         );
       } finally {
-        if (actif) definirVerificationApiEnCours(false);
+        if (actif) setVerificationApiEnCours(false);
       }
     };
     void rechargerSessionApi();
@@ -199,14 +209,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       const reponse = await callApi<ApiAuthResponse>("auth/connexion", {
         method: "POST",
-        body: { courriel: courriel.trim().toLowerCase(), motDePasse },
+        body: {
+          courriel: courriel.trim().toLowerCase(),
+          motDePasse,
+        },
       });
       const { session: sessionNouvelle } = sessionDepuisApi(reponse);
       mettreAJourEtat(() => createEmptyState());
-      definirErreurVerificationApi(null);
-      definirVerificationApiEnCours(true);
+      setErreurVerificationApi(null);
+      setVerificationApiEnCours(true);
       sessionPersistee(sessionNouvelle);
-      definirSession(sessionNouvelle);
+      setSession(sessionNouvelle);
       return sessionNouvelle;
     },
     [mettreAJourEtat],
@@ -235,10 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const { utilisateur, session: sessionNouvelle } = sessionDepuisApi(reponse);
       mettreAJourEtat(() => createEmptyState());
-      definirErreurVerificationApi(null);
-      definirVerificationApiEnCours(true);
+      setErreurVerificationApi(null);
+      setVerificationApiEnCours(true);
       sessionPersistee(sessionNouvelle);
-      definirSession(sessionNouvelle);
+      setSession(sessionNouvelle);
       return { role: utilisateur.role, utilisateur };
     },
     [mettreAJourEtat],
@@ -247,9 +260,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const deconnecter = useCallback(() => {
     effacerSessionPersistante();
     mettreAJourEtat(() => createEmptyState());
-    definirSession(null);
-    definirErreurVerificationApi(null);
-    definirVerificationApiEnCours(false);
+    setSession(null);
+    setErreurVerificationApi(null);
+    setVerificationApiEnCours(false);
   }, [mettreAJourEtat]);
 
   const changerMotDePasse = useCallback(
@@ -267,7 +280,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         expireLe: Date.now() + dureeSession,
       };
       sessionPersistee(sessionMiseAJour);
-      definirSession(sessionMiseAJour);
+      setSession(sessionMiseAJour);
+      return true;
+    },
+    [session],
+  );
+
+  const configurerPremiereConnexion = useCallback(
+    async (
+      motDePasseActuel: string,
+      nouveauMotDePasse: string,
+      profil?: { adresse?: string; ville?: string; telephone?: string; nomCommercial?: string },
+    ) => {
+      if (!isApiConfigured || !session?.jetonApi)
+        throw new Error("Une session serveur est nécessaire pour la configuration initiale.");
+      await callApi<{ message: string }>("auth/configuration-initiale", {
+        method: "POST",
+        token: session.jetonApi,
+        body: {
+          motDePasseActuel,
+          nouveauMotDePasse,
+          ...(profil ? { profil } : {}),
+        },
+      });
+      const sessionMiseAJour = {
+        ...session,
+        changementMotDePasseRequis: false,
+        profilComplete: true,
+        expireLe: Date.now() + dureeSession,
+      };
+      sessionPersistee(sessionMiseAJour);
+      setSession(sessionMiseAJour);
       return true;
     },
     [session],
@@ -283,6 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       inscrire,
       deconnecter,
       changerMotDePasse,
+      configurerPremiereConnexion,
     }),
     [
       session,
@@ -293,6 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       inscrire,
       deconnecter,
       changerMotDePasse,
+      configurerPremiereConnexion,
     ],
   );
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
@@ -312,12 +357,4 @@ export function pathMatchesRole(chemin: string, role: UserRole) {
   return role === "ADMIN"
     ? chemin === "/admin" || chemin.startsWith("/admin/")
     : chemin === "/client" || chemin.startsWith("/client/");
-}
-
-export function regionList(): string[] {
-  return [SRE_REGION];
-}
-
-export function taxpayerTypes(): TaxpayerType[] {
-  return ["PARTICULIER", "ENTREPRISE"];
 }

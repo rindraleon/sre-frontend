@@ -1,32 +1,25 @@
 import { Link } from "react-router-dom";
-import { Landmark } from "lucide-react";
+import { CircleHelp } from "lucide-react";
+import { LogoSre } from "@/assets/icons/logo-sre";
 
-/**
- * En-tête partagé des pages publiques d'authentification
- * (connexion, inscription, mot de passe) — auparavant dupliqué dans 3 pages.
- * La page d'accueil conserve son en-tête propre (navigation par ancres).
- */
 export function AuthHeader({
-  surTitre = "SERVICE RÉGIONAL DES IMPÔTS",
+  surTitre = "SERVICE RÉGIONAL DES ENTREPRISES",
   libelleLien = "Connexion",
   cheminLien = "/connexion",
 }: Readonly<{ surTitre?: string; libelleLien?: string; cheminLien?: string }>) {
   return (
     <header className="auth-entete-sre">
       <Link to="/accueil" className="marque-sre">
-        <span>
-          <Landmark size={20} />
-        </span>
-        <div>
-          <strong>
-            SRE<span>·</span>Portail
-          </strong>
-          <small>{surTitre}</small>
-        </div>
+        <LogoSre taille={30} sousTitre={surTitre} />
       </Link>
-      <Link className="lien-retour-sre" to={cheminLien}>
-        {libelleLien}
-      </Link>
+      <nav className="flex items-center gap-3">
+        <Link className="lien-retour-sre inline-flex items-center gap-1.5" to="/aide">
+          <CircleHelp size={15} aria-hidden="true" /> Aide
+        </Link>
+        <Link className="lien-retour-sre" to={cheminLien}>
+          {libelleLien}
+        </Link>
+      </nav>
     </header>
   );
 }

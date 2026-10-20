@@ -16,6 +16,8 @@ export interface ApiUser {
   role: UserRole;
   statut: AccountStatus;
   changementMotDePasseRequis: boolean;
+  profilComplete?: boolean;
+  courrielVerifie?: boolean;
   creeLe: string;
   derniereConnexion?: string | null;
   contribuableId?: string;
@@ -89,7 +91,7 @@ export interface ApiNotification {
   message: string;
   lien: string | null;
   lue: boolean;
-  statutCourriel: "NON_CONFIGURE" | "EN_ATTENTE" | "ENVOYE" | "ECHEC";
+  statutCourriel: "NON_CONFIGURE" | "EN_ATTENTE" | "ENVOYE" | "DELIVRE" | "ECHEC";
   cleIdempotence: string;
   creeLe: string;
   obligation?: { id: string } | null;

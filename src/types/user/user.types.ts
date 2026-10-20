@@ -9,6 +9,8 @@ export interface AppUser {
   contribuableId?: string;
   statut: AccountStatus;
   changementMotDePasseRequis: boolean;
+  profilComplete?: boolean;
+  courrielVerifie?: boolean;
   creeLe: string;
   derniereConnexion?: string;
 }

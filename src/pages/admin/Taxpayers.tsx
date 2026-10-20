@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Building2, CirclePlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, CirclePlus } from "lucide-react";
 import type { Taxpayer } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
@@ -10,7 +10,14 @@ import {
   MSG_SESSION_MANQUANTE_ADMIN,
   TOUS,
 } from "@/constants";
-import { Button, ConfirmDialog, PageHeader, Modal, DataTable } from "@/components/ui";
+import {
+  Button,
+  ConfirmDialog,
+  PageHeader,
+  Modal,
+  DataTable,
+  convertirColonnesTanstack,
+} from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/forms/form-field";
@@ -19,14 +26,22 @@ import { creerColonnesContribuables } from "@/components/tables/admin/taxpayers-
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
 import { taxpayerFormSchema, type TaxpayerFormValues } from "@/validation/profile.schema";
 
+const CHAMPS_ETAPES_PROFIL = [
+  ["type", "nom", "prenom", "raisonSociale", "nomCommercial"],
+  ["nif", "stat", "representantLegal"],
+  ["courriel", "telephone", "adresse", "region", "ville"],
+] as const;
+type EtapeFormulaire = 0 | 1 | 2;
+
 export function AdminTaxpayersPage({
   typeInitial = TOUS,
 }: { typeInitial?: "TOUS" | "ENTREPRISE" } = {}) {
   const { etat, mettreAJourEtat, notifier } = useSre();
   const { session } = useAuth();
   const table = useTableState();
-  const [typeFiltre, definirTypeFiltre] = useState<string>(typeInitial);
-  const [modal, definirModal] = useState(false);
+  const [typeFiltre, setTypeFiltre] = useState<string>(typeInitial);
+  const [modal, setModal] = useState(false);
+  const [etapeFormulaire, setEtapeFormulaire] = useState<EtapeFormulaire>(0);
   const suppression = useConfirmation<Taxpayer>();
   const formulaire = useApiForm<TaxpayerFormValues>({
     schema: taxpayerFormSchema,
@@ -37,20 +52,29 @@ export function AdminTaxpayersPage({
   const contribuables = useMemo(
     () =>
       etat.contribuables.filter(
-        (contribuable) =>
-          (typeFiltre === TOUS || contribuable.type === typeFiltre) &&
-          `${contribuable.nom} ${contribuable.prenom ?? ""} ${contribuable.raisonSociale ?? ""} ${contribuable.nif} ${contribuable.stat ?? ""} ${contribuable.courriel}`
-            .toLowerCase()
-            .includes(table.recherche.toLowerCase()),
+        (contribuable) => typeFiltre === TOUS || contribuable.type === typeFiltre,
       ),
-    [etat.contribuables, table.recherche, typeFiltre],
+    [etat.contribuables, typeFiltre],
   );
 
   const colonnes = creerColonnesContribuables({ onSupprimer: suppression.ouvrir });
 
   const fermer = () => {
-    definirModal(false);
+    setModal(false);
+    setEtapeFormulaire(0);
     formulaire.reinitialiserFormulaire();
+  };
+
+  const avancerEtape = async () => {
+    const valide = await formulaire.trigger([...CHAMPS_ETAPES_PROFIL[etapeFormulaire]], {
+      shouldFocus: true,
+    });
+    if (valide) {
+      setEtapeFormulaire((courante) => {
+        if (courante === 0 && formulaire.getValues("type") === "PARTICULIER") return 2;
+        return Math.min(2, courante + 1) as 0 | 1 | 2;
+      });
+    }
   };
 
   const creer = formulaire.handleSubmit(async (valeurs) => {
@@ -113,53 +137,36 @@ export function AdminTaxpayersPage({
   };
 
   const entreprise = typeInitial === "ENTREPRISE";
+  const nomProfilSuppression =
+    suppression.cible?.raisonSociale ||
+    [suppression.cible?.prenom, suppression.cible?.nom].filter(Boolean).join(" ");
 
   return (
     <div className="page-contenu-sre">
       <PageHeader
         titre={entreprise ? "Entreprises" : "Contribuables"}
-        description={`Profils du périmètre ${SRE_REGION}. Un profil n’est pas un compte utilisateur.`}
-        filAriane={["Back-office", entreprise ? "Entreprises" : "Contribuables"]}
-        actions={
-          <Button
-            onClick={() => {
-              definirModal(true);
-              formulaire.reinitialiserErreur();
-            }}
-          >
-            <CirclePlus size={15} /> Ajouter un profil
-          </Button>
-        }
+        description={`Profils du périmètre ${SRE_REGION}.`}
+        filAriane={["Accueil", entreprise ? "Entreprises" : "Contribuables"]}
       />
-      <div className="bandeau-info-sre">
-        <span>
-          <Building2 size={17} />
-        </span>
-        <div>
-          <strong>
-            {contribuables.length} profil{contribuables.length === 1 ? "" : "s"} ·{" "}
-            {contribuables.filter((e) => e.type === "ENTREPRISE").length} entreprise(s)
-          </strong>
-          <p>
-            Les profils sont enregistrés par le serveur. Ils ne créent ni compte, ni accès, ni mot
-            de passe.
-          </p>
-        </div>
-      </div>
+      
       <DataTable
-        lignes={contribuables}
-        colonnes={colonnes}
-        obtenirId={(entree) => entree.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Nom, NIF, STAT ou e-mail…"
-        actionsEntete={
+        data={contribuables}
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Profils contribuables"
+        getRowId={(entree) => entree.id}
+        getSearchText={(contribuable) =>
+          `${contribuable.nom} ${contribuable.prenom ?? ""} ${contribuable.raisonSociale ?? ""} ${contribuable.nif} ${contribuable.stat ?? ""} ${contribuable.courriel}`
+        }
+        searchPlaceholder="Nom, NIF, STAT ou e-mail…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        toolbarActions={
           <label className="filtre-compact-sre">
             Type
             <Select
               value={typeFiltre}
               onChange={(event) => {
-                definirTypeFiltre(event.target.value);
+                setTypeFiltre(event.target.value);
                 table.reinitialiserPage();
               }}
             >
@@ -167,17 +174,29 @@ export function AdminTaxpayersPage({
             </Select>
           </label>
         }
-        espaceVide="Aucun contribuable"
-        messageVide="Aucun profil ne correspond à votre recherche."
+        actionPrimary={
+          <Button
+            onClick={() => {
+              setEtapeFormulaire(0);
+              setModal(true);
+              formulaire.reinitialiserErreur();
+            }}
+          >
+            <CirclePlus size={15} /> Ajouter un profil
+          </Button>
+        }
+        columnToggle
+        emptyTitle="Aucun contribuable"
+        emptyDescription="Aucun profil ne correspond à votre recherche."
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
       <Modal
         ouvert={modal}
         titre="Ajouter un profil contribuable"
-        description={`Dossier rattaché à ${SRE_REGION}. Aucun compte ou mot de passe ne sera créé.`}
+        description={`Dossier rattaché à ${SRE_REGION}. Formulaire en trois étapes ; aucun compte ni mot de passe ne sera créé.`}
         fermer={fermer}
         fermetureBloquee={formulaire.isSubmitting}
         largeur="large"
@@ -186,24 +205,58 @@ export function AdminTaxpayersPage({
             <Button variante="contour" onClick={fermer} disabled={formulaire.isSubmitting}>
               Annuler
             </Button>
-            <SubmitButton
-              form="formulaire-contribuable-admin"
-              enCours={formulaire.isSubmitting}
-              libelleEnCours="Enregistrement…"
-            >
-              Enregistrer le profil
-            </SubmitButton>
+            {etapeFormulaire > 0 && (
+              <Button
+                variante="contour"
+                onClick={() => {
+                  if (etapeFormulaire === 2 && formulaire.getValues("type") === "PARTICULIER")
+                    setEtapeFormulaire(0);
+                  else setEtapeFormulaire((courante) => Math.max(0, courante - 1) as 0 | 1 | 2);
+                }}
+                disabled={formulaire.isSubmitting}
+              >
+                <ArrowLeft size={15} /> Précédent
+              </Button>
+            )}
+            {etapeFormulaire < 2 ? (
+              <Button onClick={() => void avancerEtape()} disabled={formulaire.isSubmitting}>
+                Suivant <ArrowRight size={15} />
+              </Button>
+            ) : (
+              <SubmitButton
+                form="formulaire-contribuable-admin"
+                enCours={formulaire.isSubmitting}
+                libelleEnCours="Enregistrement…"
+              >
+                Enregistrer le profil
+              </SubmitButton>
+            )}
           </>
         }
       >
-        <form id="formulaire-contribuable-admin" onSubmit={creer} noValidate>
-          <TaxpayerFormFields formulaire={formulaire} erreur={formulaire.erreur} />
+        <form
+          id="formulaire-contribuable-admin"
+          onSubmit={
+            etapeFormulaire === 2
+              ? creer
+              : (event) => {
+                  event.preventDefault();
+                  void avancerEtape();
+                }
+          }
+          noValidate
+        >
+          <TaxpayerFormFields
+            formulaire={formulaire}
+            erreur={formulaire.erreur}
+            etape={etapeFormulaire}
+          />
         </form>
       </Modal>
       <ConfirmDialog
         ouvert={!!suppression.cible}
         titre="Supprimer ce profil ?"
-        description={`Le profil « ${suppression.cible?.raisonSociale || `${suppression.cible?.prenom ?? ""} ${suppression.cible?.nom ?? ""}`.trim()} » sera supprimé définitivement si aucun compte, paiement ou historique fiscal ne lui est lié. Cette action est irréversible.`}
+        description={`Le profil « ${nomProfilSuppression} » sera supprimé définitivement si aucun compte, paiement ou historique fiscal ne lui est lié. Cette action est irréversible.`}
         fermer={suppression.fermer}
         confirmer={() => void suppression.executer(supprimer)}
         libelleConfirmer="Supprimer le profil"

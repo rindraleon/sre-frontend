@@ -21,12 +21,6 @@ export type UseApiFormResult<T extends FieldValues> = UseFormReturn<T> & {
   reinitialiserFormulaire: (valeurs?: T) => void;
 };
 
-/**
- * Formulaire react-hook-form + zod avec gestion centralisée de l'erreur globale :
- * - `erreur` : bandeau d'erreur global du formulaire (à afficher via <FormError />) ;
- * - `traiterEchec(cause)` : projette les erreurs API par champ puis affiche le message global ;
- * - `reinitialiserFormulaire()` : remet valeurs par défaut et erreur à zéro.
- */
 export function useApiForm<T extends FieldValues>({
   schema,
   valeursInitiales,
@@ -36,23 +30,24 @@ export function useApiForm<T extends FieldValues>({
   valeursInitiales: T;
   messageRepli: string;
 }): UseApiFormResult<T> {
-  const [erreur, definirErreur] = useState("");
+  const [erreur, setErreur] = useState("");
   const formulaire: UseFormReturn<T> = useForm<T>({
     resolver: zodResolver(schema as never) as Resolver<T>,
     mode: "onTouched",
     defaultValues: valeursInitiales as DefaultValues<T>,
   });
 
-  const reinitialiserErreur = () => definirErreur("");
+  const definirErreur = (message: string) => setErreur(message);
+  const reinitialiserErreur = () => setErreur("");
 
   const traiterEchec = (cause: unknown) => {
     const globales = applyApiErrors(formulaire, cause);
-    definirErreur(globales.length ? globales.join(" ") : apiErrorMessage(cause, messageRepli));
+    setErreur(globales.length ? globales.join(" ") : apiErrorMessage(cause, messageRepli));
   };
 
   const reinitialiserFormulaire = (valeurs?: T) => {
     formulaire.reset((valeurs ?? valeursInitiales) as DefaultValues<T>);
-    definirErreur("");
+    setErreur("");
   };
 
   return {

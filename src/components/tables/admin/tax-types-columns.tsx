@@ -1,6 +1,6 @@
-﻿import { Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { Pencil, ToggleLeft, ToggleRight } from "lucide-react";
 import type { TaxType } from "@/types";
-import { StatusBadge, Button, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 const libellesPeriodicite: Record<TaxType["periodicite"], string> = {
@@ -80,22 +80,17 @@ export function creerColonnesTypesImpot({
       id: "action",
       titre: "Actions",
       afficher: (type) => (
-        <div className="actions-tableau-sre">
-          <Button variante="fantome" taille="petit" onClick={() => onModifier(type)}>
-            <Pencil size={13} /> Modifier
-          </Button>
-          <Button variante="fantome" taille="petit" onClick={() => onBasculer(type)}>
-            {type.actif ? (
-              <>
-                <ToggleRight size={14} /> Désactiver
-              </>
-            ) : (
-              <>
-                <ToggleLeft size={14} /> Réactiver
-              </>
-            )}
-          </Button>
-        </div>
+        <ActionGroup>
+          <ActionIcon titre="Modifier le type d’impôt" onClick={() => onModifier(type)}>
+            <Pencil size={15} />
+          </ActionIcon>
+          <ActionIcon
+            titre={type.actif ? "Désactiver le type d’impôt" : "Réactiver le type d’impôt"}
+            onClick={() => onBasculer(type)}
+          >
+            {type.actif ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

@@ -1,4 +1,19 @@
-import { FileCheck2, ShieldCheck, WalletCards } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Building2,
+  ChartNoAxesCombined,
+  Coins,
+  FileCheck2,
+  FileText,
+  Fuel,
+  House,
+  MapPinned,
+  Receipt,
+  Scale,
+  ShieldCheck,
+  UsersRound,
+  WalletCards,
+} from "lucide-react";
 
 export const FEATURES = [
   {
@@ -65,5 +80,85 @@ export const PROMESSES = [
     icone: "ShieldCheck",
     titre: "Accès encadré",
     description: "Les autorisations sont contrôlées par l’API.",
+  },
+] as const;
+
+export const TYPES_IMPOTS_MADAGASCAR = [
+  {
+    sigle: "IR",
+    intitule: "Impôt sur les revenus",
+    description:
+      "Imposition de revenus ou bénéfices entrant dans le champ défini par le Code des impôts.",
+    icone: BriefcaseBusiness,
+  },
+  {
+    sigle: "IS",
+    intitule: "Impôt synthétique",
+    description:
+      "Régime d’imposition synthétique appliqué aux contribuables qui remplissent les conditions légales.",
+    icone: Coins,
+  },
+  {
+    sigle: "IRSA",
+    intitule: "Revenus salariaux et assimilés",
+    description:
+      "Impôt relatif aux rémunérations et revenus assimilés visés par les textes fiscaux.",
+    icone: UsersRound,
+  },
+  {
+    sigle: "TVA",
+    intitule: "Taxe sur la valeur ajoutée",
+    description:
+      "Taxe applicable à certaines opérations et activités, selon les règles d’assujettissement en vigueur.",
+    icone: Receipt,
+  },
+  {
+    sigle: "IRCM",
+    intitule: "Revenus des capitaux mobiliers",
+    description:
+      "Impôt portant sur certaines catégories de revenus de capitaux mobiliers prévues par le Code.",
+    icone: ChartNoAxesCombined,
+  },
+  {
+    sigle: "IPVI",
+    intitule: "Plus-values immobilières",
+    description:
+      "Impôt pouvant concerner les plus-values réalisées lors de cessions immobilières imposables.",
+    icone: House,
+  },
+  {
+    sigle: "IFT",
+    intitule: "Impôt foncier sur les terrains",
+    description:
+      "Imposition foncière attachée aux terrains, selon les caractéristiques et règles applicables.",
+    icone: MapPinned,
+  },
+  {
+    sigle: "IFPB",
+    intitule: "Impôt foncier sur la propriété bâtie",
+    description:
+      "Imposition foncière concernant les propriétés bâties dans les conditions fixées par la loi.",
+    icone: Building2,
+  },
+  {
+    sigle: "DE · TIMBRE",
+    intitule: "Droits d’enregistrement et de timbre",
+    description:
+      "Droits dus pour certains actes, mutations ou formalités, selon la nature de l’opération.",
+    icone: FileText,
+  },
+  {
+    sigle: "ACCISES",
+    intitule: "Droits d’accises",
+    description:
+      "Droits indirects qui concernent certaines catégories de produits définies par les textes.",
+    icone: Scale,
+  },
+  {
+    sigle: "IDH",
+    intitule: "Impôt direct sur les hydrocarbures",
+    description:
+      "Imposition sectorielle relative aux activités et revenus pétroliers visés par le Code.",
+    icone: Fuel,
   },
 ] as const;

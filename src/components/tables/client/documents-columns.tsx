@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye } from "lucide-react";
 import type { PaymentDocument } from "@/types";
 import { ROUTES_CLIENT } from "@/constants";
-import { StatusBadge, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 /** Libellé du type de document de paiement. */
@@ -60,11 +60,16 @@ export function creerColonnesDocuments(): TableColumn<PaymentDocument>[] {
     },
     {
       id: "action",
-      titre: "",
+      titre: "Actions",
       afficher: (document) => (
-        <Link className="lien-action-sre" to={ROUTES_CLIENT.document(document.id)}>
-          Consulter <ArrowRight size={13} />
-        </Link>
+        <ActionGroup>
+          <ActionIcon
+            titre="Consulter le document"
+            href={ROUTES_CLIENT.document(document.id)}
+          >
+            <Eye size={15} />
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

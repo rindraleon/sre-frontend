@@ -10,10 +10,6 @@ const STYLES: Record<string, string> = {
   info: "border-sky-300 bg-sky-50 text-sky-900",
 };
 
-/**
- * Toasts shadcn/ui (Radix Toast) alimentés par le contexte existant :
- * fermeture manuelle, aucun toast par frappe, succès lié au résultat réel.
- */
 export function ToastRegion() {
   const { toasts, retirerToast } = useSre();
   return (
@@ -31,12 +27,24 @@ export function ToastRegion() {
           )}
           role={toast.type === "erreur" ? "alert" : undefined}
         >
-          <span
-            aria-hidden="true"
-            className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-current/10 text-[11px] font-black"
-          >
-            {toast.type === "succes" ? "✓" : toast.type === "erreur" ? "!" : "i"}
-          </span>
+          {(() => {
+            let icon;
+            if (toast.type === "succes") {
+              icon = "✓";
+            } else if (toast.type === "erreur") {
+              icon = "!";
+            } else {
+              icon = "i";
+            }
+            return (
+              <span
+                aria-hidden="true"
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-current/10 text-[11px] font-black"
+              >
+                {icon}
+              </span>
+            );
+          })()}
           <div className="min-w-0 flex-1">
             <ToastPrimitive.Title className="text-[12.5px] font-bold leading-snug">
               {toast.message}

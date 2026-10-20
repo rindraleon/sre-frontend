@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Building2, Trash2, UserRound } from "lucide-react";
+import { Building2, Eye, Trash2, UserRound } from "lucide-react";
 import type { Taxpayer } from "@/types";
 import { ROUTES_ADMIN } from "@/constants";
-import { StatusBadge, Button, type TableColumn } from "@/components/ui";
+import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 
 /** Colonnes du tableau des profils contribuables (back-office). */
@@ -71,19 +71,21 @@ export function creerColonnesContribuables({
       id: "action",
       titre: "Actions",
       afficher: (entree) => (
-        <div className="actions-tableau-sre">
-          <Link className="lien-action-sre" to={ROUTES_ADMIN.contribuable(entree.id)}>
-            Voir <ArrowRight size={13} />
-          </Link>
-          <Button
-            taille="petit"
-            variante="fantome"
-            aria-label={`Supprimer le profil ${entree.raisonSociale || entree.nom}`}
+        <ActionGroup>
+          <ActionIcon
+            titre="Consulter le profil"
+            href={ROUTES_ADMIN.contribuable(entree.id)}
+          >
+            <Eye size={15} />
+          </ActionIcon>
+          <ActionIcon
+            titre="Supprimer le profil"
+            danger
             onClick={() => onSupprimer(entree)}
           >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+            <Trash2 size={15} />
+          </ActionIcon>
+        </ActionGroup>
       ),
     },
   ];

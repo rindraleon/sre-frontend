@@ -1,0 +1,982 @@
+/* Nouvelle identité publique, repères fiscaux et pages de transparence SRE. */
+.marque-sre--public {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.marque-sre__logo-public {
+  display: block;
+  width: 68px;
+  height: 46px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  border: 1px solid rgba(217, 228, 226, 0.92);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(26, 61, 66, 0.08);
+}
+.marque-sre__texte-public {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.marque-sre__texte-public strong {
+  color: #1c3e50;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.45px;
+}
+.marque-sre__texte-public strong span {
+  color: #b68a46;
+}
+.marque-sre__texte-public small {
+  overflow: hidden;
+  color: #829296;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.9px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.hero-sre-path-zone {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(213, 228, 226, 0.78);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 48% 43%, rgba(214, 235, 230, 0.82), transparent 56%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(239, 247, 245, 0.82));
+  box-shadow: 0 26px 70px rgba(31, 71, 75, 0.09);
+}
+.hero-sre-path-zone::before {
+  position: absolute;
+  z-index: -1;
+  inset: 18px;
+  border: 1px solid rgba(117, 158, 157, 0.13);
+  border-radius: 20px;
+  content: "";
+}
+.hero-sre-path-zone__halo {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: min(72%, 340px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(35, 125, 124, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 28px rgba(35, 125, 124, 0.025),
+    0 0 0 58px rgba(35, 125, 124, 0.02);
+  transform: translate(-50%, -52%);
+}
+.hero-sre-path-brand {
+  width: 100%;
+  min-height: 100%;
+  padding: 24px 24px 45px;
+}
+.hero-sre-path-brand svg {
+  overflow: visible;
+  filter: drop-shadow(0 7px 5px rgba(22, 88, 97, 0.08));
+}
+.hero-sre-path-fallback {
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6b8187;
+  text-align: center;
+}
+.hero-sre-path-fallback strong {
+  color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(86px, 13vw, 148px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 2px #287e83;
+}
+.hero-sre-path-fallback span {
+  font-size: 12px;
+}
+.hero-sre-path-zone__signature {
+  position: absolute;
+  right: 32px;
+  bottom: 22px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #82999b;
+}
+.hero-sre-path-zone__signature > span {
+  width: 27px;
+  height: 1px;
+  background: #b79558;
+}
+.hero-sre-path-zone__signature small {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.section-fiscalite-public-sre {
+  position: relative;
+  overflow: hidden;
+  padding: 78px clamp(22px, 7.7vw, 118px) 74px;
+  background:
+    radial-gradient(ellipse at 92% 14%, rgba(213, 233, 227, 0.54), transparent 38%), #f4f8f6;
+}
+.section-fiscalite-public-sre::before {
+  position: absolute;
+  top: -140px;
+  right: -120px;
+  width: 330px;
+  height: 330px;
+  border: 1px solid rgba(68, 128, 125, 0.09);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 30px rgba(68, 128, 125, 0.025),
+    0 0 0 64px rgba(68, 128, 125, 0.02);
+  content: "";
+  pointer-events: none;
+}
+.section-fiscalite-public-sre__entete {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin-bottom: 34px;
+}
+.cartes-fiscalite-public-sre {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 1130px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 auto;
+}
+.carte-fiscalite-public-sre {
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 19px 20px 20px;
+  border: 1px solid #e1eae8;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 20px rgba(25, 58, 61, 0.035);
+  transition:
+    opacity 0.62s ease-out,
+    transform 0.62s ease-out,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+.carte-fiscalite-public-sre:hover {
+  border-color: #bfd9d3;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(25, 58, 61, 0.09);
+}
+.carte-fiscalite-public-sre__entete {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.carte-fiscalite-public-sre__icone {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #237c78;
+  border: 1px solid #e1efeb;
+  border-radius: 12px;
+  background: #eff7f4;
+}
+.carte-fiscalite-public-sre__sigle {
+  padding: 5px 8px;
+  color: #66817e;
+  border: 1px solid #e6eeeb;
+  border-radius: 999px;
+  background: #f8fbf9;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.7px;
+}
+.carte-fiscalite-public-sre h3 {
+  margin: 16px 0 6px;
+  color: #244958;
+  font-size: 13px;
+  font-weight: 780;
+  line-height: 1.4;
+}
+.carte-fiscalite-public-sre p {
+  margin: 0;
+  color: #73878b;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.note-fiscalite-public-sre {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 1130px);
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 22px auto 0;
+  padding: 15px 18px;
+  border: 1px solid #dde8e4;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.74);
+}
+.note-fiscalite-public-sre__icone {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: #a47b3d;
+  border-radius: 10px;
+  background: #faf3e8;
+}
+.note-fiscalite-public-sre p {
+  margin: 0;
+  color: #687e81;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.note-fiscalite-public-sre a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #176d75;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.note-fiscalite-public-sre a:hover {
+  color: #0e4f58;
+}
+
+.pied-public-sre--institutionnel {
+  position: relative;
+  overflow: hidden;
+  padding: 54px clamp(22px, 7.7vw, 118px) 0;
+  color: #dce8e8;
+  background:
+    radial-gradient(ellipse at 84% -12%, rgba(48, 112, 113, 0.36), transparent 45%),
+    linear-gradient(140deg, #10262e 0%, #132e37 54%, #10242c 100%);
+}
+.pied-public-sre--institutionnel::before {
+  position: absolute;
+  top: -145px;
+  right: 4%;
+  width: 390px;
+  height: 390px;
+  border: 1px solid rgba(197, 220, 216, 0.08);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 35px rgba(197, 220, 216, 0.025),
+    0 0 0 74px rgba(197, 220, 216, 0.018);
+  content: "";
+  pointer-events: none;
+}
+.pied-public-sre__contenu {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 1180px);
+  grid-template-columns: minmax(240px, 1.35fr) minmax(130px, 0.7fr) minmax(160px, 0.9fr) minmax(
+      220px,
+      1.1fr
+    );
+  gap: clamp(24px, 4vw, 52px);
+  margin: 0 auto;
+  padding-bottom: 42px;
+}
+.pied-public-sre__identite > p {
+  max-width: 335px;
+  margin: 17px 0 15px;
+  color: #aebfc1;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.pied-public-sre__region {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #c6d7d6;
+  font-size: 10px;
+  font-weight: 720;
+}
+.pied-public-sre--institutionnel .marque-sre__logo-public {
+  width: 74px;
+  height: 49px;
+  border-color: rgba(255, 255, 255, 0.27);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.pied-public-sre--institutionnel .marque-sre__texte-public strong {
+  color: #f4f7f6;
+}
+.pied-public-sre--institutionnel .marque-sre__texte-public small {
+  color: #aabfc0;
+}
+.pied-public-sre__colonne h2,
+.pied-public-sre__appel h2 {
+  margin: 3px 0 17px;
+  color: #f2f6f5;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.pied-public-sre__colonne ul {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pied-public-sre__colonne a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #aebfc1;
+  font-size: 10px;
+  line-height: 1.5;
+  transition: color 0.16s ease;
+}
+.pied-public-sre__colonne a:hover {
+  color: #fff;
+}
+.pied-public-sre__appel {
+  padding: 18px;
+  border: 1px solid rgba(195, 218, 215, 0.16);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.045);
+}
+.pied-public-sre__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: #a9d5c8;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+.pied-public-sre__appel h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.pied-public-sre__appel p {
+  margin: 0 0 14px;
+  color: #aebfc1;
+  font-size: 10px;
+  line-height: 1.65;
+}
+.pied-public-sre__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #d6e9e4;
+  font-size: 10px;
+  font-weight: 800;
+}
+.pied-public-sre__cta:hover {
+  color: #fff;
+}
+.pied-public-sre__bas--institutionnel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 1180px);
+  min-height: 55px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 13px 0;
+  border-top: 1px solid rgba(220, 232, 232, 0.13);
+  color: #99afb0;
+  font-size: 9px;
+  letter-spacing: 0.35px;
+}
+
+/* Pages Mentions légales et Politique de confidentialité. */
+.site-juridique-public-sre {
+  background: #f7f9f8;
+}
+.entete-juridique-public-sre {
+  gap: 18px;
+}
+.navigation-juridique-sre {
+  display: flex;
+  align-items: center;
+  gap: clamp(13px, 2.5vw, 28px);
+  margin-left: auto;
+}
+.navigation-juridique-sre > a:not(.bouton-sre) {
+  color: #637a7d;
+  font-size: 11px;
+  font-weight: 750;
+}
+.navigation-juridique-sre > a:not(.bouton-sre):hover {
+  color: #126d70;
+}
+.contenu-juridique-sre {
+  width: min(100% - 44px, 1160px);
+  margin: 0 auto;
+  padding: 26px 0 76px;
+}
+.fil-ariane-juridique-sre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 22px;
+  color: #8b9a9b;
+  font-size: 10px;
+  font-weight: 650;
+}
+.fil-ariane-juridique-sre a:hover {
+  color: #176d75;
+}
+.fil-ariane-juridique-sre [aria-current="page"] {
+  color: #47646b;
+}
+.hero-juridique-sre {
+  position: relative;
+  display: grid;
+  min-height: 274px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(230px, 0.6fr);
+  align-items: center;
+  gap: 32px;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 52px);
+  border: 1px solid #e1eae8;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 90% 25%, rgba(218, 236, 231, 0.72), transparent 40%),
+    linear-gradient(135deg, #fff, #f2f7f5);
+  box-shadow: 0 15px 44px rgba(31, 71, 75, 0.055);
+}
+.hero-juridique-sre__texte {
+  position: relative;
+  z-index: 1;
+  max-width: 710px;
+}
+.surtitre-juridique-sre {
+  color: #49807f;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.7px;
+}
+.hero-juridique-sre h1 {
+  margin: 12px 0 11px;
+  color: #183b4b;
+  font-size: clamp(31px, 4.5vw, 48px);
+  font-weight: 800;
+  letter-spacing: -1.8px;
+  line-height: 1.1;
+}
+.hero-juridique-sre__texte > p {
+  max-width: 650px;
+  margin: 0;
+  color: #74888b;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.hero-juridique-sre__lieu {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  color: #6f8586;
+  font-size: 10px;
+  font-weight: 750;
+}
+.carte-juridique-sre {
+  position: relative;
+  display: flex;
+  min-height: 174px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 11px;
+  overflow: hidden;
+  padding: 23px;
+  border: 1px solid rgba(190, 216, 209, 0.76);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 25px rgba(33, 80, 81, 0.06);
+}
+.carte-juridique-sre__icone {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: #16766f;
+  border: 1px solid #dcece7;
+  border-radius: 14px;
+  background: #f1f8f5;
+}
+.carte-juridique-sre > strong {
+  position: relative;
+  z-index: 1;
+  color: #264b56;
+  font-size: 13px;
+}
+.carte-juridique-sre > small {
+  position: relative;
+  z-index: 1;
+  color: #819395;
+  font-size: 10px;
+}
+.carte-juridique-sre__decor {
+  position: absolute;
+  right: -42px;
+  bottom: -96px;
+  width: 180px;
+  height: 180px;
+  border: 1px solid rgba(54, 129, 122, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 20px rgba(54, 129, 122, 0.025),
+    0 0 0 44px rgba(54, 129, 122, 0.02);
+}
+.grille-juridique-sre {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  margin-top: 24px;
+}
+.sommaire-juridique-sre__interieur {
+  position: sticky;
+  top: calc(var(--hauteur-entete-sre, 72px) + 19px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 15px;
+  border: 1px solid #e3ebe9;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(31, 71, 75, 0.035);
+}
+.sommaire-juridique-sre__titre {
+  margin: 0 0 9px 7px;
+  color: #89989a;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.sommaire-juridique-sre__interieur > a:not(.sommaire-juridique-sre__aide) {
+  padding: 8px 7px;
+  color: #667b7f;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 660;
+  line-height: 1.4;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
+}
+.sommaire-juridique-sre__interieur > a:not(.sommaire-juridique-sre__aide):hover {
+  color: #176c6c;
+  background: #f0f7f4;
+}
+.sommaire-juridique-sre__aide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 13px 5px 0;
+  padding-top: 13px;
+  color: #16736e;
+  border-top: 1px solid #edf1ef;
+  font-size: 10px;
+  font-weight: 800;
+}
+.texte-juridique-sre {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 11px;
+}
+.section-texte-juridique-sre {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 15px;
+  padding: 23px 25px;
+  border: 1px solid #e2ebe8;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(31, 71, 75, 0.025);
+  scroll-margin-top: calc(var(--hauteur-entete-sre, 72px) + 18px);
+}
+.section-texte-juridique-sre__numero {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #557e7e;
+  border: 1px solid #e2ece8;
+  border-radius: 10px;
+  background: #f2f8f5;
+  font-size: 9px;
+  font-weight: 850;
+}
+.section-texte-juridique-sre h2 {
+  margin: 2px 0 13px;
+  color: #204452;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.35px;
+}
+.section-texte-juridique-sre__corps {
+  color: #62787c;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.section-texte-juridique-sre__corps p {
+  margin: 0 0 11px;
+}
+.section-texte-juridique-sre__corps p:last-child {
+  margin-bottom: 0;
+}
+.section-texte-juridique-sre__corps strong {
+  color: #375d63;
+  font-weight: 780;
+}
+.section-texte-juridique-sre__corps a:not(.lien-loi-donnees-sre) {
+  color: #146f70;
+  font-weight: 760;
+  text-decoration: underline;
+  text-decoration-color: rgba(20, 111, 112, 0.24);
+  text-underline-offset: 3px;
+}
+.definitions-juridiques-sre {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 16px 0 0;
+  border: 1px solid #e5ece9;
+  border-radius: 11px;
+  background: #e5ece9;
+}
+.definitions-juridiques-sre > div {
+  min-width: 0;
+  padding: 12px 14px;
+  background: #fbfcfb;
+}
+.definitions-juridiques-sre dt {
+  margin-bottom: 5px;
+  color: #809194;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+.definitions-juridiques-sre dd {
+  margin: 0;
+  color: #476268;
+  font-size: 10px;
+  font-weight: 690;
+  line-height: 1.6;
+}
+.liste-juridique-sre {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding-left: 18px;
+}
+.liste-juridique-sre li {
+  padding-left: 2px;
+}
+.liste-juridique-sre li::marker {
+  color: #3c8a7e;
+}
+.note-juridique-sre {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 13px;
+  color: #6d8182;
+  border: 1px solid #e1ebe7;
+  border-radius: 10px;
+  background: #f6faf8;
+  font-size: 10px;
+  line-height: 1.65;
+}
+.note-juridique-sre > svg {
+  flex: 0 0 auto;
+  color: #45817a;
+}
+.liens-sources-juridiques-sre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+}
+.liens-sources-juridiques-sre a,
+.lien-loi-donnees-sre {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: #176d70;
+  border: 1px solid #dce9e5;
+  border-radius: 9px;
+  background: #f7fbf9;
+  font-size: 10px;
+  font-weight: 790;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+.liens-sources-juridiques-sre a:hover,
+.lien-loi-donnees-sre:hover {
+  border-color: #bdd9d2;
+  background: #eff7f4;
+}
+.lien-loi-donnees-sre {
+  margin-top: 8px;
+}
+.section-texte-juridique-sre code {
+  padding: 2px 5px;
+  color: #425e61;
+  border-radius: 4px;
+  background: #f0f5f2;
+  font-size: 0.92em;
+}
+.alerte-juridique-sre {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: start;
+  gap: 13px;
+  margin-top: 22px;
+  padding: 17px 19px;
+  border: 1px solid #e4d8bd;
+  border-radius: 13px;
+  background: #fffaf0;
+}
+.alerte-juridique-sre__icone {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  color: #9c733a;
+  border-radius: 11px;
+  background: #f7eddc;
+}
+.alerte-juridique-sre strong {
+  color: #6f5635;
+  font-size: 11px;
+  font-weight: 850;
+}
+.alerte-juridique-sre p {
+  margin: 5px 0 0;
+  color: #82745d;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+@media (max-width: 1020px) {
+  .pied-public-sre__contenu {
+    grid-template-columns: minmax(230px, 1.25fr) repeat(2, minmax(125px, 0.75fr));
+  }
+  .pied-public-sre__appel {
+    grid-column: 1 / -1;
+    max-width: 440px;
+  }
+  .cartes-fiscalite-public-sre {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .navigation-juridique-sre {
+    gap: 12px;
+  }
+  .hero-juridique-sre {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 20px;
+  }
+  .grille-juridique-sre {
+    grid-template-columns: 1fr;
+  }
+  .sommaire-juridique-sre__interieur {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 7px;
+  }
+  .sommaire-juridique-sre__titre,
+  .sommaire-juridique-sre__aide {
+    grid-column: 1 / -1;
+  }
+  .sommaire-juridique-sre__aide {
+    margin-top: 7px;
+  }
+}
+@media (max-width: 600px) {
+  .marque-sre--public {
+    gap: 7px;
+  }
+  .marque-sre__logo-public {
+    width: 58px;
+    height: 39px;
+  }
+  .entete-public-sre .marque-sre__texte-public strong {
+    font-size: 12px;
+  }
+  .entete-public-sre .marque-sre__texte-public small {
+    max-width: 125px;
+    font-size: 8px;
+    letter-spacing: 0.55px;
+  }
+  .hero-sre-path-zone {
+    min-height: 310px;
+    border-radius: 21px;
+  }
+  .hero-sre-path-brand {
+    padding: 16px 12px 40px;
+  }
+  .hero-sre-path-zone__signature {
+    right: 20px;
+    bottom: 16px;
+    left: 20px;
+  }
+  .section-fiscalite-public-sre {
+    padding: 55px 18px 52px;
+  }
+  .cartes-fiscalite-public-sre {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .carte-fiscalite-public-sre {
+    min-height: 0;
+    padding: 16px;
+  }
+  .carte-fiscalite-public-sre h3 {
+    margin-top: 12px;
+  }
+  .note-fiscalite-public-sre {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 9px 12px;
+    padding: 13px;
+  }
+  .note-fiscalite-public-sre a {
+    grid-column: 2;
+    white-space: normal;
+  }
+  .pied-public-sre--institutionnel {
+    padding: 39px 18px 0;
+  }
+  .pied-public-sre__contenu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 27px 20px;
+    padding-bottom: 29px;
+  }
+  .pied-public-sre__identite,
+  .pied-public-sre__appel {
+    grid-column: 1 / -1;
+  }
+  .pied-public-sre__appel {
+    max-width: none;
+  }
+  .pied-public-sre__bas--institutionnel {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 0;
+  }
+  .contenu-juridique-sre {
+    width: min(100% - 32px, 1160px);
+    padding-top: 19px;
+    padding-bottom: 52px;
+  }
+  .navigation-juridique-sre {
+    gap: 8px;
+  }
+  .navigation-juridique-sre > a:not(.bouton-sre) {
+    display: none;
+  }
+  .navigation-juridique-sre .bouton-sre {
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+  .hero-juridique-sre {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 25px 21px;
+    border-radius: 17px;
+  }
+  .hero-juridique-sre h1 {
+    font-size: clamp(30px, 9vw, 39px);
+  }
+  .carte-juridique-sre {
+    min-height: 126px;
+    padding: 17px;
+  }
+  .carte-juridique-sre__icone {
+    width: 40px;
+    height: 40px;
+  }
+  .sommaire-juridique-sre__interieur {
+    grid-template-columns: 1fr;
+    padding: 15px 13px;
+  }
+  .sommaire-juridique-sre__titre,
+  .sommaire-juridique-sre__aide {
+    grid-column: 1;
+  }
+  .section-texte-juridique-sre {
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 10px;
+    padding: 17px 15px;
+  }
+  .section-texte-juridique-sre__numero {
+    width: 25px;
+    height: 25px;
+    border-radius: 8px;
+  }
+  .section-texte-juridique-sre h2 {
+    margin-top: 3px;
+    font-size: 14px;
+  }
+  .definitions-juridiques-sre {
+    grid-template-columns: 1fr;
+  }
+  .liens-sources-juridiques-sre {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .liens-sources-juridiques-sre a {
+    justify-content: space-between;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carte-fiscalite-public-sre,
+  .sommaire-juridique-sre__interieur > a,
+  .liens-sources-juridiques-sre a,
+  .lien-loi-donnees-sre {
+    transition: none;
+  }
+}

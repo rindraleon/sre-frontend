@@ -36,13 +36,14 @@ export function FormField({
   return (
     <div className={`champ-formulaire-sre ${classeSupplementaire}`}>
       <Label htmlFor={id}>
-        {libelle}
-        {requis && (
-          <span aria-hidden="true" className="text-destructive">
-            {" "}
-            *
-          </span>
-        )}
+        <span className="champ-libelle-sre">
+          {libelle}
+          {requis && (
+            <span aria-hidden="true" className="champ-obligatoire-sre">
+              *
+            </span>
+          )}
+        </span>
       </Label>
       {children({ id, "aria-invalid": Boolean(erreur), "aria-describedby": decritPar })}
       {aide && (

@@ -11,6 +11,7 @@ import {
   ConfirmDialog,
   PageHeader,
   DataTable,
+  convertirColonnesTanstack,
   type TableColumn,
 } from "@/components/ui";
 import { formatDate } from "@/utils/format";
@@ -26,15 +27,8 @@ export function AdminUsersPage() {
   const [traitement, definirTraitement] = useState(false);
   const [erreurAction, definirErreurAction] = useState("");
   const utilisateurs = useMemo(
-    () =>
-      etat.utilisateurs.filter(
-        (compte) =>
-          (roleFiltre === "TOUS" || compte.role === roleFiltre) &&
-          `${compte.nom} ${compte.courriel} ${compte.role}`
-            .toLowerCase()
-            .includes(recherche.toLowerCase()),
-      ),
-    [etat.utilisateurs, roleFiltre, recherche],
+    () => etat.utilisateurs.filter((compte) => roleFiltre === "TOUS" || compte.role === roleFiltre),
+    [etat.utilisateurs, roleFiltre],
   );
 
   const colonnes: TableColumn<AppUser>[] = [
@@ -138,7 +132,8 @@ export function AdminUsersPage() {
       );
       definirCompteCible(null);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le compte.";
+      const message =
+        cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le compte.";
       definirErreurAction(message);
       notifier(message, "erreur");
     } finally {
@@ -152,16 +147,18 @@ export function AdminUsersPage() {
       <PageHeader
         titre="Comptes utilisateurs"
         description="Consultez les comptes et gérez leur statut d’accès."
-        filAriane={["Back-office", "Comptes utilisateurs"]}
+        filAriane={["Accueil", "Comptes utilisateurs"]}
       />
       <DataTable
-        lignes={utilisateurs}
-        colonnes={colonnes}
-        obtenirId={(compte) => compte.id}
-        recherche={recherche}
-        rechercher={definirRecherche}
-        placeholder="Nom ou adresse e-mail…"
-        actionsEntete={
+        data={utilisateurs}
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Comptes utilisateurs"
+        getRowId={(compte) => compte.id}
+        getSearchText={(compte) => `${compte.nom} ${compte.courriel} ${compte.role}`}
+        searchPlaceholder="Nom ou adresse e-mail…"
+        searchValue={recherche}
+        onSearchChange={definirRecherche}
+        toolbarActions={
           <label className="filtre-compact-sre">
             Rôle
             <Select
@@ -177,12 +174,13 @@ export function AdminUsersPage() {
             </Select>
           </label>
         }
-        espaceVide="Aucun utilisateur"
-        messageVide="Aucun utilisateur ne correspond à votre recherche."
+        columnToggle
+        emptyTitle="Aucun utilisateur"
+        emptyDescription="Aucun utilisateur ne correspond à votre recherche."
         page={page}
-        parPage={parPage}
-        changerPage={definirPage}
-        changerParPage={definirParPage}
+        rowsPerPage={parPage}
+        onPageChange={definirPage}
+        onRowsPerPageChange={definirParPage}
       />
       <ConfirmDialog
         ouvert={!!compteCible}

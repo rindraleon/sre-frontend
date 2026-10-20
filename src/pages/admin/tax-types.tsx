@@ -1,22 +1,42 @@
-﻿import { useMemo, useState } from "react";
-import { Calculator, CirclePlus } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, CirclePlus } from "lucide-react";
 import type { TaxType } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { callApi, mapApiTaxType, type ApiTaxType } from "@/services/api-client";
-import { Button, ConfirmDialog, PageHeader, Modal, DataTable } from "@/components/ui";
+import {
+  Button,
+  ConfirmDialog,
+  PageHeader,
+  Modal,
+  DataTable,
+  convertirColonnesTanstack,
+} from "@/components/ui";
 import { SubmitButton } from "@/components/forms/form-field";
 import { TaxTypeFormFields, TAX_TYPE_VIDE } from "@/components/forms/admin/tax-type-form";
 import { creerColonnesTypesImpot } from "@/components/tables/admin/tax-types-columns";
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
 import { taxTypeFormSchema, type TaxTypeFormValues } from "@/validation/admin.schema";
 
+const CHAMPS_ETAPES_TYPE_IMPOT = [
+  ["code", "nom", "categorie", "description"],
+  [
+    "contribuablesConcernes",
+    "periodicite",
+    "modeMontant",
+    "montantReference",
+    "regleEcheance",
+    "champsComplementairesTexte",
+  ],
+] as const;
+
 export function AdminTaxTypesPage() {
   const { etat, mettreAJourEtat, notifier } = useSre();
   const { session } = useAuth();
   const table = useTableState();
-  const [modal, definirModal] = useState(false);
-  const [typeModifie, definirTypeModifie] = useState<string | null>(null);
+  const [modal, setModal] = useState(false);
+  const [etapeFormulaire, setEtapeFormulaire] = useState<0 | 1>(0);
+  const [typeModifie, setTypeModifie] = useState<string | null>(null);
   const basculement = useConfirmation<TaxType>();
   const formulaire = useApiForm<TaxTypeFormValues>({
     schema: taxTypeFormSchema,
@@ -24,19 +44,12 @@ export function AdminTaxTypesPage() {
     messageRepli: "Le serveur n’a pas enregistré le type d’impôt.",
   });
 
-  const types = useMemo(
-    () =>
-      etat.typesImpots.filter((type) =>
-        `${type.code} ${type.nom} ${type.categorie} ${type.description}`
-          .toLowerCase()
-          .includes(table.recherche.toLowerCase()),
-      ),
-    [etat.typesImpots, table.recherche],
-  );
+  const types = etat.typesImpots;
 
   const ouvrirEdition = (type?: TaxType) => {
+    setEtapeFormulaire(0);
     formulaire.reinitialiserErreur();
-    definirTypeModifie(type?.id ?? null);
+    setTypeModifie(type?.id ?? null);
     formulaire.reinitialiserFormulaire(
       type
         ? {
@@ -53,13 +66,21 @@ export function AdminTaxTypesPage() {
           }
         : TAX_TYPE_VIDE,
     );
-    definirModal(true);
+    setModal(true);
   };
 
   const fermer = () => {
-    definirModal(false);
-    definirTypeModifie(null);
+    setModal(false);
+    setEtapeFormulaire(0);
+    setTypeModifie(null);
     formulaire.reinitialiserFormulaire();
+  };
+
+  const avancerEtape = async () => {
+    const valide = await formulaire.trigger([...CHAMPS_ETAPES_TYPE_IMPOT[etapeFormulaire]], {
+      shouldFocus: true,
+    });
+    if (valide) setEtapeFormulaire(1);
   };
 
   const colonnes = creerColonnesTypesImpot({
@@ -80,6 +101,7 @@ export function AdminTaxTypesPage() {
       )
     ) {
       formulaire.setError("code", { type: "server", message: "Ce code est déjà utilisé." });
+      setEtapeFormulaire(0);
       return;
     }
     try {
@@ -155,44 +177,35 @@ export function AdminTaxTypesPage() {
     <div className="page-contenu-sre">
       <PageHeader
         titre="Types d’impôts"
-        description="Gérez les paramètres fiscaux après validation par l’administration."
-        filAriane={["Back-office", "Types d’impôts"]}
-        actions={
+        description="Paramètres fiscaux validés par l’administration."
+        filAriane={["Accueil", "Types d’impôts"]}
+      />
+      <DataTable
+        data={types}
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Types d’impôts"
+        getRowId={(type) => type.id}
+        getSearchText={(type) => `${type.code} ${type.nom} ${type.categorie} ${type.description}`}
+        searchPlaceholder="Code, nom ou catégorie…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        actionPrimary={
           <Button onClick={() => ouvrirEdition()}>
             <CirclePlus size={15} /> Ajouter un type
           </Button>
         }
-      />
-      <div className="bandeau-info-sre">
-        <span>
-          <Calculator size={17} />
-        </span>
-        <div>
-          <strong>Valeurs à saisir après validation par l’administration</strong>
-          <p>
-            Aucun taux, barème ou calendrier n’est fourni par défaut. Les champs doivent
-            correspondre à des règles confirmées avant publication.
-          </p>
-        </div>
-      </div>
-      <DataTable
-        lignes={types}
-        colonnes={colonnes}
-        obtenirId={(type) => type.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Code, nom ou catégorie…"
-        espaceVide="Aucun type d’impôt"
-        messageVide="Les types enregistrés par l’administration apparaîtront ici."
+        columnToggle
+        emptyTitle="Aucun type d’impôt"
+        emptyDescription="Les types enregistrés par l’administration apparaîtront ici."
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
       <Modal
         ouvert={modal}
         titre={typeModifie ? "Modifier le type d’impôt" : "Ajouter un type d’impôt"}
-        description="Saisissez uniquement des règles fiscales approuvées et applicables."
+        description="Formulaire en deux étapes. Saisissez uniquement des règles fiscales approuvées et applicables."
         fermer={fermer}
         fermetureBloquee={formulaire.isSubmitting}
         largeur="large"
@@ -201,18 +214,48 @@ export function AdminTaxTypesPage() {
             <Button variante="contour" onClick={fermer} disabled={formulaire.isSubmitting}>
               Annuler
             </Button>
-            <SubmitButton
-              form="formulaire-type-impot"
-              enCours={formulaire.isSubmitting}
-              libelleEnCours="Enregistrement…"
-            >
-              Enregistrer
-            </SubmitButton>
+            {etapeFormulaire > 0 && (
+              <Button
+                variante="contour"
+                onClick={() => setEtapeFormulaire(0)}
+                disabled={formulaire.isSubmitting}
+              >
+                <ArrowLeft size={15} /> Précédent
+              </Button>
+            )}
+            {etapeFormulaire === 0 ? (
+              <Button onClick={() => void avancerEtape()} disabled={formulaire.isSubmitting}>
+                Suivant <ArrowRight size={15} />
+              </Button>
+            ) : (
+              <SubmitButton
+                form="formulaire-type-impot"
+                enCours={formulaire.isSubmitting}
+                libelleEnCours="Enregistrement…"
+              >
+                Enregistrer
+              </SubmitButton>
+            )}
           </>
         }
       >
-        <form id="formulaire-type-impot" onSubmit={enregistrer} noValidate>
-          <TaxTypeFormFields formulaire={formulaire} erreur={formulaire.erreur} />
+        <form
+          id="formulaire-type-impot"
+          onSubmit={
+            etapeFormulaire === 1
+              ? enregistrer
+              : (event) => {
+                  event.preventDefault();
+                  void avancerEtape();
+                }
+          }
+          noValidate
+        >
+          <TaxTypeFormFields
+            formulaire={formulaire}
+            erreur={formulaire.erreur}
+            etape={etapeFormulaire}
+          />
         </form>
       </Modal>
       <ConfirmDialog

@@ -26,7 +26,7 @@ export function ClientDocumentDetailPage() {
   if (!document)
     return (
       <div className="page-contenu-sre">
-        <PageHeader titre="Document introuvable" filAriane={["Mon espace", "Mes reçus"]} />
+        <PageHeader titre="Document introuvable" filAriane={["Accueil", "Mes reçus"]} />
         <EmptyState
           titre="Ce document n’est pas accessible"
           description="Il n’existe pas ou ne fait pas partie de votre espace contribuable."
@@ -78,7 +78,7 @@ export function ClientDocumentDetailPage() {
       <PageHeader
         titre={titreDocument(document)}
         description={`Document ${document.numero}`}
-        filAriane={["Mon espace", "Mes reçus", document.numero]}
+        filAriane={["Accueil", "Mes reçus", document.numero]}
         actions={actions}
       />
       <article className="document-paiement-sre" aria-label={titreDocument(document)}>

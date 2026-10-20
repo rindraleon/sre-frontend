@@ -1,4 +1,3 @@
-/** Option de liste déroulante générique (valeur = code API, libellé = affichage). */
 export interface OptionSelect {
   valeur: string;
   libelle: string;
@@ -10,12 +9,6 @@ export const OPTIONS_TYPE_CONTRIBUABLE: OptionSelect[] = [
   { valeur: TOUS, libelle: "Tous" },
   { valeur: "PARTICULIER", libelle: "Particuliers" },
   { valeur: "ENTREPRISE", libelle: "Entreprises" },
-];
-
-export const OPTIONS_ROLE_UTILISATEUR: OptionSelect[] = [
-  { valeur: TOUS, libelle: "Tous les rôles" },
-  { valeur: "ADMIN", libelle: "Administrateurs" },
-  { valeur: "CLIENT", libelle: "Contribuables" },
 ];
 
 export const OPTIONS_STATUT_OBLIGATION: OptionSelect[] = [
@@ -44,5 +37,3 @@ export const STATUTS_OBLIGATION_DECLARABLE = [
   "REJETE",
   "CORRECTION_DEMANDEE",
 ] as const;
-
-export const TAILLES_PAGES_TABLEAU = [10, 20, 50] as const;

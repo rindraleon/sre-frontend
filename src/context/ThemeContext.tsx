@@ -38,9 +38,9 @@ interface ContexteThemeSre {
 
 const Contexte = createContext<ContexteThemeSre | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, definirThemeEtat] = useState<Theme>(() => getInitialTheme());
-  const [preferenceExplicite, definirPreferenceExplicite] = useState(
+export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
+  const [preferenceExplicite, setPreferenceExplicite] = useState(
     () => lireThemePersistant() !== null,
   );
 
@@ -58,19 +58,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (preferenceExplicite) return;
     const requeteMedia = window.matchMedia("(prefers-color-scheme: dark)");
     const suivrePreferenceSysteme = (event: MediaQueryListEvent) => {
-      definirThemeEtat(event.matches ? "sombre" : "clair");
+      setTheme(event.matches ? "sombre" : "clair");
     };
     requeteMedia.addEventListener("change", suivrePreferenceSysteme);
     return () => requeteMedia.removeEventListener("change", suivrePreferenceSysteme);
   }, [preferenceExplicite]);
 
   const definirTheme = useCallback((nouveau: Theme) => {
-    definirPreferenceExplicite(true);
-    definirThemeEtat(nouveau);
+    setPreferenceExplicite(true);
+    setTheme(nouveau);
   }, []);
   const basculerTheme = useCallback(() => {
-    definirPreferenceExplicite(true);
-    definirThemeEtat((courant) => (courant === "sombre" ? "clair" : "sombre"));
+    setPreferenceExplicite(true);
+    setTheme((courant) => (courant === "sombre" ? "clair" : "sombre"));
   }, []);
 
   const valeur = useMemo(

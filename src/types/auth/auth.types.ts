@@ -29,6 +29,7 @@ export interface ApiSession {
   role: UserRole;
   contribuableId?: string;
   changementMotDePasseRequis: boolean;
+  profilComplete: boolean;
   expireLe: number;
   modeApi: true;
   jetonApi: string;

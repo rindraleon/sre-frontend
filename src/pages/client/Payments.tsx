@@ -4,7 +4,7 @@ import { CircleDollarSign } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable } from "@/components/ui";
+import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { creerColonnesPaiements } from "@/components/tables/client/payments-columns";
 import { useTableState } from "@/hooks";
@@ -15,48 +15,41 @@ export function ClientPaymentsPage() {
   const { session } = useAuth();
   const { etat } = useSre();
   const table = useTableState();
-  const [statut, definirStatut] = useState<string>(TOUS);
+  const [statut, setStatut] = useState<string>(TOUS);
   const paiements = useMemo(
     () =>
       etat.paiements
         .filter((paiement) => paiement.contribuableId === session?.contribuableId)
-        .filter(
-          (paiement) =>
-            (statut === TOUS || paiement.statut === statut) &&
-            `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode}`
-              .toLowerCase()
-              .includes(table.recherche.toLowerCase()),
-        )
+        .filter((paiement) => statut === TOUS || paiement.statut === statut)
         .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe)),
-    [etat.paiements, session?.contribuableId, statut, table.recherche],
+    [etat.paiements, session?.contribuableId, statut],
   );
   const colonnes = creerColonnesPaiements();
   return (
     <div className="page-contenu-sre">
       <PageHeader
         titre="Historique des paiements"
-        description="Suivez les déclarations associées à votre compte."
-        filAriane={["Mon espace", "Historique des paiements"]}
-        actions={
-          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_CLIENT.nouveauPaiement}>
-            <CircleDollarSign size={16} /> Déclarer un paiement
-          </Link>
-        }
+        description="Déclarations associées à votre compte."
+        filAriane={["Accueil", "Historique des paiements"]}
       />
       <DataTable
-        lignes={paiements}
-        colonnes={colonnes}
-        obtenirId={(paiement) => paiement.id}
-        recherche={table.recherche}
-        rechercher={table.rechercher}
-        placeholder="Référence, impôt, période…"
-        actionsEntete={
+        data={paiements}
+        columns={convertirColonnesTanstack(colonnes)}
+        label="Historique des paiements"
+        getRowId={(paiement) => paiement.id}
+        getSearchText={(paiement) =>
+          `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode}`
+        }
+        searchPlaceholder="Référence, impôt, période…"
+        searchValue={table.recherche}
+        onSearchChange={table.rechercher}
+        toolbarActions={
           <label className="filtre-compact-sre">
             Statut
             <Select
               value={statut}
               onChange={(event) => {
-                definirStatut(event.target.value);
+                setStatut(event.target.value);
                 table.reinitialiserPage();
               }}
             >
@@ -64,12 +57,18 @@ export function ClientPaymentsPage() {
             </Select>
           </label>
         }
-        espaceVide="Aucune déclaration"
-        messageVide="Les déclarations enregistrées apparaîtront ici."
+        actionPrimary={
+          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_CLIENT.nouveauPaiement}>
+            <CircleDollarSign size={16} /> Déclarer un paiement
+          </Link>
+        }
+        columnToggle
+        emptyTitle="Aucune déclaration"
+        emptyDescription="Les déclarations enregistrées apparaîtront ici."
         page={table.page}
-        parPage={table.parPage}
-        changerPage={table.changerPage}
-        changerParPage={table.changerParPage}
+        rowsPerPage={table.parPage}
+        onPageChange={table.changerPage}
+        onRowsPerPageChange={table.changerParPage}
       />
     </div>
   );

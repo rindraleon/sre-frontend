@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -13,12 +13,17 @@ import {
   WalletCards,
 } from "lucide-react";
 import { useSre } from "@/context/SreContext";
+import { useAuth } from "@/context/AuthContext";
 import { ROUTES_ADMIN } from "@/constants";
 import { StatusBadge, StatCard, PageHeader, EmptyState } from "@/components/ui";
+import { loadActivityLogApi } from "@/services/api-client";
+import type { ActivityLogEntry } from "@/types";
 import { formatMoney, formatDate } from "@/utils/format";
 
 export function AdminDashboardPage() {
   const { etat } = useSre();
+  const { session } = useAuth();
+  const [activite, setActivite] = useState<ActivityLogEntry[]>([]);
   const contribuablesActifs = etat.contribuables.filter(
     (contribuable) => contribuable.statut === "ACTIF",
   );
@@ -61,31 +66,36 @@ export function AdminDashboardPage() {
   const paiementsRecents = [...etat.paiements]
     .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe))
     .slice(0, 5);
-  const derniereActivite = etat.journauxActivite.slice(0, 4);
+
+  useEffect(() => {
+    if (!session?.jetonApi) return;
+    let ignore = false;
+    loadActivityLogApi(session.jetonApi, 8)
+      .then((entrees) => {
+        if (!ignore) setActivite(entrees);
+      })
+      .catch(() => {
+        // Le journal peut être indisponible : le tableau de bord reste consultable.
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [session?.jetonApi]);
+
+  const derniereActivite = activite.slice(0, 4);
 
   return (
     <div className="page-contenu-sre">
       <PageHeader
-        titre="Vue d’ensemble"
+        titre="Tableau de bord"
         description="Suivi des données enregistrées pour le périmètre Haute Matsiatra."
-        filAriane={["Back-office", "Tableau de bord"]}
+        filAriane={["Accueil", "Tableau de bord"]}
         actions={
           <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_ADMIN.importExcel}>
             <FileSpreadsheet size={15} /> Importer un fichier
           </Link>
         }
       />
-
-      <div className="bandeau-alerte-securite-sre">
-        <BadgeCheck size={18} />
-        <div>
-          <strong>Les indicateurs sont issus des données du serveur.</strong>
-          <p>
-            Les déclarations ne sont pas confirmées automatiquement. Aucune transaction bancaire ou
-            notification externe n’est traitée par le portail.
-          </p>
-        </div>
-      </div>
 
       <section className="grille-statistiques-sre">
         <StatCard
@@ -254,17 +264,15 @@ export function AdminDashboardPage() {
                       "Profil indisponible";
                     return (
                       <tr key={paiement.id}>
-                        <td>
-                          <strong>{paiement.referenceInterne}</strong>
-                        </td>
-                        <td>{nom}</td>
-                        <td>{paiement.typeImpotNom}</td>
-                        <td>{formatMoney(paiement.montant)}</td>
-                        <td>{formatDate(paiement.soumisLe)}</td>
-                        <td>
+                        <td data-label="Référence"><strong>{paiement.referenceInterne}</strong></td>
+                        <td data-label="Contribuable">{nom}</td>
+                        <td data-label="Impôt">{paiement.typeImpotNom}</td>
+                        <td data-label="Montant déclaré">{formatMoney(paiement.montant)}</td>
+                        <td data-label="Soumis le">{formatDate(paiement.soumisLe)}</td>
+                        <td data-label="Statut">
                           <StatusBadge statut={paiement.statut} />
                         </td>
-                        <td>
+                        <td data-label="Action">
                           <Link className="lien-action-sre" to={ROUTES_ADMIN.paiement(paiement.id)}>
                             Détails <ArrowRight size={13} />
                           </Link>
@@ -310,7 +318,7 @@ export function AdminDashboardPage() {
           ) : (
             <EmptyState
               titre="Aucun événement disponible"
-              description="Le journal d’activité n’est pas encore fourni par l’API."
+              description="Les actions réalisées par les comptes apparaîtront ici dès leur exécution."
             />
           )}
         </section>

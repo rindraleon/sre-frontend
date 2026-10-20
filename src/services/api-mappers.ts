@@ -26,6 +26,8 @@ export function mapApiUser(utilisateur: ApiUser): AppUser {
     contribuableId: utilisateur.contribuableId,
     statut: utilisateur.statut,
     changementMotDePasseRequis: utilisateur.changementMotDePasseRequis,
+    profilComplete: utilisateur.profilComplete ?? true,
+    courrielVerifie: utilisateur.courrielVerifie ?? false,
     creeLe: utilisateur.creeLe,
     derniereConnexion: utilisateur.derniereConnexion ?? undefined,
   };
@@ -170,10 +172,12 @@ export function mapApiNotification(
     statutEmail:
       notification.statutCourriel === "ENVOYE"
         ? "ENVOYE"
-        : notification.statutCourriel === "ECHEC"
-          ? "ERREUR"
-          : notification.statutCourriel === "EN_ATTENTE"
-            ? "EN_ATTENTE"
-            : "NON_ENVOYE",
+        : notification.statutCourriel === "DELIVRE"
+          ? "DELIVRE"
+          : notification.statutCourriel === "ECHEC"
+            ? "ERREUR"
+            : notification.statutCourriel === "EN_ATTENTE"
+              ? "EN_ATTENTE"
+              : "NON_ENVOYE",
   };
 }

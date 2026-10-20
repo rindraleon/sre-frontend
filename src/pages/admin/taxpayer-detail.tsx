@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CirclePlus, UserRound } from "lucide-react";
 import { useSre } from "@/context/SreContext";
 import { ROUTES_ADMIN, SRE_REGION } from "@/constants";
@@ -7,12 +7,16 @@ import { formatDate } from "@/utils/format";
 
 export function AdminTaxpayerDetailPage() {
   const { id } = useParams();
+  const emplacement = useLocation();
   const { etat } = useSre();
+  const listeParente = emplacement.pathname.startsWith("/admin/entreprises")
+    ? "Entreprises"
+    : "Contribuables";
   const contribuable = etat.contribuables.find((entree) => entree.id === id);
   if (!contribuable)
     return (
       <div className="page-contenu-sre">
-        <PageHeader titre="Contribuable introuvable" filAriane={["Back-office", "Contribuables"]} />
+        <PageHeader titre="Contribuable introuvable" filAriane={["Accueil", listeParente]} />
         <EmptyState
           titre="Profil non trouvé"
           description="Ce profil n’existe pas dans les données accessibles à votre session."
@@ -36,7 +40,7 @@ export function AdminTaxpayerDetailPage() {
           contribuable.raisonSociale || `${contribuable.prenom ?? ""} ${contribuable.nom}`.trim()
         }
         description={`${contribuable.type === "ENTREPRISE" ? "Entreprise" : "Particulier"} · ${SRE_REGION}`}
-        filAriane={["Back-office", "Contribuables", contribuable.nif || contribuable.id]}
+        filAriane={["Accueil", listeParente, contribuable.nif || contribuable.id]}
         actions={
           <Link className="bouton-sre bouton-sre--contour" to={ROUTES_ADMIN.contribuables}>
             <ArrowLeft size={14} /> Retour

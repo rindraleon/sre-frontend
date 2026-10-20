@@ -62,7 +62,7 @@ export function ClientNotificationsPage() {
       <PageHeader
         titre="Notifications"
         description="Rappels d’échéances et messages liés à votre dossier, générés par le serveur."
-        filAriane={["Mon espace", "Notifications"]}
+        filAriane={["Accueil", "Notifications"]}
         actions={
           nonLues > 0 ? (
             <Button
@@ -114,11 +114,15 @@ export function ClientNotificationsPage() {
                     </Button>
                   )}
                   <small>
-                    {notification.statutEmail === "ENVOYE"
-                      ? "Courriel : envoyé"
-                      : notification.statutEmail === "ERREUR"
-                        ? "Courriel : échec d’envoi (notification conservée ici)"
-                        : "Courriel : non envoyé"}
+                    {notification.statutEmail === "DELIVRE"
+                      ? "Courriel : délivré"
+                      : notification.statutEmail === "ENVOYE"
+                        ? "Courriel : envoyé"
+                        : notification.statutEmail === "EN_ATTENTE"
+                          ? "Courriel : en attente d’envoi"
+                          : notification.statutEmail === "ERREUR"
+                            ? "Courriel : échec d’envoi (notification conservée ici)"
+                            : "Courriel : non envoyé"}
                   </small>
                 </div>
               </div>
@@ -128,8 +132,5 @@ export function ClientNotificationsPage() {
       )}
     </div>
   );
-}
-function definirEnCours(id: string) {
-  throw new Error("Function not implemented.");
 }
 

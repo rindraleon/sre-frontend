@@ -1,4 +1,4 @@
-import type { PlatformState, UserRole } from "@/types";
+import type { ActivityLogEntry, PlatformState, UserRole } from "@/types";
 import type {
   ApiDocument,
   ApiNotification,
@@ -146,6 +146,16 @@ export async function getRegistrationStateApi() {
   return callApi<{ administrateurInitialise: boolean }>("auth/etat-inscription");
 }
 
+/** Journal d'audit alimenté par le backend (intercepteur global). */
+export async function loadActivityLogApi(
+  jeton: string,
+  parPage = 200,
+): Promise<ActivityLogEntry[]> {
+  return callApi<ActivityLogEntry[]>(`admin/journal-activite?parPage=${parPage}`, {
+    token: jeton,
+  });
+}
+
 async function loadAllApiPages<T>(chemin: string, jeton: string): Promise<T[]> {
   const taillePage = 100;
   const premierePage = await callApi<ApiPaginatedResponse<T>>(
@@ -155,22 +165,24 @@ async function loadAllApiPages<T>(chemin: string, jeton: string): Promise<T[]> {
   const nombrePages = Math.ceil(
     premierePage.total / Math.max(1, premierePage.parPage || taillePage),
   );
-  const pagesSupplementaires: T[][] = [];
+  let pagesSupplementaires = Promise.resolve<T[][]>([]);
   for (let debut = 2; debut <= nombrePages; debut += 4) {
     const numeros = Array.from(
       { length: Math.min(4, nombrePages - debut + 1) },
       (_, index) => debut + index,
     );
-    const resultatLot = await Promise.all(
-      numeros.map((numero) =>
-        callApi<ApiPaginatedResponse<T>>(`${chemin}?page=${numero}&parPage=${taillePage}`, {
-          token: jeton,
-        }),
-      ),
-    );
-    pagesSupplementaires.push(...resultatLot.map((page) => page.donnees));
+    pagesSupplementaires = pagesSupplementaires.then(async (pages) => {
+      const resultatLot = await Promise.all(
+        numeros.map((numero) =>
+          callApi<ApiPaginatedResponse<T>>(`${chemin}?page=${numero}&parPage=${taillePage}`, {
+            token: jeton,
+          }),
+        ),
+      );
+      return [...pages, ...resultatLot.map((page) => page.donnees)];
+    });
   }
-  return [...premierePage.donnees, ...pagesSupplementaires.flat()];
+  return [...premierePage.donnees, ...(await pagesSupplementaires).flat()];
 }
 
 export async function loadApiState(

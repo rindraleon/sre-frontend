@@ -16,7 +16,7 @@ export function ClientObligationDetailPage() {
   if (!obligation) {
     return (
       <div className="page-contenu-sre">
-        <PageHeader titre="Obligation introuvable" filAriane={["Mon espace", "Mes impôts"]} />
+        <PageHeader titre="Obligation introuvable" filAriane={["Accueil", "Mes impôts"]} />
         <EmptyState
           titre="Cette obligation n’est pas accessible"
           description="Elle n’existe pas ou ne fait pas partie des données de votre compte."
@@ -36,7 +36,7 @@ export function ClientObligationDetailPage() {
       <PageHeader
         titre={obligation.typeImpotNom}
         description={`Référence ${obligation.referenceFiscale}`}
-        filAriane={["Mon espace", "Mes impôts", obligation.referenceFiscale]}
+        filAriane={["Accueil", "Mes impôts", obligation.referenceFiscale]}
         actions={
           <Link className="bouton-sre bouton-sre--contour" to="/client/obligations">
             <ArrowLeft size={15} /> Retour
