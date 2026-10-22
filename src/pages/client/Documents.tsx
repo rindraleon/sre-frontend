@@ -1,44 +1,44 @@
 import { useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
-import { creerColonnesDocuments } from "@/components/tables/client/documents-columns";
+import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
+import { createDocumentColumns } from "@/components/tables/client/documents-columns";
 import { useTableState } from "@/hooks";
 
 export function ClientDocumentsPage() {
   const { session } = useAuth();
-  const { etat } = useSre();
+  const { state } = useSre();
   const table = useTableState();
   const documents = useMemo(
     () =>
-      etat.documentsPaiement
+      state.paymentDocuments
         .filter(
           (document) =>
-            document.contribuableId === session?.contribuableId && document.statut === "VALIDE",
+            document.taxpayerId === session?.taxpayerId && document.status === "VALIDE",
         )
-        .sort((a, b) => b.emisLe.localeCompare(a.emisLe)),
-    [etat.documentsPaiement, session?.contribuableId],
+        .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt)),
+    [state.paymentDocuments, session?.taxpayerId],
   );
-  const colonnes = creerColonnesDocuments();
+  const columns = createDocumentColumns();
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Mes reçus et documents"
+        title="Mes reçus et documents"
         description="Retrouvez les accusés de réception et les reçus internes liés à vos déclarations."
-        filAriane={["Accueil", "Mes reçus"]}
+        breadcrumb={["Accueil", "Mes reçus"]}
       />
       <DataTable
         data={documents}
-        columns={convertirColonnesTanstack(colonnes)}
+        columns={toTanstackColumns(columns)}
         label="Mes reçus et documents"
         getRowId={(document) => document.id}
         columnToggle
         emptyTitle="Aucun document"
         emptyDescription="Les accusés et reçus associés à vos déclarations apparaîtront ici."
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
     </div>
   );

@@ -1,37 +1,37 @@
 export interface OptionSelect {
-  valeur: string;
-  libelle: string;
+  value: string;
+  label: string;
 }
 
-export const TOUS = "TOUS" as const;
+export const ALL = "TOUS" as const;
 
-export const OPTIONS_TYPE_CONTRIBUABLE: OptionSelect[] = [
-  { valeur: TOUS, libelle: "Tous" },
-  { valeur: "PARTICULIER", libelle: "Particuliers" },
-  { valeur: "ENTREPRISE", libelle: "Entreprises" },
+export const TAXPAYER_TYPE_OPTIONS: OptionSelect[] = [
+  { value: ALL, label: "Tous" },
+  { value: "PARTICULIER", label: "Particuliers" },
+  { value: "ENTREPRISE", label: "Entreprises" },
 ];
 
-export const OPTIONS_STATUT_OBLIGATION: OptionSelect[] = [
-  { valeur: TOUS, libelle: "Tous" },
-  { valeur: "A_PAYER", libelle: "À payer" },
-  { valeur: "EN_RETARD", libelle: "En retard" },
-  { valeur: "PAIEMENT_EN_COURS", libelle: "Paiement en cours" },
-  { valeur: "EN_VERIFICATION", libelle: "En vérification" },
-  { valeur: "REJETE", libelle: "Rejeté" },
-  { valeur: "PAYE", libelle: "Décision confirmée en interne" },
+export const OBLIGATION_STATUS_OPTIONS: OptionSelect[] = [
+  { value: ALL, label: "Tous" },
+  { value: "A_PAYER", label: "À payer" },
+  { value: "EN_RETARD", label: "En retard" },
+  { value: "PAIEMENT_EN_COURS", label: "Paiement en cours" },
+  { value: "EN_VERIFICATION", label: "En vérification" },
+  { value: "REJETE", label: "Rejeté" },
+  { value: "PAYE", label: "Décision confirmée en interne" },
 ];
 
-export const OPERATEURS_MOBILE_MONEY: OptionSelect[] = [
-  { valeur: "MVOLA", libelle: "MVola" },
-  { valeur: "ORANGE_MONEY", libelle: "Orange Money" },
-  { valeur: "AIRTEL_MONEY", libelle: "Airtel Money" },
+export const OPERATORS_MOBILE_MONEY: OptionSelect[] = [
+  { value: "MVOLA", label: "MVola" },
+  { value: "ORANGE_MONEY", label: "Orange Money" },
+  { value: "AIRTEL_MONEY", label: "Airtel Money" },
 ];
 
-export const MODE_PAIEMENT_MOBILE_MONEY = "MOBILE_MONEY" as const;
-export const MODE_PAIEMENT_VIREMENT = "VIREMENT_BANCAIRE" as const;
+export const PAYMENT_METHOD_MOBILE_MONEY = "MOBILE_MONEY" as const;
+export const PAYMENT_METHOD_BANK_TRANSFER = "VIREMENT_BANCAIRE" as const;
 
-/** Statuts d'obligation ouvrant la déclaration d'un paiement. */
-export const STATUTS_OBLIGATION_DECLARABLE = [
+/** Obligation statuses that allow declaring a payment. */
+export const DECLARABLE_OBLIGATION_STATUSES = [
   "A_PAYER",
   "EN_RETARD",
   "REJETE",

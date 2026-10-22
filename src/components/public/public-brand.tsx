@@ -16,11 +16,11 @@ export function PublicBrand({
   return (
     <Link
       to="/accueil"
-      className={cn("marque-sre marque-sre--public", `marque-sre--${variant}`, className)}
+      className={cn("brand-sre brand-sre--public", `brand-sre--${variant}`, className)}
       aria-label="SRE, retour à l’accueil"
     >
-      <img className="marque-sre__logo-public" src={logoSre} alt="" aria-hidden="true" />
-      <div className="marque-sre__texte-public">
+      <img className="brand-sre__public-logo" src={logoSre} alt="" aria-hidden="true" />
+      <div className="brand-sre__public-text">
         <strong>
           SRE<span>·</span>Portail
         </strong>

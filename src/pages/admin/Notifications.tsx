@@ -6,36 +6,36 @@ import { formatDate } from "@/utils/format";
 
 export function AdminNotificationsPage() {
   const { session } = useAuth();
-  const { etat } = useSre();
-  const notifications = etat.notifications.filter(
-    (notification) => notification.utilisateurId === session?.utilisateurId,
+  const { state } = useSre();
+  const notifications = state.notifications.filter(
+    (notification) => notification.userId === session?.userId,
   );
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Notifications & e-mails"
+        title="Notifications & e-mails"
         description="Centre de communication administratif."
-        filAriane={["Accueil", "Notifications"]}
+        breadcrumb={["Accueil", "Notifications"]}
       />
       
       {notifications.length === 0 ? (
         <EmptyState
-          titre="Aucune notification personnelle"
+          title="Aucune notification personnelle"
           description="Les rappels d’échéances sont adressés aux comptes contribuables concernés ; cette page affiche uniquement les notifications de votre propre compte administrateur."
         />
       ) : (
-        <div className="liste-notifications-sre">
+        <div className="notifications-list-sre">
           {notifications.map((notification) => (
             <article
               key={notification.id}
-              className={`notification-carte-sre${notification.lue ? "" : " notification-carte-sre--non-lue"}`}
+              className={`notification-card-sre${notification.isRead ? "" : " notification-card-sre--unread"}`}
             >
-              <span className="notification-carte-sre__icone">
+              <span className="notification-card-sre__icon">
                 <Bell size={16} />
               </span>
               <div>
-                <div className="notification-carte-sre__ligne">
-                  <strong>{notification.titre}</strong>
+                <div className="notification-card-sre__row">
+                  <strong>{notification.title}</strong>
                   <small>{formatDate(notification.date, true)}</small>
                 </div>
                 <p>{notification.message}</p>

@@ -1,33 +1,33 @@
 import { cn } from "@/lib/utils";
 
-/** Marque officielle du portail SRE (logo professionnel validé). */
-const MARQUE = "/logo-sre-pro.png";
+/** Official brand of the SRE portal (validated professional logo). */
+const BRAND = "/logo-sre-pro.png";
 
 export function LogoSre({
-  taille = 34,
-  avecTexte = true,
-  sousTitre,
+  size = 34,
+  withText = true,
+  subtitle,
   className,
 }: Readonly<{
-  taille?: number;
-  avecTexte?: boolean;
-  sousTitre?: string | null;
+  size?: number;
+  withText?: boolean;
+  subtitle?: string | null;
   className?: string;
 }>) {
   return (
     <>
       <span
-        className={cn("logo-sre-marque", className)}
-        style={{ width: taille, height: taille }}
+        className={cn("logo-sre-brand", className)}
+        style={{ width: size, height: size }}
       >
-        <img src={MARQUE} alt="Logo SRE" width={taille} height={taille} />
+        <img src={BRAND} alt="Logo SRE" width={size} height={size} />
       </span>
-      {avecTexte && (
+      {withText && (
         <div>
           <strong>
             SRE<span>·</span>Fianarantsoa
           </strong>
-          {sousTitre !== null && <small>{sousTitre ?? "Haute Matsiatra"}</small>}
+          {subtitle !== null && <small>{subtitle ?? "Haute Matsiatra"}</small>}
         </div>
       )}
     </>

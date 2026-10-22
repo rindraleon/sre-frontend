@@ -5,16 +5,16 @@ export type TaxPeriodicity = "MENSUELLE" | "TRIMESTRIELLE" | "ANNUELLE" | "PONCT
 export interface TaxType {
   id: string;
   code: string;
-  nom: string;
+  name: string;
   description: string;
-  categorie: string;
-  contribuablesConcernes: "TOUS" | TaxpayerType;
-  periodicite: TaxPeriodicity;
-  regleEcheance: string;
-  modeMontant: "FIXE" | "CALCULE" | "MANUEL";
-  montantReference: number | null;
-  champsComplementaires: string[];
-  actif: boolean;
-  creeLe: string;
-  modifieLe: string;
+  category: string;
+  applicableTaxpayers: "TOUS" | TaxpayerType;
+  periodicity: TaxPeriodicity;
+  dueDateRule: string;
+  amountMode: "FIXE" | "CALCULE" | "MANUEL";
+  referenceAmount: number | null;
+  additionalFields: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

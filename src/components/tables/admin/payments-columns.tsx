@@ -5,86 +5,86 @@ import { ROUTES_ADMIN } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
-export function creerColonnesPaiements({
-  contribuables,
-}: Readonly<{ contribuables: Taxpayer[] }>): TableColumn<Payment>[] {
+export function createPaymentColumns({
+  taxpayers,
+}: Readonly<{ taxpayers: Taxpayer[] }>): TableColumn<Payment>[] {
   return [
     {
       id: "ref",
-      titre: "Référence",
-      afficher: (paiement) => (
-        <Link className="reference-sre" to={ROUTES_ADMIN.paiement(paiement.id)}>
-          {paiement.referenceInterne}
+      title: "Référence",
+      render: (payment) => (
+        <Link className="reference-sre" to={ROUTES_ADMIN.payment(payment.id)}>
+          {payment.internalReference}
         </Link>
       ),
-      valeurTri: (paiement) => paiement.referenceInterne,
+      sortValue: (payment) => payment.internalReference,
     },
     {
-      id: "contribuable",
-      titre: "Contribuable",
-      afficher: (paiement) => {
-        const c = contribuables.find((entree) => entree.id === paiement.contribuableId);
+      id: "taxpayer",
+      title: "Contribuable",
+      render: (payment) => {
+        const c = taxpayers.find((entry) => entry.id === payment.taxpayerId);
         return (
           <div>
             <strong>
-              {c?.raisonSociale ||
-                `${c?.prenom ?? ""} ${c?.nom ?? ""}`.trim() ||
+              {c?.legalName ||
+                `${c?.firstName ?? ""} ${c?.lastName ?? ""}`.trim() ||
                 "Profil indisponible"}
             </strong>
-            <small className="sous-ligne-sre">{c?.nif || c?.courriel || "—"}</small>
+            <small className="sub-row-sre">{c?.nif || c?.email || "—"}</small>
           </div>
         );
       },
-      valeurTri: (paiement) =>
-        contribuables.find((e) => e.id === paiement.contribuableId)?.raisonSociale ?? "",
+      sortValue: (payment) =>
+        taxpayers.find((e) => e.id === payment.taxpayerId)?.legalName ?? "",
     },
     {
-      id: "impot",
-      titre: "Impôt / période",
-      afficher: (paiement) => (
+      id: "tax",
+      title: "Impôt / période",
+      render: (payment) => (
         <>
-          {paiement.typeImpotNom}
-          <small className="sous-ligne-sre">{paiement.periode}</small>
+          {payment.taxTypeName}
+          <small className="sub-row-sre">{payment.period}</small>
         </>
       ),
-      valeurTri: (paiement) => paiement.typeImpotNom,
+      sortValue: (payment) => payment.taxTypeName,
     },
     {
-      id: "montant",
-      titre: "Montant déclaré",
-      afficher: (paiement) => <strong>{formatMoney(paiement.montant)}</strong>,
-      valeurTri: (paiement) => paiement.montant,
+      id: "amount",
+      title: "Montant déclaré",
+      render: (payment) => <strong>{formatMoney(payment.amount)}</strong>,
+      sortValue: (payment) => payment.amount,
     },
     {
       id: "mode",
-      titre: "Mode déclaré",
-      afficher: (paiement) => <StatusBadge statut={paiement.mode} />,
-      valeurTri: (paiement) => paiement.mode,
+      title: "Mode déclaré",
+      render: (payment) => <StatusBadge status={payment.mode} />,
+      sortValue: (payment) => payment.mode,
     },
     {
-      id: "soumis",
-      titre: "Soumis le",
-      afficher: (paiement) => formatDate(paiement.soumisLe, true),
-      valeurTri: (paiement) => paiement.soumisLe,
+      id: "submitted",
+      title: "Soumis le",
+      render: (payment) => formatDate(payment.submittedAt, true),
+      sortValue: (payment) => payment.submittedAt,
     },
     {
-      id: "statut",
-      titre: "Statut",
-      afficher: (paiement) => <StatusBadge statut={paiement.statut} />,
-      valeurTri: (paiement) => paiement.statut,
+      id: "status",
+      title: "Statut",
+      render: (payment) => <StatusBadge status={payment.status} />,
+      sortValue: (payment) => payment.status,
     },
     {
       id: "action",
-      titre: "Actions",
-      afficher: (paiement) => (
+      title: "Actions",
+      render: (payment) => (
         <ActionGroup>
           <ActionIcon
-            titre={
-              paiement.statut === "EN_VERIFICATION"
+            title={
+              payment.status === "EN_VERIFICATION"
                 ? "Examiner la déclaration"
                 : "Consulter la déclaration"
             }
-            href={ROUTES_ADMIN.paiement(paiement.id)}
+            href={ROUTES_ADMIN.payment(payment.id)}
           >
             <Eye size={15} />
           </ActionIcon>

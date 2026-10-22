@@ -5,32 +5,32 @@ import { AuthHeader } from "@/components/layout/auth-header";
 import { ActivationForm } from "@/components/forms/auth/activation-form";
 import { callApi } from "@/services/api-client";
 
-interface EtatActivation {
-  enCours: boolean;
-  valide: boolean | null;
+interface ActivationState {
+  inProgress: boolean;
+  valid: boolean | null;
   message: string;
-  courrielMasque?: string;
-  nom?: string;
-  expireLe?: string;
+  maskedEmail?: string;
+  name?: string;
+  expiresAt?: string;
 }
 
 
 export function ActivationPage() {
-  const [rechercheParams] = useSearchParams();
-  const jeton = rechercheParams.get("jeton") ?? "";
-  const [etat, setEtat] = useState<EtatActivation>({
-    enCours: true,
-    valide: null,
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("jeton") ?? "";
+  const [state, setState] = useState<ActivationState>({
+    inProgress: true,
+    valid: null,
     message: "Vérification du lien d’activation…",
   });
 
   useEffect(() => {
-    let actif = true;
-    const verifier = async () => {
-      if (!jeton) {
-        setEtat({
-          enCours: false,
-          valide: false,
+    let isActive = true;
+    const verify = async () => {
+      if (!token) {
+        setState({
+          inProgress: false,
+          valid: false,
           message: "Lien d’activation incomplet : aucun jeton fourni.",
         });
         return;
@@ -41,21 +41,21 @@ export function ActivationPage() {
           courrielMasque: string;
           nom: string;
           expireLe: string;
-        }>(`auth/activation/${encodeURIComponent(jeton)}`);
-        if (!actif) return;
-        setEtat({
-          enCours: false,
-          valide: true,
+        }>(`auth/activation/${encodeURIComponent(token)}`);
+        if (!isActive) return;
+        setState({
+          inProgress: false,
+          valid: true,
           message: "Lien d’activation valide.",
-          courrielMasque: information.courrielMasque,
-          nom: information.nom,
-          expireLe: information.expireLe,
+          maskedEmail: information.courrielMasque,
+          name: information.nom,
+          expiresAt: information.expireLe,
         });
       } catch (cause) {
-        if (!actif) return;
-        setEtat({
-          enCours: false,
-          valide: false,
+        if (!isActive) return;
+        setState({
+          inProgress: false,
+          valid: false,
           message:
             cause instanceof Error
               ? cause.message
@@ -63,37 +63,37 @@ export function ActivationPage() {
         });
       }
     };
-    void verifier();
+    void verify();
     return () => {
-      actif = false;
+      isActive = false;
     };
-  }, [jeton]);
+  }, [token]);
 
   return (
     <div className="page-auth-sre">
-      <AuthHeader surTitre="ACTIVATION DE VOTRE ESPACE" libelleLien="Connexion" cheminLien="/connexion" />
-      <main className="auth-cadre-sre">
-        <section className="auth-carte-sre">
-          {etat.enCours && (
+      <AuthHeader overline="ACTIVATION DE VOTRE ESPACE" linkLabel="Connexion" linkPath="/connexion" />
+      <main className="auth-frame-sre">
+        <section className="auth-card-sre">
+          {state.inProgress && (
             <p className="text-center">Vérification du lien d’activation…</p>
           )}
-          {!etat.enCours && etat.valide === false && (
+          {!state.inProgress && state.valid === false && (
             <>
               <h1 className="text-center">Lien d’activation non valide</h1>
               <p className="text-center" role="alert">
-                {etat.message}
+                {state.message}
               </p>
-              <p className="auth-lien-secondaire-sre text-center">
+              <p className="auth-link-secondary-sre text-center">
                 Demandez un nouveau lien à votre administration, ou{" "}
                 <Link to="/connexion">connectez-vous avec votre mot de passe provisoire</Link>.
               </p>
             </>
           )}
-          {!etat.enCours && etat.valide === true && (
+          {!state.inProgress && state.valid === true && (
             <>
               <p className="text-center">
-                <ShieldCheck size={16} aria-hidden="true" /> Bonjour {etat.nom || "…"} — compte{" "}
-                {etat.courrielMasque}
+                <ShieldCheck size={16} aria-hidden="true" /> Bonjour {state.name || "…"} — compte{" "}
+                {state.maskedEmail}
               </p>
               <ActivationForm />
             </>

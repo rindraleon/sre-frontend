@@ -5,8 +5,8 @@ import { FormField, FormError } from "@/components/forms/form-field";
 import { FormStepIndicator } from "@/components/forms/form-step-indicator";
 import type { TaxpayerFormValues } from "@/validation/profile.schema";
 
-/** Valeurs par défaut du formulaire « profil contribuable ». */
-export const PROFIL_VIDE: TaxpayerFormValues = {
+/** Default values of the "taxpayer profile" form. */
+export const PROFILE_EMPTY: TaxpayerFormValues = {
   nom: "",
   prenom: "",
   type: "PARTICULIER",
@@ -25,70 +25,70 @@ export const PROFIL_VIDE: TaxpayerFormValues = {
   fonctionContact: "",
 };
 
-/** Champs de création d'un profil, organisés en étapes courtes dans la modale. */
+/** Profile creation fields, organized into short steps in the modal. */
 export function TaxpayerFormFields({
-  formulaire,
-  erreur,
-  etape,
+  form,
+  error,
+  step,
 }: Readonly<{
-  formulaire: UseFormReturn<TaxpayerFormValues>;
-  erreur?: string;
-  etape: number;
+  form: UseFormReturn<TaxpayerFormValues>;
+  error?: string;
+  step: number;
 }>) {
   const {
     register,
     watch,
     formState: { errors },
-  } = formulaire;
-  const typeProfil = watch("type");
-  const etapes =
-    typeProfil === "ENTREPRISE"
+  } = form;
+  const profileType = watch("type");
+  const steps =
+    profileType === "ENTREPRISE"
       ? ["Identité", "Identification", "Coordonnées"]
       : ["Identité", "Coordonnées"];
-  const etapeIndicateur = typeProfil === "ENTREPRISE" || etape === 0 ? etape : 1;
+  const stepIndicator = profileType === "ENTREPRISE" || step === 0 ? step : 1;
   return (
-    <div className="formulaire-sre grille-formulaire-sre formulaire-compact-sre">
-      <FormStepIndicator etape={etapeIndicateur} etapes={etapes} />
-      {etape === 0 && (
+    <div className="form-sre form-grid-sre compact-form-sre">
+      <FormStepIndicator step={stepIndicator} steps={steps} />
+      {step === 0 && (
         <>
-          <FormField libelle="Type" erreur={errors.type} requis>
+          <FormField label="Type" error={errors.type} required>
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("type")}>
+              <Select {...p} className="field-simple-sre" {...register("type")}>
                 <option value="PARTICULIER">Particulier</option>
                 <option value="ENTREPRISE">Entreprise</option>
               </Select>
             )}
           </FormField>
-          {typeProfil === "ENTREPRISE" ? (
+          {profileType === "ENTREPRISE" ? (
             <>
-              <FormField libelle="Raison sociale" erreur={errors.raisonSociale} requis>
+              <FormField label="Raison sociale" error={errors.raisonSociale} required>
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("raisonSociale")} />
+                  <input {...p} className="field-simple-sre" {...register("raisonSociale")} />
                 )}
               </FormField>
-              <FormField libelle="Nom commercial" erreur={errors.nomCommercial} aide="Facultatif">
+              <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("nomCommercial")} />
+                  <input {...p} className="field-simple-sre" {...register("nomCommercial")} />
                 )}
               </FormField>
             </>
           ) : (
             <>
-              <FormField libelle="Nom" erreur={errors.nom} requis>
+              <FormField label="Nom" error={errors.nom} required>
                 {(p) => (
                   <input
                     {...p}
-                    className="champ-simple-sre"
+                    className="field-simple-sre"
                     autoComplete="family-name"
                     {...register("nom")}
                   />
                 )}
               </FormField>
-              <FormField libelle="Prénom" erreur={errors.prenom}>
+              <FormField label="Prénom" error={errors.prenom}>
                 {(p) => (
                   <input
                     {...p}
-                    className="champ-simple-sre"
+                    className="field-simple-sre"
                     autoComplete="given-name"
                     {...register("prenom")}
                   />
@@ -98,36 +98,36 @@ export function TaxpayerFormFields({
           )}
         </>
       )}
-      {etape === 1 && (
+      {step === 1 && (
         <>
-          <FormField libelle="NIF" erreur={errors.nif} aide="Facultatif">
-            {(p) => <input {...p} className="champ-simple-sre" {...register("nif")} />}
+          <FormField label="NIF" error={errors.nif} help="Facultatif">
+            {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
           </FormField>
-          {typeProfil === "ENTREPRISE" && (
+          {profileType === "ENTREPRISE" && (
             <>
-              <FormField libelle="STAT" erreur={errors.stat} aide="Facultatif">
-                {(p) => <input {...p} className="champ-simple-sre" {...register("stat")} />}
+              <FormField label="STAT" error={errors.stat} help="Facultatif">
+                {(p) => <input {...p} className="field-simple-sre" {...register("stat")} />}
               </FormField>
               <FormField
-                libelle="Représentant légal"
-                erreur={errors.representantLegal}
-                aide="Facultatif"
+                label="Représentant légal"
+                error={errors.representantLegal}
+                help="Facultatif"
               >
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("representantLegal")} />
+                  <input {...p} className="field-simple-sre" {...register("representantLegal")} />
                 )}
               </FormField>
             </>
           )}
         </>
       )}
-      {etape === 2 && (
+      {step === 2 && (
         <>
-          <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
+          <FormField label="Adresse e-mail" error={errors.courriel} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="email"
                 inputMode="email"
                 autoComplete="email"
@@ -135,11 +135,11 @@ export function TaxpayerFormFields({
               />
             )}
           </FormField>
-          <FormField libelle="Téléphone" erreur={errors.telephone} requis>
+          <FormField label="Téléphone" error={errors.telephone} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -147,24 +147,24 @@ export function TaxpayerFormFields({
               />
             )}
           </FormField>
-          <FormField libelle="Adresse" erreur={errors.adresse} requis>
+          <FormField label="Adresse" error={errors.adresse} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 autoComplete="street-address"
                 {...register("adresse")}
               />
             )}
           </FormField>
-          <FormField libelle="Région">
-            {(p) => <input {...p} className="champ-simple-sre" value={SRE_REGION} readOnly />}
+          <FormField label="Région">
+            {(p) => <input {...p} className="field-simple-sre" value={SRE_REGION} readOnly />}
           </FormField>
-          <FormField libelle="Ville / Commune" erreur={errors.ville} requis>
+          <FormField label="Ville / Commune" error={errors.ville} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 autoComplete="address-level2"
                 {...register("ville")}
               />
@@ -172,8 +172,8 @@ export function TaxpayerFormFields({
           </FormField>
         </>
       )}
-      <div className="champ-sre-large">
-        <FormError message={erreur} />
+      <div className="field-sre-wide">
+        <FormError message={error} />
       </div>
     </div>
   );

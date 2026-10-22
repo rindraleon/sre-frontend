@@ -5,10 +5,10 @@ export function ForgotPasswordPage() {
   return (
     <div className="page-auth-sre">
       <AuthHeader />
-      <main className="auth-cadre-sre">
+      <main className="auth-frame-sre">
         <ForgotPasswordForm />
       </main>
-      <footer className="auth-pied-sre">
+      <footer className="auth-footer-sre">
         Lien de réinitialisation sécurisé : à usage unique, valable 24 heures, envoyé
         uniquement aux comptes actifs.
       </footer>

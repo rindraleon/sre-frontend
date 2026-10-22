@@ -10,7 +10,7 @@ interface ConfirmationContact {
   message: string;
 }
 
-const VALEURS_VIDES: PublicContactFormValues = {
+const EMPTY_VALUES: PublicContactFormValues = {
   nom: "",
   courriel: "",
   sujet: "",
@@ -18,7 +18,7 @@ const VALEURS_VIDES: PublicContactFormValues = {
   siteWeb: "",
 };
 
-/** Formulaire public de contact : une seule colonne, sans défilement interne. */
+/** Public contact form: single column, no internal scrolling. */
 export function PublicContactForm() {
   const [confirmation, setConfirmation] = useState<ConfirmationContact | null>(null);
   const {
@@ -26,31 +26,31 @@ export function PublicContactForm() {
     handleSubmit,
     errors,
     isSubmitting,
-    erreur,
-    traiterEchec,
-    reinitialiserFormulaire,
+    error,
+    handleFailure,
+    resetForm,
   } = useApiForm<PublicContactFormValues>({
     schema: publicContactSchema,
-    valeursInitiales: VALEURS_VIDES,
-    messageRepli: "Impossible de transmettre votre message. Réessayez plus tard.",
+    initialValues: EMPTY_VALUES,
+    fallbackMessage: "Impossible de transmettre votre message. Réessayez plus tard.",
   });
 
-  const soumettre = handleSubmit(async (valeurs) => {
+  const onSubmit = handleSubmit(async (values) => {
     setConfirmation(null);
     try {
-      const resultat = await callApi<ConfirmationContact>("contact", {
+      const result = await callApi<ConfirmationContact>("contact", {
         method: "POST",
         body: {
-          nom: valeurs.nom.trim(),
-          courriel: valeurs.courriel.trim().toLowerCase(),
-          sujet: valeurs.sujet.trim(),
-          message: valeurs.message.trim(),
-          siteWeb: valeurs.siteWeb ?? "",
+          nom: values.nom.trim(),
+          courriel: values.courriel.trim().toLowerCase(),
+          sujet: values.sujet.trim(),
+          message: values.message.trim(),
+          siteWeb: values.siteWeb ?? "",
         },
       });
-      setConfirmation(resultat);
+      setConfirmation(result);
     } catch (cause) {
-      traiterEchec(cause);
+      handleFailure(cause);
     }
   });
 
@@ -61,7 +61,7 @@ export function PublicContactForm() {
         role="status"
         aria-live="polite"
       >
-        <span className="contact-confirmation-sre__icone">
+        <span className="contact-confirmation-sre__icon">
           <CheckCircle2 size={22} aria-hidden="true" />
         </span>
         <strong>
@@ -72,10 +72,10 @@ export function PublicContactForm() {
         <p>{confirmation.message}</p>
         <button
           type="button"
-          className="lien-contact-sre"
+          className="contact-link-sre"
           onClick={() => {
             setConfirmation(null);
-            reinitialiserFormulaire(VALEURS_VIDES);
+            resetForm(EMPTY_VALUES);
           }}
         >
           Envoyer un autre message
@@ -85,9 +85,9 @@ export function PublicContactForm() {
   }
 
   return (
-    <form className="formulaire-contact-sre" onSubmit={soumettre} noValidate>
-      <div className="contact-formulaire-entete-sre">
-        <span className="contact-formulaire-entete-sre__icone">
+    <form className="contact-form-sre" onSubmit={onSubmit} noValidate>
+      <div className="contact-form-header-sre">
+        <span className="contact-form-header-sre__icon">
           <Send size={17} aria-hidden="true" />
         </span>
         <div>
@@ -96,12 +96,12 @@ export function PublicContactForm() {
         </div>
       </div>
 
-      <FormField libelle="Nom" erreur={errors.nom} requis>
-        {(proprietes) => (
-          <span className="champ-sre champ-sre--icone">
+      <FormField label="Nom" error={errors.nom} required>
+        {(props) => (
+          <span className="field-sre field-sre--icon">
             <UserRound size={16} aria-hidden="true" />
             <input
-              {...proprietes}
+              {...props}
               type="text"
               autoComplete="name"
               maxLength={120}
@@ -112,12 +112,12 @@ export function PublicContactForm() {
         )}
       </FormField>
 
-      <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
-        {(proprietes) => (
-          <span className="champ-sre champ-sre--icone">
+      <FormField label="Adresse e-mail" error={errors.courriel} required>
+        {(props) => (
+          <span className="field-sre field-sre--icon">
             <Mail size={16} aria-hidden="true" />
             <input
-              {...proprietes}
+              {...props}
               type="email"
               inputMode="email"
               autoComplete="email"
@@ -129,11 +129,11 @@ export function PublicContactForm() {
         )}
       </FormField>
 
-      <FormField libelle="Sujet" erreur={errors.sujet} requis>
-        {(proprietes) => (
+      <FormField label="Sujet" error={errors.sujet} required>
+        {(props) => (
           <input
-            {...proprietes}
-            className="champ-simple-sre"
+            {...props}
+            className="field-simple-sre"
             type="text"
             maxLength={140}
             placeholder="Objet de votre demande"
@@ -143,15 +143,15 @@ export function PublicContactForm() {
       </FormField>
 
       <FormField
-        libelle="Votre message"
-        erreur={errors.message}
-        aide="N’incluez pas de mot de passe ni de données bancaires."
-        requis
+        label="Votre message"
+        error={errors.message}
+        help="N’incluez pas de mot de passe ni de données bancaires."
+        required
       >
-        {(proprietes) => (
+        {(props) => (
           <textarea
-            {...proprietes}
-            className="champ-simple-sre champ-texte-sre"
+            {...props}
+            className="field-simple-sre field-text-sre"
             rows={4}
             maxLength={4000}
             placeholder="Expliquez votre demande…"
@@ -160,7 +160,7 @@ export function PublicContactForm() {
         )}
       </FormField>
 
-      {/* Honeypot anti-robot masqué visuellement et ignoré par le clavier. */}
+      {/* Anti-bot honeypot hidden visually and ignored by the keyboard. */}
       <div className="contact-honeypot-sre" aria-hidden="true">
         <label htmlFor="contact-site-web">Ne pas remplir ce champ</label>
         <input
@@ -172,20 +172,20 @@ export function PublicContactForm() {
         />
       </div>
 
-      <FormError message={erreur} />
+      <FormError message={error} />
       {!isApiConfigured && (
-        <output className="contact-avertissement-sre">
+        <output className="contact-warning-sre">
           Le service de contact n’est pas disponible pour le moment. Réessayez plus tard.
         </output>
       )}
       <SubmitButton
-        enCours={isSubmitting}
-        libelleEnCours="Transmission…"
+        inProgress={isSubmitting}
+        pendingLabel="Transmission…"
         disabled={!isApiConfigured}
       >
         Transmettre le message <ArrowRight size={16} />
       </SubmitButton>
-      <p className="contact-confidentialite-sre">
+      <p className="contact-privacy-sre">
         Votre adresse e-mail sera utilisée pour vous répondre. Le message est transmis aux
         administrateurs actifs ; aucune adresse administrative n’est exposée sur la page publique.
       </p>

@@ -8,53 +8,52 @@ const EXPLORATION = [
   { label: "Services", to: "/accueil#services" },
   { label: "Fiscalité à Madagascar", to: "/accueil#fiscalite" },
   { label: "Parcours", to: "/accueil#etapes" },
-  { label: "Aide et documentation", to: "/aide" },
 ];
 
-const CADRE_LEGAL = [
+const LEGAL_FRAMEWORK = [
   { label: "Mentions légales", to: "/mentions-legales" },
   { label: "Politique de confidentialité", to: "/politique-confidentialite" },
 ];
 
 export function PublicFooter() {
   return (
-    <footer className="pied-public-sre pied-public-sre--institutionnel">
-      <div className="pied-public-sre__contenu">
-        <div className="pied-public-sre__identite">
+    <footer className="public-footer-sre public-footer-sre--institutional">
+      <div className="public-footer-sre__content">
+        <div className="public-footer-sre__identity">
           <PublicBrand variant="footer" subtitle={SRE_REGION.toUpperCase()} />
           <p>
             Un espace de suivi des démarches fiscales du SRE pour le périmètre de {SRE_REGION}. Les
             données de dossier sont chargées depuis le serveur après authentification.
           </p>
-          <span className="pied-public-sre__region">
+          <span className="public-footer-sre__region">
             <MapPin size={15} aria-hidden="true" /> Madagascar · {SRE_REGION}
           </span>
         </div>
 
-        <nav className="pied-public-sre__colonne" aria-label="Explorer le portail">
+        <nav className="public-footer-sre__column" aria-label="Explorer le portail">
           <h2>Explorer</h2>
           <ul>
-            {EXPLORATION.map((lien) => (
-              <li key={lien.to}>
-                {lien.to.includes("#") ? (
-                  <a href={lien.to}>{lien.label}</a>
+            {EXPLORATION.map((link) => (
+              <li key={link.to}>
+                {link.to.includes("#") ? (
+                  <a href={link.to}>{link.label}</a>
                 ) : (
-                  <Link to={lien.to}>{lien.label}</Link>
+                  <Link to={link.to}>{link.label}</Link>
                 )}
               </li>
             ))}
           </ul>
         </nav>
 
-        <nav className="pied-public-sre__colonne" aria-label="Informations légales">
+        <nav className="public-footer-sre__column" aria-label="Informations légales">
           <h2>Informations</h2>
           <ul>
-            {CADRE_LEGAL.map((lien) => (
-              <li key={lien.to}>
-                {lien.to.includes("#") ? (
-                  <a href={lien.to}>{lien.label}</a>
+            {LEGAL_FRAMEWORK.map((link) => (
+              <li key={link.to}>
+                {link.to.includes("#") ? (
+                  <a href={link.to}>{link.label}</a>
                 ) : (
-                  <Link to={lien.to}>{lien.label}</Link>
+                  <Link to={link.to}>{link.label}</Link>
                 )}
               </li>
             ))}
@@ -69,19 +68,19 @@ export function PublicFooter() {
           </ul>
         </nav>
 
-        <div className="pied-public-sre__appel">
-          <span className="pied-public-sre__badge">
+        <div className="public-footer-sre__call">
+          <span className="public-footer-sre__badge">
             <ShieldCheck size={15} aria-hidden="true" /> Accès sécurisé
           </span>
           <h2>Votre dossier, au même endroit.</h2>
           <p>Connectez-vous pour consulter les informations rattachées à votre compte.</p>
-          <Link className="pied-public-sre__cta" to="/connexion">
+          <Link className="public-footer-sre__cta" to="/connexion">
             Ouvrir mon espace <ArrowRight size={15} aria-hidden="true" />
           </Link>
         </div>
       </div>
 
-      <div className="pied-public-sre__bas pied-public-sre__bas--institutionnel">
+      <div className="public-footer-sre__bottom public-footer-sre__bottom--institutional">
         <span>
           © {new Date().getFullYear()} · SRE · {SRE_REGION}
         </span>

@@ -4,7 +4,7 @@ import { useAuth, pathMatchesRole, roleHomePath } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { AppLayout } from "@/components/layout/app-layout";
 import { PublicHomePage } from "@/pages/public/home";
-import { MentionsLegalesPage, PolitiqueConfidentialitePage } from "@/pages/public/legal";
+import { LegalNoticePage, PrivacyPolicyPage } from "@/pages/public/legal";
 import { LoginPage } from "@/pages/auth/login";
 import { RegisterPage } from "@/pages/auth/register";
 import { ChangePasswordPage } from "@/pages/auth/change-password";
@@ -29,15 +29,16 @@ import { AdminTaxTypesPage } from "@/pages/admin/tax-types";
 import { AdminObligationsPage } from "@/pages/admin/obligations";
 import { AdminPaymentsPage } from "@/pages/admin/payments";
 import { AdminPaymentDetailPage } from "@/pages/admin/payment-detail";
-import { AdminRetardsPage } from "@/pages/admin/retards";
+import { AdminOverduePage } from "@/pages/admin/overdue";
 import { AdminTaxpayerImportPage } from "@/pages/admin/taxpayer-import";
 import { AdminNotificationsPage } from "@/pages/admin/notifications";
 import { AdminReportsPage } from "@/pages/admin/reports";
 import { AdminActivityLogPage } from "@/pages/admin/activity-log";
+import { AdminContactMessagesPage } from "@/pages/admin/contact-messages";
 import { AdminSettingsPage } from "@/pages/admin/settings";
-import { AidePage } from "@/pages/aide";
+import { HelpPage } from "@/pages/help";
 import { ActivationPage } from "@/pages/auth/activation";
-import { ConfigurationInitialePage } from "@/pages/auth/configuration-initiale";
+import { InitialSetupPage } from "@/pages/auth/initial-setup";
 import { ConfirmDialog, ToastRegion } from "@/components/ui";
 import { PageLoader } from "@/components/ui/core-spin-loader";
 import { RouteProgress } from "@/app/router/route-progress";
@@ -49,9 +50,9 @@ export function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/accueil" replace />} />
         <Route path="/accueil" element={<PublicHomePage />} />
-        <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
-        <Route path="/politique-confidentialite" element={<PolitiqueConfidentialitePage />} />
-        <Route path="/aide" element={<AidePage />} />
+        <Route path="/mentions-legales" element={<LegalNoticePage />} />
+        <Route path="/politique-confidentialite" element={<PrivacyPolicyPage />} />
+        <Route path="/aide" element={<HelpRoute />} />
         <Route path="/connexion" element={<LoginRoute />} />
         <Route path="/inscription" element={<RegisterPage />} />
         <Route path="/activation" element={<ActivationPage />} />
@@ -73,17 +74,18 @@ export function App() {
           <Route path="utilisateurs" element={<AdminUsersPage />} />
           <Route path="types-impots" element={<AdminTaxTypesPage />} />
           <Route path="obligations" element={<AdminObligationsPage />} />
-          <Route path="paiements-a-verifier" element={<AdminPaymentsPage verificationSeule />} />
+          <Route path="paiements-a-verifier" element={<AdminPaymentsPage verificationOnly />} />
           <Route path="paiements/:id" element={<AdminPaymentDetailPage />} />
           <Route path="paiements" element={<AdminPaymentsPage />} />
-          <Route path="retards" element={<AdminRetardsPage />} />
+          <Route path="retards" element={<AdminOverduePage />} />
           <Route path="import-excel" element={<AdminTaxpayerImportPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="rapports" element={<AdminReportsPage />} />
           <Route path="journal" element={<AdminActivityLogPage />} />
+          <Route path="messages-contact" element={<AdminContactMessagesPage />} />
           <Route path="parametres" element={<AdminSettingsPage />} />
-          <Route path="aide" element={<AidePage dansEspace />} />
-          <Route path="configuration-initiale" element={<ConfigurationInitialePage />} />
+          <Route path="aide" element={<HelpPage withinAppLayout />} />
+          <Route path="configuration-initiale" element={<InitialSetupPage />} />
           <Route path="changement-mot-de-passe" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
@@ -106,8 +108,8 @@ export function App() {
           <Route path="notifications" element={<ClientNotificationsPage />} />
           <Route path="profil" element={<ClientProfilePage />} />
           <Route path="parametres" element={<ClientSettingsPage />} />
-          <Route path="aide" element={<AidePage dansEspace />} />
-          <Route path="configuration-initiale" element={<ConfigurationInitialePage />} />
+          <Route path="aide" element={<HelpPage withinAppLayout />} />
+          <Route path="configuration-initiale" element={<InitialSetupPage />} />
           <Route path="changement-mot-de-passe" element={<ChangePasswordPage />} />
           <Route path="*" element={<Navigate to="/client" replace />} />
         </Route>
@@ -121,71 +123,71 @@ export function App() {
 function ProtectedRoute({ role, children }: Readonly<{ role: "ADMIN" | "CLIENT"; children: ReactNode }>) {
   const {
     session,
-    deconnecter,
-    verificationApiEnCours,
-    erreurVerificationApi,
-    reessayerVerificationApi,
+    logOut,
+    isApiVerificationInProgress,
+    apiVerificationError,
+    retryApiVerification,
   } = useAuth();
-  const { chargementInitial } = useSre();
-  const emplacement = useLocation();
-  const [confirmationDeconnexion, setConfirmationDeconnexion] = useState(false);
-  const confirmerDeconnexion = () => {
-    setConfirmationDeconnexion(false);
-    deconnecter();
+  const { isInitialLoading } = useSre();
+  const location = useLocation();
+  const [confirmationLogout, setConfirmationLogout] = useState(false);
+  const confirmLogout = () => {
+    setConfirmationLogout(false);
+    logOut();
   };
 
-  if (chargementInitial || verificationApiEnCours) {
+  if (isInitialLoading || isApiVerificationInProgress) {
     return (
-      <div className="chargement-portail-sre">
-        <span className="marque-chargement-sre">SRE</span>
+      <div className="portal-loading-sre">
+        <span className="loading-brand-sre">SRE</span>
         <PageLoader
-          libelle="Préparation de votre espace…"
+          label="Préparation de votre espace…"
           detail="Vérification de la session et chargement depuis le serveur"
         />
       </div>
     );
   }
   if (!session) {
-    const retour = `${emplacement.pathname}${emplacement.search}`;
-    return <Navigate to={`/connexion?${new URLSearchParams({ retour })}`} replace />;
+    const returnTo = `${location.pathname}${location.search}`;
+    return <Navigate to={`/connexion?${new URLSearchParams({ retour: returnTo })}`} replace />;
   }
-  if (erreurVerificationApi) {
+  if (apiVerificationError) {
     return (
       <>
-        <main className="chargement-portail-sre" role="alert">
-          <span className="marque-chargement-sre">SRE</span>
+        <main className="portal-loading-sre" role="alert">
+          <span className="loading-brand-sre">SRE</span>
           <strong>Impossible de charger les données du serveur.</strong>
-          <small>{erreurVerificationApi}</small>
-          <div className="actions-formulaire-sre">
-            <button className="bouton-sre bouton-sre--primaire" onClick={reessayerVerificationApi}>
+          <small>{apiVerificationError}</small>
+          <div className="form-actions-sre">
+            <button className="button-sre button-sre--primary" onClick={retryApiVerification}>
               Réessayer
             </button>
             <button
-              className="bouton-sre bouton-sre--contour"
-              onClick={() => setConfirmationDeconnexion(true)}
+              className="button-sre button-sre--outline"
+              onClick={() => setConfirmationLogout(true)}
             >
               Se déconnecter
             </button>
           </div>
         </main>
         <ConfirmDialog
-          ouvert={confirmationDeconnexion}
-          titre="Se déconnecter ?"
+          open={confirmationLogout}
+          title="Se déconnecter ?"
           description="Votre session sera fermée sur cet appareil. Vous devrez vous authentifier à nouveau pour accéder à votre espace."
-          fermer={() => setConfirmationDeconnexion(false)}
-          confirmer={confirmerDeconnexion}
-          libelleConfirmer="Se déconnecter"
+          close={() => setConfirmationLogout(false)}
+          confirm={confirmLogout}
+          confirmLabel="Se déconnecter"
         />
       </>
     );
   }
-  if (!pathMatchesRole(emplacement.pathname, role) || session.role !== role) {
+  if (!pathMatchesRole(location.pathname, role) || session.role !== role) {
     return <Navigate to={roleHomePath(session.role)} replace />;
   }
-  const configurationRequise = session.changementMotDePasseRequis || !session.profilComplete;
-  const cheminConfiguration = `${roleHomePath(role)}/configuration-initiale`;
-  if (configurationRequise && emplacement.pathname !== cheminConfiguration) {
-    return <Navigate to={cheminConfiguration} replace />;
+  const configurationRequired = session.mustChangePassword || !session.isProfileComplete;
+  const setupPath = `${roleHomePath(role)}/configuration-initiale`;
+  if (configurationRequired && location.pathname !== setupPath) {
+    return <Navigate to={setupPath} replace />;
   }
   return children;
 }
@@ -193,11 +195,19 @@ function ProtectedRoute({ role, children }: Readonly<{ role: "ADMIN" | "CLIENT";
 function LoginRoute() {
   const { session } = useAuth();
   if (session) {
-    const racine = roleHomePath(session.role);
-    const configurationRequise = session.changementMotDePasseRequis || !session.profilComplete;
+    const rootPath = roleHomePath(session.role);
+    const configurationRequired = session.mustChangePassword || !session.isProfileComplete;
     return (
-      <Navigate to={configurationRequise ? `${racine}/configuration-initiale` : racine} replace />
+      <Navigate to={configurationRequired ? `${rootPath}/configuration-initiale` : rootPath} replace />
     );
   }
   return <LoginPage />;
+}
+
+function HelpRoute() {
+  const { session } = useAuth();
+  if (!session) {
+    return <Navigate to={`/connexion?${new URLSearchParams({ retour: "/aide" })}`} replace />;
+  }
+  return <HelpPage />;
 }

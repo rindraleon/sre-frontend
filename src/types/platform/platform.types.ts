@@ -11,17 +11,17 @@ export interface AppSettings {
   regions: string[];
 }
 
-/** Projection en mémoire des réponses API utilisées par les pages. */
+/** In-memory projection of the API responses used by the pages. */
 export interface PlatformState {
   version: 1;
-  administrateurInitialise: boolean;
-  utilisateurs: AppUser[];
-  contribuables: Taxpayer[];
-  typesImpots: TaxType[];
+  isAdministratorInitialized: boolean;
+  users: AppUser[];
+  taxpayers: Taxpayer[];
+  taxTypes: TaxType[];
   obligations: TaxObligation[];
-  paiements: Payment[];
-  documentsPaiement: PaymentDocument[];
+  payments: Payment[];
+  paymentDocuments: PaymentDocument[];
   notifications: AppNotification[];
-  journauxActivite: ActivityLogEntry[];
-  parametres: AppSettings;
+  logsActivity: ActivityLogEntry[];
+  settings: AppSettings;
 }

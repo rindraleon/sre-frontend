@@ -10,20 +10,20 @@ export type NotificationType =
 
 export interface AppNotification {
   id: string;
-  titre: string;
+  title: string;
   message: string;
   type: NotificationType;
   date: string;
-  lue: boolean;
-  utilisateurId?: string;
-  roleDestinataire?: UserRole;
-  referenceEntite?: string;
-  /** Statut du courriel associé — « DELIVRE » uniquement si confirmé par le fournisseur. */
-  statutEmail: "NON_ENVOYE" | "ERREUR" | "ENVOYE" | "EN_ATTENTE" | "DELIVRE";
+  isRead: boolean;
+  userId?: string;
+  recipientRole?: UserRole;
+  entityReference?: string;
+  /** Status of the attached e-mail — "DELIVRE" only when confirmed by the provider. */
+  emailStatus: "NON_ENVOYE" | "ERREUR" | "ENVOYE" | "EN_ATTENTE" | "DELIVRE";
 }
 
-/** Situation d'un dossier dans le suivi des retards (calculée par le serveur). */
-export type SituationRetard =
+/** Situation of a record in the overdue tracking (computed by the server). */
+export type OverdueSituation =
   | "REGULARISE"
   | "EN_VERIFICATION"
   | "REJETE"
@@ -31,15 +31,15 @@ export type SituationRetard =
   | "EN_RETARD"
   | "EN_ATTENTE";
 
-export type StatutCourrielNotification =
+export type StatusEmailNotification =
   | "NON_CONFIGURE"
   | "EN_ATTENTE"
   | "ENVOYE"
   | "DELIVRE"
   | "ECHEC";
 
-/** Ligne du tableau de suivi des retards (GET /admin/retards). */
-export interface LigneRetard {
+/** Row of the overdue tracking table (GET /admin/retards). */
+export interface OverdueRow {
   obligationId: string;
   referenceFiscale: string;
   periode: string;
@@ -50,7 +50,7 @@ export interface LigneRetard {
   joursRestants: number;
   joursRetard: number;
   statut: string;
-  situation: SituationRetard;
+  situation: OverdueSituation;
   entite: {
     id: string;
     nom: string;
@@ -61,18 +61,18 @@ export interface LigneRetard {
   };
 }
 
-/** Résultat par destinataire d'une campagne groupée. */
-export interface ResultatDestinataireCampagne {
+/** Per-recipient result of a bulk campaign. */
+export interface CampaignRecipientResult {
   obligationId: string;
   destinataire: string;
   reference: string;
   resultat: "ENVOYEE" | "DEJA_ENVOYEE" | "IGNOREE" | "SANS_COMPTE" | "ECHEC";
-  statutCourriel: StatutCourrielNotification;
+  statutCourriel: StatusEmailNotification;
   erreur?: string;
 }
 
-/** Récapitulatif d'une campagne de notifications groupées. */
-export interface BilanCampagne {
+/** Summary of a bulk notification campaign. */
+export interface CampaignSummary {
   totalSelectionnes: number;
   notificationsCreees: number;
   dejaEnvoyees: number;
@@ -81,11 +81,11 @@ export interface BilanCampagne {
   echecs: number;
   courrielsEnvoyes: number;
   courrielsNonConfigures: number;
-  details: ResultatDestinataireCampagne[];
+  details: CampaignRecipientResult[];
 }
 
-/** Entrée de l'historique des envois groupés. */
-export interface EntreeHistoriqueEnvois {
+/** Entry of the bulk-dispatch history. */
+export interface DispatchHistoryEntry {
   id: string;
   titre: string;
   message: string;
@@ -93,7 +93,7 @@ export interface EntreeHistoriqueEnvois {
   destinataire: { nom: string; courriel: string };
   dossier: { id: string | null; reference: string };
   initiePar: string;
-  statutCourriel: StatutCourrielNotification;
+  statutCourriel: StatusEmailNotification;
   tentativesCourriel: number;
   derniereErreurCourriel: string | null;
 }

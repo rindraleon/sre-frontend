@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Activity, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Button,
   DataTable,
   PageHeader,
   StatusBadge,
-  convertirColonnesTanstack,
+  toTanstackColumns,
   type TableColumn,
 } from "@/components/ui";
 import { useTableState } from "@/hooks";
@@ -14,130 +14,118 @@ import { loadActivityLogApi } from "@/services/api-client";
 import type { ActivityLogEntry } from "@/types";
 import { formatDate } from "@/utils/format";
 
-const colonnes: TableColumn<ActivityLogEntry>[] = [
+const columns: TableColumn<ActivityLogEntry>[] = [
   {
     id: "date",
-    titre: "Date",
-    afficher: (entree) => formatDate(entree.date, true),
-    valeurTri: (entree) => entree.date,
+    title: "Date",
+    render: (entry) => formatDate(entry.date, true),
+    sortValue: (entry) => entry.date,
   },
   {
     id: "acteur",
-    titre: "Acteur",
-    afficher: (entree) => (
+    title: "Acteur",
+    render: (entry) => (
       <div>
-        <strong>{entree.acteur}</strong>
-        {entree.details && <small className="sous-ligne-sre">{entree.details}</small>}
+        <strong>{entry.acteur}</strong>
+        {entry.details && <small className="sub-row-sre">{entry.details}</small>}
       </div>
     ),
-    valeurTri: (entree) => entree.acteur,
+    sortValue: (entry) => entry.acteur,
   },
   {
     id: "role",
-    titre: "Rôle",
-    afficher: (entree) => <StatusBadge statut={entree.role} />,
-    valeurTri: (entree) => entree.role,
+    title: "Rôle",
+    render: (entry) => <StatusBadge status={entry.role} />,
+    sortValue: (entry) => entry.role,
   },
   {
     id: "action",
-    titre: "Action",
-    afficher: (entree) => entree.action,
-    valeurTri: (entree) => entree.action,
+    title: "Action",
+    render: (entry) => entry.action,
+    sortValue: (entry) => entry.action,
   },
   {
     id: "ressource",
-    titre: "Ressource",
-    afficher: (entree) => entree.ressource,
-    valeurTri: (entree) => entree.ressource,
+    title: "Ressource",
+    render: (entry) => entry.ressource,
+    sortValue: (entry) => entry.ressource,
   },
   
   {
     id: "resultat",
-    titre: "Résultat",
-    afficher: (entree) => <StatusBadge statut={entree.resultat} />,
-    valeurTri: (entree) => entree.resultat,
+    title: "Résultat",
+    render: (entry) => <StatusBadge status={entry.resultat} />,
+    sortValue: (entry) => entry.resultat,
   },
 ];
 
 export function AdminActivityLogPage() {
   const { session } = useAuth();
   const table = useTableState(20);
-  const [entrees, setEntrees] = useState<ActivityLogEntry[]>([]);
-  const [chargement, setChargement] = useState(true);
-  const [erreurChargement, setErreurChargement] = useState<string | null>(null);
+  const [entries, setEntries] = useState<ActivityLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
-  const chargerJournal = useCallback(async () => {
-    if (!session?.jetonApi) return;
-    setChargement(true);
-    setErreurChargement(null);
+  const loadLog = useCallback(async () => {
+    if (!session?.apiToken) return;
+    setLoading(true);
+    setLoadingError(null);
     try {
-      setEntrees(await loadActivityLogApi(session.jetonApi, 500));
+      setEntries(await loadActivityLogApi(session.apiToken, 500));
     } catch (cause) {
-      setErreurChargement(
+      setLoadingError(
         cause instanceof Error ? cause.message : "Impossible de charger le journal d’activité.",
       );
     } finally {
-      setChargement(false);
+      setLoading(false);
     }
-  }, [session?.jetonApi]);
+  }, [session?.apiToken]);
 
   useEffect(() => {
-    void chargerJournal();
-  }, [chargerJournal]);
+    void loadLog();
+  }, [loadLog]);
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Journal d’activité"
+        title="Journal d’activité"
         description="Actions réalisées par les comptes : acteur, ressource, résultat et horodatage."
-        filAriane={["Accueil", "Journal d’activité"]}
+        breadcrumb={["Accueil", "Journal d’activité"]}
         actions={
-          <Button variante="contour" onClick={() => void chargerJournal()} chargement={chargement}>
+          <Button variant="outline" onClick={() => void loadLog()} loading={loading}>
             <RefreshCw size={15} /> Actualiser
           </Button>
         }
       />
-      <div className="bandeau-info-sre">
-        <span>
-          <Activity size={17} />
-        </span>
-        <div>
-          <strong>Traçabilité serveur</strong>
-          <p>
-            Chaque action métier (création, modification, suppression, décision) est enregistrée par
-            le serveur, succès comme échec, avec son auteur et son horodatage.
-          </p>
-        </div>
-      </div>
-      {erreurChargement && (
-        <p className="message-erreur-sre" role="alert">
-          {erreurChargement}
+      {loadingError && (
+        <p className="error-message-sre" role="alert">
+          {loadingError}
         </p>
       )}
       <DataTable
-        data={entrees}
-        columns={convertirColonnesTanstack(colonnes)}
+        data={entries}
+        columns={toTanstackColumns(columns)}
         label="Journal d’activité"
-        getRowId={(entree) => entree.id}
+        getRowId={(entry) => entry.id}
         searchPlaceholder="Acteur, action, ressource, référence…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         toolbarActions={
           <span className="text-xs text-muted-foreground">
-            {entrees.length} événement{entrees.length === 1 ? "" : "s"}
+            {entries.length} événement{entries.length === 1 ? "" : "s"}
           </span>
         }
         columnToggle
-        emptyTitle={chargement ? "Chargement…" : "Aucun événement"}
+        emptyTitle={loading ? "Chargement…" : "Aucun événement"}
         emptyDescription={
-          chargement
+          loading
             ? "Récupération du journal depuis le serveur."
             : "Réglez un compte puis réalisez une action : chaque écriture serveur apparaîtra ici."
         }
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
     </div>
   );

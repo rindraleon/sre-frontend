@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------- */
-/* Thème sombre — surcharges ciblées sur les variables et surfaces du projet.  */
-/* Le document PDF (accusé/reçu) reste volontairement en fond clair : c'est   */
-/* un document destiné à l'impression, pas une surface d'interface.           */
+/* Dark theme — targeted overrides on the project's variables and surfaces.  */
+/* The PDF document (acknowledgment/receipt) deliberately keeps a light background: it is   */
+/* a document meant for printing, not an interface surface.           */
 /* -------------------------------------------------------------------------- */
 [data-theme="sombre"] {
   --background: 160 24% 8%;
@@ -49,93 +49,154 @@
   --sre-info: #87c5df;
   --sre-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
   color-scheme: dark;
+
+  /* Public site tokens — dark overrides. */
+  --pub-page: #0e1913;
+  --pub-surface: #14221b;
+  --pub-surface-alt: #101d17;
+  --pub-surface-soft: #16241d;
+  --pub-surface-raised: #18271f;
+  --pub-glass: rgba(20, 34, 27, 0.92);
+  --pub-glass-soft: rgba(20, 34, 27, 0.7);
+  --pub-header: rgba(17, 29, 23, 0.92);
+  --pub-border: #2a4034;
+  --pub-border-soft: #22332a;
+  --pub-border-strong: #365142;
+  --pub-border-accent: #3d6b56;
+  --pub-border-gold: #4a3c22;
+  --pub-heading: #eaf3ee;
+  --pub-heading-2: #d9e8e0;
+  --pub-body: #b9cbbf;
+  --pub-body-strong: #cddcd2;
+  --pub-muted: #9ab0a2;
+  --pub-muted-2: #809688;
+  --pub-faint: #85998a;
+  --pub-accent: #5fc2bd;
+  --pub-accent-soft: #7ed2cd;
+  --pub-accent-strong: #8aded8;
+  --pub-accent-bg: #14302f;
+  --pub-gold: #d9b36d;
+  --pub-gold-soft: #e2c08a;
+  --pub-gold-bg: #33291a;
+  --pub-blue: #7cb9d6;
+  --pub-blue-bg: #162e3b;
+  --pub-green: #6fc3aa;
+  --pub-green-bg: #14302a;
+  --pub-warn: #e0bb72;
+  --pub-warn-bg: #322714;
+  --pub-hero-from: #132019;
+  --pub-hero-to: #0f1c15;
+  --pub-hero-glow: rgba(63, 150, 150, 0.16);
+  --pub-grid-line: rgba(120, 175, 175, 0.05);
+  --pub-shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.3);
+  --pub-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
+  --pub-shadow-card: 0 25px 70px rgba(0, 0, 0, 0.5);
+
+  /* Button tokens — the accent turns light in dark mode, so solid buttons need
+     a dark label; outline/ghost buttons keep a light label. */
+  --btn-primary-fg: #0b2018;
+  --btn-primary-bg: var(--sre-blue);
+  --btn-primary-bg-hover: #7ed0ad;
+  --btn-outline-fg: var(--sre-ink);
+  --btn-outline-fg-hover: #fff;
+  --btn-outline-bg: transparent;
+  --btn-outline-bg-hover: var(--sre-blue-soft);
+  --btn-outline-border: var(--sre-border);
+  --btn-outline-border-hover: var(--sre-teal);
+  --btn-light-fg: #10312a;
+  --btn-light-bg: #dff0e9;
+  --btn-light-bg-hover: #cbe6dc;
+  --btn-light-border: rgba(223, 240, 233, 0.55);
+  --btn-secondary-fg: var(--sre-teal);
+  --btn-secondary-bg: var(--sre-blue-soft);
+  --btn-secondary-bg-hover: #204a3b;
+  --btn-secondary-border: var(--sre-border);
+  --btn-ghost-fg: var(--sre-ink-2);
+  --btn-ghost-fg-hover: var(--sre-ink);
+  --btn-ghost-bg-hover: var(--sre-blue-soft);
+  --btn-danger-fg: #fff;
+  --btn-danger-bg: #b94c4b;
+  --btn-danger-bg-hover: #9d3c3c;
 }
 [data-theme="sombre"] body { background: var(--sre-bg); color: var(--sre-ink); }
-[data-theme="sombre"] .carte-sre,
-[data-theme="sombre"] .auth-carte-sre,
+[data-theme="sombre"] .card-sre,
+[data-theme="sombre"] .auth-card-sre,
 [data-theme="sombre"] .modal-sre,
-[data-theme="sombre"] .carte-stat-sre,
-[data-theme="sombre"] .carte-tableau-sre,
+[data-theme="sombre"] .stat-card-sre,
+[data-theme="sombre"] .table-card-sre,
 [data-theme="sombre"] .toast-sre,
-[data-theme="sombre"] .barre-laterale-sre,
-[data-theme="sombre"] .entete-application-sre,
-[data-theme="sombre"] .menu-utilisateur-sre__panneau,
-[data-theme="sombre"] .select-recherchable-sre__liste,
-[data-theme="sombre"] .carte-portail-public-sre {
+[data-theme="sombre"] .sidebar-sre,
+[data-theme="sombre"] .app-header-sre,
+[data-theme="sombre"] .user-menu-sre__panel,
+[data-theme="sombre"] .searchable-select-sre__list,
+[data-theme="sombre"] .public-card-portal-sre {
   background: var(--sre-paper);
   border-color: var(--sre-border);
   color: var(--sre-ink);
 }
-[data-theme="sombre"] .auth-entete-sre,
-[data-theme="sombre"] .entete-public-sre {
+[data-theme="sombre"] .auth-header-sre {
   background: color-mix(in srgb, var(--sre-paper) 94%, transparent);
   border-color: var(--sre-border);
 }
-[data-theme="sombre"] .page-auth-sre,
-[data-theme="sombre"] .site-public-sre { background: var(--sre-bg); color: var(--sre-ink); }
-[data-theme="sombre"] .champ-simple-sre,
-[data-theme="sombre"] .champ-sre,
-[data-theme="sombre"] .champ-sre input,
-[data-theme="sombre"] .champ-sre select,
-[data-theme="sombre"] .champ-sre textarea,
-[data-theme="sombre"] .select-recherchable-sre__champ,
-[data-theme="sombre"] select.champ-simple-sre,
-[data-theme="sombre"] textarea.champ-simple-sre {
+[data-theme="sombre"] .page-auth-sre {
+  background:
+    radial-gradient(ellipse at 80% 15%, color-mix(in srgb, var(--pub-accent-soft) 18%, transparent), transparent 32%),
+    var(--sre-bg);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .field-simple-sre,
+[data-theme="sombre"] .field-sre,
+[data-theme="sombre"] .field-sre input,
+[data-theme="sombre"] .field-sre select,
+[data-theme="sombre"] .field-sre textarea,
+[data-theme="sombre"] .searchable-select-sre__field,
+[data-theme="sombre"] select.field-simple-sre,
+[data-theme="sombre"] textarea.field-simple-sre {
   background: var(--sre-paper);
   border-color: var(--sre-border);
   color: var(--sre-ink);
 }
-[data-theme="sombre"] .champ-simple-sre::placeholder,
-[data-theme="sombre"] .champ-sre input::placeholder { color: #7e97a1; }
-[data-theme="sombre"] .tableau-sre { color: var(--sre-ink); }
-[data-theme="sombre"] .tableau-sre th { background: #101f28; border-color: var(--sre-border); color: var(--sre-muted); }
-[data-theme="sombre"] .tableau-sre td { border-color: var(--sre-border); }
-[data-theme="sombre"] .bouton-sre--contour {
-  background: transparent;
-  border-color: var(--sre-border);
-  color: var(--sre-ink);
-}
-[data-theme="sombre"] .bouton-sre--fantome { color: var(--sre-ink); }
+[data-theme="sombre"] .field-simple-sre::placeholder,
+[data-theme="sombre"] .field-sre input::placeholder { color: #7e97a1; }
+[data-theme="sombre"] .table-sre { color: var(--sre-ink); }
+[data-theme="sombre"] .table-sre th { background: #101f28; border-color: var(--sre-border); color: var(--sre-muted); }
+[data-theme="sombre"] .table-sre td { border-color: var(--sre-border); }
+[data-theme="sombre"] .loading-brand-sre { color: #06231a; }
 [data-theme="sombre"] .modal-sre > footer,
 [data-theme="sombre"] .modal-sre > header { background: var(--sre-paper); border-color: var(--sre-border); }
-[data-theme="sombre"] .voile-modal-sre { background: rgba(4, 10, 14, 0.66); }
-[data-theme="sombre"] .fermer-menu-mobile-sre { background: var(--sre-paper); color: var(--sre-ink); }
-[data-theme="sombre"] .menu-utilisateur-sre__panneau a:hover,
-[data-theme="sombre"] .menu-utilisateur-sre__panneau button:hover,
-[data-theme="sombre"] .select-recherchable-sre__liste li:hover,
-[data-theme="sombre"] .select-recherchable-sre__liste li.select-recherchable-sre__option--active {
+[data-theme="sombre"] .modal-overlay-sre { background: rgba(4, 10, 14, 0.66); }
+[data-theme="sombre"] .close-mobile-menu-sre { background: var(--sre-paper); color: var(--sre-ink); }
+[data-theme="sombre"] .user-menu-sre__panel a:hover,
+[data-theme="sombre"] .user-menu-sre__panel button:hover,
+[data-theme="sombre"] .searchable-select-sre__list li:hover,
+[data-theme="sombre"] .searchable-select-sre__list li.searchable-select-sre__option--active {
   background: var(--sre-blue-soft);
 }
-[data-theme="sombre"] .note-fiscale-sre,
-[data-theme="sombre"] .note-securite-sre,
-[data-theme="sombre"] .bandeau-info-sre,
-[data-theme="sombre"] .bandeau-conseil-sre {
+[data-theme="sombre"] .tax-note-sre,
+[data-theme="sombre"] .security-note-sre,
+[data-theme="sombre"] .info-banner-sre,
+[data-theme="sombre"] .tip-banner-sre {
   background: #172a20;
   border-color: var(--sre-border);
   color: var(--sre-ink-2);
 }
-[data-theme="sombre"] .message-erreur-sre {
+[data-theme="sombre"] .error-message-sre {
   background: #3a1d20;
   border-color: #6e3438;
   color: #f0b6b8;
 }
-[data-theme="sombre"] .champ-erreur-sre { color: #f0a3a5; }
-[data-theme="sombre"] .champ-formulaire-sre > label,
-[data-theme="sombre"] .formulaire-sre label,
-[data-theme="sombre"] .grille-formulaire-sre label { color: var(--sre-muted); }
-[data-theme="sombre"] .champ-aide-sre,
-[data-theme="sombre"] .champ-formulaire-sre small { color: var(--sre-muted-2); }
+[data-theme="sombre"] .field-error-sre { color: #f0a3a5; }
+[data-theme="sombre"] .field-form-sre > label,
+[data-theme="sombre"] .form-sre label,
+[data-theme="sombre"] .form-grid-sre label { color: var(--sre-muted); }
+[data-theme="sombre"] .field-help-sre,
+[data-theme="sombre"] .field-form-sre small { color: var(--sre-muted-2); }
 [data-theme="sombre"] .toast-sre > button:hover,
-[data-theme="sombre"] .champ-mot-de-passe-sre > button:hover { background: var(--sre-blue-soft); color: var(--sre-ink); }
-[data-theme="sombre"] .bouton-sre--contour {
-  background: transparent;
-  border-color: var(--sre-border);
-  color: var(--sre-ink);
-}
+[data-theme="sombre"] .password-field-sre > button:hover { background: var(--sre-blue-soft); color: var(--sre-ink); }
 [data-theme="sombre"] h1,
 [data-theme="sombre"] h2,
 [data-theme="sombre"] h3 { color: var(--sre-ink); }
-[data-theme="sombre"] .document-paiement-sre {
+[data-theme="sombre"] .payment-document-sre {
   background: #fff;
   color: #18283c;
 }

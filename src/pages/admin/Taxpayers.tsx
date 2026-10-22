@@ -6,9 +6,9 @@ import { useSre } from "@/context/SreContext";
 import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api-client";
 import {
   SRE_REGION,
-  OPTIONS_TYPE_CONTRIBUABLE,
-  MSG_SESSION_MANQUANTE_ADMIN,
-  TOUS,
+  TAXPAYER_TYPE_OPTIONS,
+  MSG_SESSION_MISSING_ADMIN,
+  ALL,
 } from "@/constants";
 import {
   Button,
@@ -16,170 +16,170 @@ import {
   PageHeader,
   Modal,
   DataTable,
-  convertirColonnesTanstack,
+  toTanstackColumns,
 } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/forms/form-field";
-import { TaxpayerFormFields, PROFIL_VIDE } from "@/components/forms/admin/taxpayer-form";
-import { creerColonnesContribuables } from "@/components/tables/admin/taxpayers-columns";
+import { TaxpayerFormFields, PROFILE_EMPTY } from "@/components/forms/admin/taxpayer-form";
+import { createTaxpayerColumns } from "@/components/tables/admin/taxpayers-columns";
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
 import { taxpayerFormSchema, type TaxpayerFormValues } from "@/validation/profile.schema";
 
-const CHAMPS_ETAPES_PROFIL = [
+const PROFILE_STEP_FIELDS = [
   ["type", "nom", "prenom", "raisonSociale", "nomCommercial"],
   ["nif", "stat", "representantLegal"],
   ["courriel", "telephone", "adresse", "region", "ville"],
 ] as const;
-type EtapeFormulaire = 0 | 1 | 2;
+type FormStep = 0 | 1 | 2;
 
 export function AdminTaxpayersPage({
-  typeInitial = TOUS,
+  typeInitial = ALL,
 }: { typeInitial?: "TOUS" | "ENTREPRISE" } = {}) {
-  const { etat, mettreAJourEtat, notifier } = useSre();
+  const { state, updateState, notify } = useSre();
   const { session } = useAuth();
   const table = useTableState();
-  const [typeFiltre, setTypeFiltre] = useState<string>(typeInitial);
+  const [typeFilter, setTypeFilter] = useState<string>(typeInitial);
   const [modal, setModal] = useState(false);
-  const [etapeFormulaire, setEtapeFormulaire] = useState<EtapeFormulaire>(0);
-  const suppression = useConfirmation<Taxpayer>();
-  const formulaire = useApiForm<TaxpayerFormValues>({
+  const [formStep, setStepForm] = useState<FormStep>(0);
+  const deletion = useConfirmation<Taxpayer>();
+  const form = useApiForm<TaxpayerFormValues>({
     schema: taxpayerFormSchema,
-    valeursInitiales: PROFIL_VIDE,
-    messageRepli: "Le serveur n’a pas enregistré le profil.",
+    initialValues: PROFILE_EMPTY,
+    fallbackMessage: "Le serveur n’a pas enregistré le profil.",
   });
 
-  const contribuables = useMemo(
+  const taxpayers = useMemo(
     () =>
-      etat.contribuables.filter(
-        (contribuable) => typeFiltre === TOUS || contribuable.type === typeFiltre,
+      state.taxpayers.filter(
+        (taxpayer) => typeFilter === ALL || taxpayer.type === typeFilter,
       ),
-    [etat.contribuables, typeFiltre],
+    [state.taxpayers, typeFilter],
   );
 
-  const colonnes = creerColonnesContribuables({ onSupprimer: suppression.ouvrir });
+  const columns = createTaxpayerColumns({ onDelete: deletion.open });
 
-  const fermer = () => {
+  const close = () => {
     setModal(false);
-    setEtapeFormulaire(0);
-    formulaire.reinitialiserFormulaire();
+    setStepForm(0);
+    form.resetForm();
   };
 
-  const avancerEtape = async () => {
-    const valide = await formulaire.trigger([...CHAMPS_ETAPES_PROFIL[etapeFormulaire]], {
+  const advanceStep = async () => {
+    const valid = await form.trigger([...PROFILE_STEP_FIELDS[formStep]], {
       shouldFocus: true,
     });
-    if (valide) {
-      setEtapeFormulaire((courante) => {
-        if (courante === 0 && formulaire.getValues("type") === "PARTICULIER") return 2;
-        return Math.min(2, courante + 1) as 0 | 1 | 2;
+    if (valid) {
+      setStepForm((current) => {
+        if (current === 0 && form.getValues("type") === "PARTICULIER") return 2;
+        return Math.min(2, current + 1) as 0 | 1 | 2;
       });
     }
   };
 
-  const creer = formulaire.handleSubmit(async (valeurs) => {
-    formulaire.reinitialiserErreur();
-    if (!session?.jetonApi) {
-      formulaire.definirErreur(MSG_SESSION_MANQUANTE_ADMIN);
+  const create = form.handleSubmit(async (values) => {
+    form.resetError();
+    if (!session?.apiToken) {
+      form.setError(MSG_SESSION_MISSING_ADMIN);
       return;
     }
     try {
-      const corps = {
-        type: valeurs.type,
-        nom: valeurs.nom.trim() || valeurs.raisonSociale?.trim() || "",
-        ...(valeurs.prenom?.trim() ? { prenom: valeurs.prenom.trim() } : {}),
-        ...(valeurs.raisonSociale?.trim() ? { raisonSociale: valeurs.raisonSociale.trim() } : {}),
-        ...(valeurs.nomCommercial?.trim() ? { nomCommercial: valeurs.nomCommercial.trim() } : {}),
-        ...(valeurs.nif.trim() ? { nif: valeurs.nif.trim() } : {}),
-        ...(valeurs.stat?.trim() ? { stat: valeurs.stat.trim() } : {}),
-        adresse: valeurs.adresse.trim(),
+      const body = {
+        type: values.type,
+        nom: values.nom.trim() || values.raisonSociale?.trim() || "",
+        ...(values.prenom?.trim() ? { prenom: values.prenom.trim() } : {}),
+        ...(values.raisonSociale?.trim() ? { raisonSociale: values.raisonSociale.trim() } : {}),
+        ...(values.nomCommercial?.trim() ? { nomCommercial: values.nomCommercial.trim() } : {}),
+        ...(values.nif.trim() ? { nif: values.nif.trim() } : {}),
+        ...(values.stat?.trim() ? { stat: values.stat.trim() } : {}),
+        adresse: values.adresse.trim(),
         region: SRE_REGION,
-        ville: valeurs.ville.trim(),
-        courriel: valeurs.courriel.trim().toLowerCase(),
-        telephone: valeurs.telephone.trim(),
-        ...(valeurs.representantLegal?.trim()
-          ? { representantLegal: valeurs.representantLegal.trim() }
+        ville: values.ville.trim(),
+        courriel: values.courriel.trim().toLowerCase(),
+        telephone: values.telephone.trim(),
+        ...(values.representantLegal?.trim()
+          ? { representantLegal: values.representantLegal.trim() }
           : {}),
-        ...(valeurs.nomContact?.trim() ? { nomContact: valeurs.nomContact.trim() } : {}),
-        ...(valeurs.prenomContact?.trim() ? { prenomContact: valeurs.prenomContact.trim() } : {}),
-        ...(valeurs.fonctionContact?.trim()
-          ? { fonctionContact: valeurs.fonctionContact.trim() }
+        ...(values.nomContact?.trim() ? { nomContact: values.nomContact.trim() } : {}),
+        ...(values.prenomContact?.trim() ? { prenomContact: values.prenomContact.trim() } : {}),
+        ...(values.fonctionContact?.trim()
+          ? { fonctionContact: values.fonctionContact.trim() }
           : {}),
       };
-      const reponse = await callApi<ApiTaxpayer>("contribuables", {
+      const response = await callApi<ApiTaxpayer>("contribuables", {
         method: "POST",
-        token: session.jetonApi,
-        body: corps,
+        token: session.apiToken,
+        body: body,
       });
-      const nouveau = mapApiTaxpayer(reponse);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        contribuables: [nouveau, ...courant.contribuables],
+      const newTaxpayer = mapApiTaxpayer(response);
+      updateState((current) => ({
+        ...current,
+        taxpayers: [newTaxpayer, ...current.taxpayers],
       }));
-      notifier("Profil contribuable enregistré.", "succes");
-      fermer();
+      notify("Profil contribuable enregistré.", "success");
+      close();
     } catch (cause) {
-      formulaire.traiterEchec(cause);
+      form.handleFailure(cause);
     }
   });
 
-  const supprimer = async (cible: Taxpayer) => {
-    if (!session?.jetonApi) throw new Error(MSG_SESSION_MANQUANTE_ADMIN);
-    await callApi<{ message: string }>(`contribuables/${encodeURIComponent(cible.id)}`, {
+  const remove = async (target: Taxpayer) => {
+    if (!session?.apiToken) throw new Error(MSG_SESSION_MISSING_ADMIN);
+    await callApi<{ message: string }>(`contribuables/${encodeURIComponent(target.id)}`, {
       method: "DELETE",
-      token: session.jetonApi,
+      token: session.apiToken,
     });
-    mettreAJourEtat((courant) => ({
-      ...courant,
-      contribuables: courant.contribuables.filter((entree) => entree.id !== cible.id),
+    updateState((current) => ({
+      ...current,
+      taxpayers: current.taxpayers.filter((entry) => entry.id !== target.id),
     }));
-    notifier("Profil contribuable supprimé.", "succes");
+    notify("Profil contribuable supprimé.", "success");
   };
 
-  const entreprise = typeInitial === "ENTREPRISE";
-  const nomProfilSuppression =
-    suppression.cible?.raisonSociale ||
-    [suppression.cible?.prenom, suppression.cible?.nom].filter(Boolean).join(" ");
+  const business = typeInitial === "ENTREPRISE";
+  const taxpayerNameToDelete =
+    deletion.target?.legalName ||
+    [deletion.target?.firstName, deletion.target?.lastName].filter(Boolean).join(" ");
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre={entreprise ? "Entreprises" : "Contribuables"}
+        title={business ? "Entreprises" : "Contribuables"}
         description={`Profils du périmètre ${SRE_REGION}.`}
-        filAriane={["Accueil", entreprise ? "Entreprises" : "Contribuables"]}
+        breadcrumb={["Accueil", business ? "Entreprises" : "Contribuables"]}
       />
       
       <DataTable
-        data={contribuables}
-        columns={convertirColonnesTanstack(colonnes)}
+        data={taxpayers}
+        columns={toTanstackColumns(columns)}
         label="Profils contribuables"
-        getRowId={(entree) => entree.id}
-        getSearchText={(contribuable) =>
-          `${contribuable.nom} ${contribuable.prenom ?? ""} ${contribuable.raisonSociale ?? ""} ${contribuable.nif} ${contribuable.stat ?? ""} ${contribuable.courriel}`
+        getRowId={(entry) => entry.id}
+        getSearchText={(taxpayer) =>
+          `${taxpayer.lastName} ${taxpayer.firstName ?? ""} ${taxpayer.legalName ?? ""} ${taxpayer.nif} ${taxpayer.stat ?? ""} ${taxpayer.email}`
         }
         searchPlaceholder="Nom, NIF, STAT ou e-mail…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         toolbarActions={
-          <label className="filtre-compact-sre">
+          <label className="compact-filter-sre">
             Type
             <Select
-              value={typeFiltre}
+              value={typeFilter}
               onChange={(event) => {
-                setTypeFiltre(event.target.value);
-                table.reinitialiserPage();
+                setTypeFilter(event.target.value);
+                table.resetPage();
               }}
             >
-              <OptionsSelect options={OPTIONS_TYPE_CONTRIBUABLE} />
+              <OptionsSelect options={TAXPAYER_TYPE_OPTIONS} />
             </Select>
           </label>
         }
         actionPrimary={
           <Button
             onClick={() => {
-              setEtapeFormulaire(0);
+              setStepForm(0);
               setModal(true);
-              formulaire.reinitialiserErreur();
+              form.resetError();
             }}
           >
             <CirclePlus size={15} /> Ajouter un profil
@@ -189,44 +189,44 @@ export function AdminTaxpayersPage({
         emptyTitle="Aucun contribuable"
         emptyDescription="Aucun profil ne correspond à votre recherche."
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
       <Modal
-        ouvert={modal}
-        titre="Ajouter un profil contribuable"
+        open={modal}
+        title="Ajouter un profil contribuable"
         description={`Dossier rattaché à ${SRE_REGION}. Formulaire en trois étapes ; aucun compte ni mot de passe ne sera créé.`}
-        fermer={fermer}
-        fermetureBloquee={formulaire.isSubmitting}
-        largeur="large"
-        pied={
+        close={close}
+        disableClose={form.isSubmitting}
+        width="large"
+        footer={
           <>
-            <Button variante="contour" onClick={fermer} disabled={formulaire.isSubmitting}>
+            <Button variant="outline" onClick={close} disabled={form.isSubmitting}>
               Annuler
             </Button>
-            {etapeFormulaire > 0 && (
+            {formStep > 0 && (
               <Button
-                variante="contour"
+                variant="outline"
                 onClick={() => {
-                  if (etapeFormulaire === 2 && formulaire.getValues("type") === "PARTICULIER")
-                    setEtapeFormulaire(0);
-                  else setEtapeFormulaire((courante) => Math.max(0, courante - 1) as 0 | 1 | 2);
+                  if (formStep === 2 && form.getValues("type") === "PARTICULIER")
+                    setStepForm(0);
+                  else setStepForm((current) => Math.max(0, current - 1) as 0 | 1 | 2);
                 }}
-                disabled={formulaire.isSubmitting}
+                disabled={form.isSubmitting}
               >
                 <ArrowLeft size={15} /> Précédent
               </Button>
             )}
-            {etapeFormulaire < 2 ? (
-              <Button onClick={() => void avancerEtape()} disabled={formulaire.isSubmitting}>
+            {formStep < 2 ? (
+              <Button onClick={() => void advanceStep()} disabled={form.isSubmitting}>
                 Suivant <ArrowRight size={15} />
               </Button>
             ) : (
               <SubmitButton
                 form="formulaire-contribuable-admin"
-                enCours={formulaire.isSubmitting}
-                libelleEnCours="Enregistrement…"
+                inProgress={form.isSubmitting}
+                pendingLabel="Enregistrement…"
               >
                 Enregistrer le profil
               </SubmitButton>
@@ -237,32 +237,32 @@ export function AdminTaxpayersPage({
         <form
           id="formulaire-contribuable-admin"
           onSubmit={
-            etapeFormulaire === 2
-              ? creer
+            formStep === 2
+              ? create
               : (event) => {
                   event.preventDefault();
-                  void avancerEtape();
+                  void advanceStep();
                 }
           }
           noValidate
         >
           <TaxpayerFormFields
-            formulaire={formulaire}
-            erreur={formulaire.erreur}
-            etape={etapeFormulaire}
+            form={form}
+            error={form.error}
+            step={formStep}
           />
         </form>
       </Modal>
       <ConfirmDialog
-        ouvert={!!suppression.cible}
-        titre="Supprimer ce profil ?"
-        description={`Le profil « ${nomProfilSuppression} » sera supprimé définitivement si aucun compte, paiement ou historique fiscal ne lui est lié. Cette action est irréversible.`}
-        fermer={suppression.fermer}
-        confirmer={() => void suppression.executer(supprimer)}
-        libelleConfirmer="Supprimer le profil"
+        open={!!deletion.target}
+        title="Supprimer ce profil ?"
+        description={`Le profil « ${taxpayerNameToDelete} » sera supprimé définitivement si aucun compte, paiement ou historique fiscal ne lui est lié. Cette action est irréversible.`}
+        close={deletion.close}
+        confirm={() => void deletion.execute(remove)}
+        confirmLabel="Supprimer le profil"
         danger
-        chargement={suppression.enCours}
-        erreur={suppression.erreur}
+        loading={deletion.inProgress}
+        error={deletion.error}
       />
     </div>
   );

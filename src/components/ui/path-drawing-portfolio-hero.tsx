@@ -289,7 +289,7 @@ export default function PathDrawingPortfolioHero({
       data-path-drawing-hero
       className={cn(
         embedded
-          ? "relative flex w-full flex-col items-center justify-center bg-transparent text-[#18374a]"
+          ? "relative flex w-full flex-col items-center justify-center bg-transparent text-[var(--sre-ink)]"
           : "relative flex min-h-screen w-full flex-col items-center justify-center bg-transparent text-white",
         className,
       )}
@@ -304,7 +304,7 @@ export default function PathDrawingPortfolioHero({
           <motion.p
             className={cn(
               "mb-6 text-[0.7rem] font-medium uppercase tracking-[0.35em] sm:mb-8 sm:text-xs",
-              embedded ? "text-[#648286]" : "text-white/55",
+              embedded ? "text-[var(--sre-muted)]" : "text-white/55",
             )}
             initial={instant ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,7 +339,7 @@ export default function PathDrawingPortfolioHero({
           <motion.p
             className={cn(
               "mt-4 max-w-md text-sm leading-relaxed sm:mt-6 sm:text-base",
-              embedded ? "text-[#6b8187]" : "text-white/65",
+              embedded ? "text-[var(--sre-muted-2)]" : "text-white/65",
             )}
             initial={instant ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}

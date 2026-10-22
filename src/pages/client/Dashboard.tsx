@@ -18,64 +18,64 @@ import { formatMoney, formatDate } from "@/utils/format";
 
 export function ClientDashboardPage() {
   const { session } = useAuth();
-  const { etat } = useSre();
-  const contribuable = etat.contribuables.find((entree) => entree.id === session?.contribuableId);
-  const obligations = etat.obligations.filter(
-    (obligation) => obligation.contribuableId === contribuable?.id,
+  const { state } = useSre();
+  const taxpayer = state.taxpayers.find((entry) => entry.id === session?.taxpayerId);
+  const obligations = state.obligations.filter(
+    (obligation) => obligation.taxpayerId === taxpayer?.id,
   );
-  const paiements = etat.paiements
-    .filter((paiement) => paiement.contribuableId === contribuable?.id)
-    .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe));
-  const notifications = etat.notifications
-    .filter((notification) => notification.utilisateurId === session?.utilisateurId)
+  const payments = state.payments
+    .filter((payment) => payment.taxpayerId === taxpayer?.id)
+    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  const notifications = state.notifications
+    .filter((notification) => notification.userId === session?.userId)
     .slice(0, 4);
-  const obligationsOuvertes = obligations.filter((obligation) =>
+  const openObligations = obligations.filter((obligation) =>
     ["A_PAYER", "EN_RETARD", "PAIEMENT_EN_COURS", "EN_VERIFICATION", "REJETE"].includes(
-      obligation.statut,
+      obligation.status,
     ),
   );
-  const montantOuvert = obligationsOuvertes.reduce(
-    (somme, obligation) => somme + obligation.montant,
+  const outstandingAmount = openObligations.reduce(
+    (sum, obligation) => sum + obligation.amount,
     0,
   );
-  const decisionsConfirmees = paiements.filter((paiement) => paiement.statut === "CONFIRME");
-  const totalDecisionsConfirmees = decisionsConfirmees.reduce(
-    (somme, paiement) => somme + paiement.montant,
+  const confirmedDecisions = payments.filter((payment) => payment.status === "CONFIRME");
+  const confirmedDecisionsTotal = confirmedDecisions.reduce(
+    (sum, payment) => sum + payment.amount,
     0,
   );
-  const declarationsEnAttente = paiements.filter((paiement) =>
-    ["EN_VERIFICATION", "CORRECTION_DEMANDEE"].includes(paiement.statut),
+  const pendingDeclarations = payments.filter((payment) =>
+    ["EN_VERIFICATION", "CORRECTION_DEMANDEE"].includes(payment.status),
   ).length;
-  const declarationsRejetees = paiements.filter((paiement) => paiement.statut === "REJETE").length;
+  const rejectedDeclarations = payments.filter((payment) => payment.status === "REJETE").length;
 
-  const moisGraphique = useMemo(
+  const chartMonth = useMemo(
     () =>
       Array.from({ length: 6 }, (_, index) => {
         const date = new Date();
         date.setMonth(date.getMonth() - (5 - index));
-        const total = decisionsConfirmees
-          .filter((paiement) => {
-            const dateDecision = new Date(paiement.valideLe ?? paiement.soumisLe);
+        const total = confirmedDecisions
+          .filter((payment) => {
+            const dateDecision = new Date(payment.validatedAt ?? payment.submittedAt);
             return (
               dateDecision.getMonth() === date.getMonth() &&
               dateDecision.getFullYear() === date.getFullYear()
             );
           })
-          .reduce((somme, paiement) => somme + paiement.montant, 0);
+          .reduce((sum, payment) => sum + payment.amount, 0);
         return { nom: new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date), total };
       }),
-    [decisionsConfirmees],
+    [confirmedDecisions],
   );
-  const maximumGraphique = Math.max(...moisGraphique.map((mois) => mois.total), 1);
+  const maximumChart = Math.max(...chartMonth.map((month) => month.total), 1);
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre={`Bonjour, ${contribuable?.type === "ENTREPRISE" ? contribuable.raisonSociale : (contribuable?.prenom ?? session?.nom ?? "Contribuable")}`}
+        title={`Bonjour, ${taxpayer?.type === "ENTREPRISE" ? taxpayer.legalName : (taxpayer?.firstName ?? session?.name ?? "Contribuable")}`}
         description="Retrouvez les obligations et déclarations enregistrées pour votre compte."
-        filAriane={["Accueil", "Vue d’ensemble"]}
+        breadcrumb={["Accueil", "Vue d’ensemble"]}
         actions={
-          <Link className="bouton-sre bouton-sre--primaire" to="/client/paiements/nouveau">
+          <Link className="button-sre button-sre--primary" to="/client/paiements/nouveau">
             <CircleDollarSign size={16} /> Déclarer une opération
           </Link>
         }
@@ -83,77 +83,77 @@ export function ClientDashboardPage() {
 
       
 
-      <section className="grille-statistiques-sre">
+      <section className="statistics-grid-sre">
         <StatCard
-          titre="Obligations à suivre"
-          valeur={obligationsOuvertes.length}
-          note={formatMoney(montantOuvert)}
-          icone={FileText}
-          couleur="bleu"
+          title="Obligations à suivre"
+          value={openObligations.length}
+          note={formatMoney(outstandingAmount)}
+          icon={FileText}
+          color="blue"
         />
         <StatCard
-          titre="Déclarations en cours"
-          valeur={declarationsEnAttente}
+          title="Déclarations en cours"
+          value={pendingDeclarations}
           note="En attente d’une décision administrative"
-          icone={Clock3}
-          couleur="orange"
+          icon={Clock3}
+          color="orange"
         />
         <StatCard
-          titre="Décisions confirmées en interne"
-          valeur={decisionsConfirmees.length}
-          note={formatMoney(totalDecisionsConfirmees)}
-          icone={BadgeCheck}
-          couleur="vert"
+          title="Décisions confirmées en interne"
+          value={confirmedDecisions.length}
+          note={formatMoney(confirmedDecisionsTotal)}
+          icon={BadgeCheck}
+          color="green"
         />
         <StatCard
-          titre="Déclarations rejetées"
-          valeur={declarationsRejetees}
+          title="Déclarations rejetées"
+          value={rejectedDeclarations}
           note="Consultez le motif de décision"
-          icone={Bell}
-          couleur="violet"
+          icon={Bell}
+          color="violet"
         />
       </section>
 
-      <div className="grille-contenu-sre">
-        <section className="carte-sre graphique-sre">
-          <div className="carte-sre__entete">
+      <div className="content-grid-sre">
+        <section className="card-sre chart-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Décisions administratives</h2>
               <p>Montants associés aux décisions explicites · MGA</p>
             </div>
             <WalletCards size={19} />
           </div>
-          {decisionsConfirmees.length ? (
-            <div className="graphique-sre__contenu">
-              <div className="graphique-sre__valeur">{formatMoney(totalDecisionsConfirmees)}</div>
-              <div className="barres-mois-sre">
-                {moisGraphique.map((mois) => (
-                  <div key={mois.nom}>
+          {confirmedDecisions.length ? (
+            <div className="chart-sre__content">
+              <div className="chart-sre__value">{formatMoney(confirmedDecisionsTotal)}</div>
+              <div className="month-bars-sre">
+                {chartMonth.map((month) => (
+                  <div key={month.nom}>
                     <span
-                      title={formatMoney(mois.total)}
-                      style={{ height: `${Math.max(6, (mois.total / maximumGraphique) * 100)}%` }}
+                      title={formatMoney(month.total)}
+                      style={{ height: `${Math.max(6, (month.total / maximumChart) * 100)}%` }}
                     />
-                    <small>{mois.nom}</small>
+                    <small>{month.nom}</small>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
             <EmptyState
-              titre="Aucune décision enregistrée"
+              title="Aucune décision enregistrée"
               description="Les éléments apparaîtront après une décision explicite de l’administration."
             />
           )}
         </section>
 
-        <section className="carte-sre actions-rapides-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre quick-actions-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Accès rapides</h2>
               <p>Gérez vos démarches</p>
             </div>
           </div>
-          <Link to="/client/obligations" className="raccourci-sre">
+          <Link to="/client/obligations" className="shortcut-sre">
             <span>
               <FileText size={17} />
             </span>
@@ -163,7 +163,7 @@ export function ClientDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/client/paiements/nouveau" className="raccourci-sre">
+          <Link to="/client/paiements/nouveau" className="shortcut-sre">
             <span>
               <CircleDollarSign size={17} />
             </span>
@@ -173,7 +173,7 @@ export function ClientDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/client/profil" className="raccourci-sre">
+          <Link to="/client/profil" className="shortcut-sre">
             <span>
               <Users size={17} />
             </span>
@@ -186,19 +186,19 @@ export function ClientDashboardPage() {
         </section>
       </div>
 
-      <section className="carte-sre">
-        <div className="carte-sre__entete">
+      <section className="card-sre">
+        <div className="card-sre__header">
           <div>
             <h2>Dernières déclarations</h2>
             <p>Historique des éléments liés à votre compte</p>
           </div>
-          <Link className="lien-discret-sre" to="/client/paiements">
+          <Link className="subtle-link-sre" to="/client/paiements">
             Tout l’historique <ArrowRight size={14} />
           </Link>
         </div>
-        {paiements.length ? (
-          <div className="tableau-defilement-sre">
-            <table className="tableau-sre">
+        {payments.length ? (
+          <div className="table-scroll-sre">
+            <table className="table-sre">
               <thead>
                 <tr>
                   <th>Référence interne</th>
@@ -211,22 +211,22 @@ export function ClientDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {paiements.slice(0, 5).map((paiement) => (
-                  <tr key={paiement.id}>
+                {payments.slice(0, 5).map((payment) => (
+                  <tr key={payment.id}>
                     <td data-label="Référence interne">
-                      <Link className="reference-sre" to={`/client/paiements/${paiement.id}`}>
-                        {paiement.referenceInterne}
+                      <Link className="reference-sre" to={`/client/paiements/${payment.id}`}>
+                        {payment.internalReference}
                       </Link>
                     </td>
-                    <td data-label="Impôt / catégorie">{paiement.typeImpotNom}</td>
-                    <td data-label="Période">{paiement.periode}</td>
-                    <td data-label="Montant déclaré" className="montant-sre">{formatMoney(paiement.montant)}</td>
+                    <td data-label="Impôt / catégorie">{payment.taxTypeName}</td>
+                    <td data-label="Période">{payment.period}</td>
+                    <td data-label="Montant déclaré" className="amount-sre">{formatMoney(payment.amount)}</td>
                     <td data-label="Mode déclaré">
-                      <StatusBadge statut={paiement.mode} />
+                      <StatusBadge status={payment.mode} />
                     </td>
-                    <td data-label="Soumis le">{formatDate(paiement.soumisLe)}</td>
+                    <td data-label="Soumis le">{formatDate(payment.submittedAt)}</td>
                     <td data-label="Statut">
-                      <StatusBadge statut={paiement.statut} />
+                      <StatusBadge status={payment.status} />
                     </td>
                   </tr>
                 ))}
@@ -235,11 +235,11 @@ export function ClientDashboardPage() {
           </div>
         ) : (
           <EmptyState
-            titre="Aucune déclaration"
+            title="Aucune déclaration"
             description="Lorsqu’une déclaration sera soumise, son suivi apparaîtra ici. La soumission ne confirme pas le règlement."
             action={
               <Link
-                className="bouton-sre bouton-sre--primaire bouton-sre--petit"
+                className="button-sre button-sre--primary button-sre--small"
                 to="/client/paiements/nouveau"
               >
                 Déclarer une opération
@@ -249,7 +249,7 @@ export function ClientDashboardPage() {
         )}
       </section>
 
-      <section className="bandeau-conseil-sre">
+      <section className="tip-banner-sre">
         <span>
           <ShieldCheck size={18} />
         </span>
@@ -263,21 +263,21 @@ export function ClientDashboardPage() {
       </section>
 
       {notifications.length > 0 && (
-        <section className="carte-sre notifications-recentes-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre recent-notifications-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Notifications récentes</h2>
               <p>Messages adressés à votre compte uniquement</p>
             </div>
-            <Link className="lien-discret-sre" to="/client/notifications">
+            <Link className="subtle-link-sre" to="/client/notifications">
               Voir tout <ArrowRight size={14} />
             </Link>
           </div>
           {notifications.map((notification) => (
             <div className="notification-mini-sre" key={notification.id}>
-              <i className={notification.lue ? "" : "notification-mini-sre__point"} />
+              <i className={notification.isRead ? "" : "notification-mini-sre__dot"} />
               <div>
-                <strong>{notification.titre}</strong>
+                <strong>{notification.title}</strong>
                 <p>{notification.message}</p>
                 <small>{formatDate(notification.date, true)}</small>
               </div>

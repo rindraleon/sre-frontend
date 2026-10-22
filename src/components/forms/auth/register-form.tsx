@@ -13,7 +13,7 @@ import { createRegistrationSchema, type RegistrationFormValues } from "@/validat
 import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
 import { FormField, PasswordField, SubmitButton, FormError } from "@/components/forms/form-field";
 
-export const REGISTRATION_VIDE: RegistrationFormValues = {
+export const EMPTY_REGISTRATION: RegistrationFormValues = {
   type: "PARTICULIER",
   nom: "",
   prenom: "",
@@ -34,16 +34,16 @@ export const REGISTRATION_VIDE: RegistrationFormValues = {
   confirmation: "",
 };
 
-export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdministrateur: boolean }>) {
-  const { inscrire } = useAuth();
-  const { notifier } = useSre();
+export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdministrator: boolean }>) {
+  const { register: signUp } = useAuth();
+  const { notify } = useSre();
   const navigation = useNavigate();
-  const [erreur, setErreur] = useState("");
-  const [etape, setEtape] = useState(0);
-  const formulaire = useForm<RegistrationFormValues>({
-    resolver: zodResolver(createRegistrationSchema(premierAdministrateur)),
+  const [error, setError] = useState("");
+  const [step, setStep] = useState(0);
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(createRegistrationSchema(isFirstAdministrator)),
     mode: "onTouched",
-    defaultValues: REGISTRATION_VIDE,
+    defaultValues: EMPTY_REGISTRATION,
   });
   const {
     register,
@@ -52,18 +52,18 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
     setValue,
     trigger,
     formState: { errors, isSubmitting },
-  } = formulaire;
+  } = form;
   const type = watch("type");
 
-  const etapes = premierAdministrateur
+  const steps = isFirstAdministrator
     ? [
-        { libelle: "Identité", champs: ["nom", "prenom"] as const },
-        { libelle: "Sécurité", champs: ["courriel", "motDePasse", "confirmation"] as const },
+        { label: "Identité", fields: ["nom", "prenom"] as const },
+        { label: "Sécurité", fields: ["courriel", "motDePasse", "confirmation"] as const },
       ]
     : [
         {
-          libelle: "Profil",
-          champs: [
+          label: "Profil",
+          fields: [
             "nom",
             "prenom",
             "raisonSociale",
@@ -76,23 +76,23 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
             "fonctionContact",
           ] as const,
         },
-        { libelle: "Coordonnées", champs: ["adresse", "ville", "courriel", "telephone"] as const },
-        { libelle: "Sécurité", champs: ["motDePasse", "confirmation"] as const },
+        { label: "Coordonnées", fields: ["adresse", "ville", "courriel", "telephone"] as const },
+        { label: "Sécurité", fields: ["motDePasse", "confirmation"] as const },
       ];
-  const derniereEtape = etape === etapes.length - 1;
+  const lastStep = step === steps.length - 1;
 
-  const allerSuivant = async () => {
-    const valide = await trigger([...etapes[etape].champs], { shouldFocus: true });
-    if (valide) setEtape((courante) => Math.min(courante + 1, etapes.length - 1));
+  const goToNextStep = async () => {
+    const valid = await trigger([...steps[step].fields], { shouldFocus: true });
+    if (valid) setStep((current) => Math.min(current + 1, steps.length - 1));
   };
 
-  const soumettre = handleSubmit(async (valeurs) => {
-    setErreur("");
+  const onSubmit = handleSubmit(async (values) => {
+    setError("");
     try {
-      const { motDePasse, confirmation: _confirmation, ...profilValeurs } = valeurs;
-      const donneesProfil: RegistrationProfile = premierAdministrateur
+      const { motDePasse: password, confirmation: _confirmation, ...profileValues } = values;
+      const profileData: RegistrationProfile = isFirstAdministrator
         ? {
-            ...profilValeurs,
+            ...profileValues,
             type: "PARTICULIER",
             raisonSociale: undefined,
             nif: "",
@@ -100,20 +100,20 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
             ville: "",
             region: "",
           }
-        : profilValeurs;
-      const resultat = await inscrire(donneesProfil, motDePasse);
-      notifier(
-        resultat.role === "ADMIN"
+        : profileValues;
+      const result = await signUp(profileData, password);
+      notify(
+        result.role === "ADMIN"
           ? "Premier compte administrateur créé."
           : "Compte contribuable créé sur le serveur.",
-        "succes",
+        "success",
       );
-      void navigation(resultat.role === "ADMIN" ? "/admin" : "/client", { replace: true });
+      void navigation(result.role === "ADMIN" ? "/admin" : "/client", { replace: true });
     } catch (cause) {
-      const globales = applyApiErrors(formulaire, cause);
-      setErreur(
-        globales.length
-          ? globales.join(" ")
+      const global = applyApiErrors(form, cause);
+      setError(
+        global.length
+          ? global.join(" ")
           : apiErrorMessage(cause, "Impossible de créer le compte. Réessayez."),
       );
     }
@@ -121,39 +121,39 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
 
   return (
     <form
-      className="formulaire-sre grille-formulaire-sre formulaire-compact-sre"
-      onSubmit={soumettre}
+      className="form-sre form-grid-sre compact-form-sre"
+      onSubmit={onSubmit}
       noValidate
     >
       <nav
-        className="etapes-inscription-sre champ-sre-large"
+        className="registration-steps-sre field-sre-wide"
         aria-label="Progression de l’inscription"
       >
         <ol>
-          {etapes.map((entree, index) => (
+          {steps.map((entry, index) => (
             <li
-              key={entree.libelle}
-              aria-current={index === etape ? "step" : undefined}
-              className={index < etape ? "etape-terminee-sre" : ""}
+              key={entry.label}
+              aria-current={index === step ? "step" : undefined}
+              className={index < step ? "step-completed-sre" : ""}
             >
-              {index + 1}. {entree.libelle}
+              {index + 1}. {entry.label}
             </li>
           ))}
         </ol>
       </nav>
 
-      {etape === 0 && (
+      {step === 0 && (
         <>
-          {!premierAdministrateur && (
-            <fieldset className="choix-type-contribuable-sre champ-sre-large">
+          {!isFirstAdministrator && (
+            <fieldset className="taxpayer-type-choice-sre field-sre-wide">
               <legend>Type de contribuable</legend>
               <button
                 type="button"
                 aria-pressed={type === "PARTICULIER"}
                 className={
                   type === "PARTICULIER"
-                    ? "type-contribuable-sre type-contribuable-sre--actif"
-                    : "type-contribuable-sre"
+                    ? "taxpayer-type-sre taxpayer-type-sre--active"
+                    : "taxpayer-type-sre"
                 }
                 onClick={() => setValue("type", "PARTICULIER", { shouldValidate: true })}
               >
@@ -168,8 +168,8 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
                 aria-pressed={type === "ENTREPRISE"}
                 className={
                   type === "ENTREPRISE"
-                    ? "type-contribuable-sre type-contribuable-sre--actif"
-                    : "type-contribuable-sre"
+                    ? "taxpayer-type-sre taxpayer-type-sre--active"
+                    : "taxpayer-type-sre"
                 }
                 onClick={() => setValue("type", "ENTREPRISE", { shouldValidate: true })}
               >
@@ -181,72 +181,72 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
               </button>
             </fieldset>
           )}
-          {!premierAdministrateur && type === "ENTREPRISE" ? (
+          {!isFirstAdministrator && type === "ENTREPRISE" ? (
             <>
-              <FormField libelle="Raison sociale" erreur={errors.raisonSociale} requis>
+              <FormField label="Raison sociale" error={errors.raisonSociale} required>
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("raisonSociale")} />
+                  <input {...p} className="field-simple-sre" {...register("raisonSociale")} />
                 )}
               </FormField>
-              <FormField libelle="Nom commercial" erreur={errors.nomCommercial} aide="Facultatif">
+              <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("nomCommercial")} />
+                  <input {...p} className="field-simple-sre" {...register("nomCommercial")} />
                 )}
               </FormField>
-              <FormField libelle="NIF" erreur={errors.nif} aide="Facultatif selon votre situation">
-                {(p) => <input {...p} className="champ-simple-sre" {...register("nif")} />}
+              <FormField label="NIF" error={errors.nif} help="Facultatif selon votre situation">
+                {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
               </FormField>
-              <FormField libelle="STAT" erreur={errors.stat} aide="Facultatif">
-                {(p) => <input {...p} className="champ-simple-sre" {...register("stat")} />}
+              <FormField label="STAT" error={errors.stat} help="Facultatif">
+                {(p) => <input {...p} className="field-simple-sre" {...register("stat")} />}
               </FormField>
-              <FormField libelle="Représentant légal" erreur={errors.representantLegal}>
+              <FormField label="Représentant légal" error={errors.representantLegal}>
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("representantLegal")} />
+                  <input {...p} className="field-simple-sre" {...register("representantLegal")} />
                 )}
               </FormField>
-              <FormField libelle="Nom du contact" erreur={errors.nomContact}>
-                {(p) => <input {...p} className="champ-simple-sre" {...register("nomContact")} />}
+              <FormField label="Nom du contact" error={errors.nomContact}>
+                {(p) => <input {...p} className="field-simple-sre" {...register("nomContact")} />}
               </FormField>
-              <FormField libelle="Prénom du contact" erreur={errors.prenomContact}>
+              <FormField label="Prénom du contact" error={errors.prenomContact}>
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("prenomContact")} />
+                  <input {...p} className="field-simple-sre" {...register("prenomContact")} />
                 )}
               </FormField>
-              <FormField libelle="Fonction du contact" erreur={errors.fonctionContact}>
+              <FormField label="Fonction du contact" error={errors.fonctionContact}>
                 {(p) => (
-                  <input {...p} className="champ-simple-sre" {...register("fonctionContact")} />
+                  <input {...p} className="field-simple-sre" {...register("fonctionContact")} />
                 )}
               </FormField>
             </>
           ) : (
             <>
-              <FormField libelle="Nom" erreur={errors.nom} requis>
+              <FormField label="Nom" error={errors.nom} required>
                 {(p) => (
                   <input
                     {...p}
-                    className="champ-simple-sre"
+                    className="field-simple-sre"
                     autoComplete="family-name"
                     {...register("nom")}
                   />
                 )}
               </FormField>
-              <FormField libelle="Prénom" erreur={errors.prenom}>
+              <FormField label="Prénom" error={errors.prenom}>
                 {(p) => (
                   <input
                     {...p}
-                    className="champ-simple-sre"
+                    className="field-simple-sre"
                     autoComplete="given-name"
                     {...register("prenom")}
                   />
                 )}
               </FormField>
-              {!premierAdministrateur && (
+              {!isFirstAdministrator && (
                 <FormField
-                  libelle="NIF"
-                  erreur={errors.nif}
-                  aide="Facultatif selon votre situation"
+                  label="NIF"
+                  error={errors.nif}
+                  help="Facultatif selon votre situation"
                 >
-                  {(p) => <input {...p} className="champ-simple-sre" {...register("nif")} />}
+                  {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
                 </FormField>
               )}
             </>
@@ -254,50 +254,50 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
         </>
       )}
 
-      {etape === 1 && !premierAdministrateur && (
+      {step === 1 && !isFirstAdministrator && (
         <>
           <FormField
-            libelle="Adresse"
-            erreur={errors.adresse}
-            requis
-            classeSupplementaire="champ-sre-large"
+            label="Adresse"
+            error={errors.adresse}
+            required
+            className="field-sre-wide"
           >
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 autoComplete="street-address"
                 {...register("adresse")}
               />
             )}
           </FormField>
-          <FormField libelle="Région" erreur={errors.region} requis>
+          <FormField label="Région" error={errors.region} required>
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("region")}>
+              <Select {...p} className="field-simple-sre" {...register("region")}>
                 <option value={SRE_REGION}>{SRE_REGION}</option>
               </Select>
             )}
           </FormField>
-          <FormField libelle="Ville / Commune" erreur={errors.ville} requis>
+          <FormField label="Ville / Commune" error={errors.ville} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 autoComplete="address-level2"
                 {...register("ville")}
               />
             )}
           </FormField>
           <FormField
-            libelle="Adresse e-mail"
-            erreur={errors.courriel}
-            requis
-            classeSupplementaire="champ-sre-large"
+            label="Adresse e-mail"
+            error={errors.courriel}
+            required
+            className="field-sre-wide"
           >
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="email"
                 inputMode="email"
                 autoComplete="email"
@@ -305,11 +305,11 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
               />
             )}
           </FormField>
-          <FormField libelle="Téléphone" erreur={errors.telephone} requis>
+          <FormField label="Téléphone" error={errors.telephone} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -321,19 +321,19 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
         </>
       )}
 
-      {derniereEtape && (
+      {lastStep && (
         <>
-          {premierAdministrateur && (
+          {isFirstAdministrator && (
             <FormField
-              libelle="Adresse e-mail"
-              erreur={errors.courriel}
-              requis
-              classeSupplementaire="champ-sre-large"
+              label="Adresse e-mail"
+              error={errors.courriel}
+              required
+              className="field-sre-wide"
             >
               {(p) => (
                 <input
                   {...p}
-                  className="champ-simple-sre"
+                  className="field-simple-sre"
                   type="email"
                   inputMode="email"
                   autoComplete="email"
@@ -343,22 +343,22 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
             </FormField>
           )}
           <PasswordField
-            libelle="Mot de passe"
-            erreur={errors.motDePasse}
-            aide="10 caractères minimum, une majuscule, une minuscule et un chiffre."
-            requis
+            label="Mot de passe"
+            error={errors.motDePasse}
+            help="10 caractères minimum, une majuscule, une minuscule et un chiffre."
+            required
             autoComplete="new-password"
             {...register("motDePasse")}
           />
           <PasswordField
-            libelle="Confirmer le mot de passe"
-            erreur={errors.confirmation}
-            requis
+            label="Confirmer le mot de passe"
+            error={errors.confirmation}
+            required
             autoComplete="new-password"
             {...register("confirmation")}
           />
-          <div className="champ-sre-large">
-            <div className="note-securite-sre">
+          <div className="field-sre-wide">
+            <div className="security-note-sre">
               <CheckCircle2 size={16} />
               <p>
                 <strong>Compte sécurisé par le serveur</strong>
@@ -372,27 +372,27 @@ export function RegisterForm({ premierAdministrateur }: Readonly<{ premierAdmini
         </>
       )}
 
-      <div className="champ-sre-large">
-        <FormError message={erreur} />
+      <div className="field-sre-wide">
+        <FormError message={error} />
       </div>
-      <div className="actions-formulaire-sre champ-sre-large">
-        {etape > 0 && (
+      <div className="form-actions-sre field-sre-wide">
+        {step > 0 && (
           <Button
             type="button"
-            variante="contour"
+            variant="outline"
             disabled={isSubmitting}
-            onClick={() => setEtape((courante) => Math.max(0, courante - 1))}
+            onClick={() => setStep((current) => Math.max(0, current - 1))}
           >
             <ArrowLeft size={15} /> Précédent
           </Button>
         )}
-        {!derniereEtape ? (
-          <Button type="button" onClick={() => void allerSuivant()}>
+        {!lastStep ? (
+          <Button type="button" onClick={() => void goToNextStep()}>
             Suivant <ArrowRight size={16} />
           </Button>
         ) : (
-          <SubmitButton enCours={isSubmitting} libelleEnCours="Création du compte…">
-            {premierAdministrateur
+          <SubmitButton inProgress={isSubmitting} pendingLabel="Création du compte…">
+            {isFirstAdministrator
               ? "Initialiser l’administration"
               : "Créer mon compte contribuable"}{" "}
             <ArrowRight size={16} />

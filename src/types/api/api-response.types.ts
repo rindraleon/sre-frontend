@@ -1,7 +1,7 @@
 import type { AccountStatus, UserRole } from "../user";
 import type { TaxpayerType } from "../taxpayer";
 import type { TaxType } from "../tax";
-import type { StatutObligation } from "../obligation";
+import type { StatusObligation } from "../obligation";
 import type {
   Payment,
   PaymentDocument,
@@ -60,9 +60,9 @@ export interface ApiTaxType {
   description: string;
   categorie: string;
   contribuablesConcernes: "TOUS" | TaxpayerType;
-  periodicite: TaxType["periodicite"];
+  periodicite: TaxType["periodicity"];
   regleEcheance: string;
-  modeMontant: TaxType["modeMontant"];
+  modeMontant: TaxType["amountMode"];
   montantReference: string | number | null;
   champsComplementaires: string[];
   actif: boolean;
@@ -80,7 +80,7 @@ export interface ApiObligation {
   montant: number | string;
   devise: "MGA";
   echeance: string;
-  statut: StatutObligation;
+  statut: StatusObligation;
   creeLe: string;
 }
 
@@ -137,7 +137,7 @@ export interface ApiPayment {
   montant: number | string;
   devise: "MGA";
   mode: PaymentMethod;
-  operateur?: Payment["operateur"] | null;
+  operateur?: Payment["operator"] | null;
   telephoneUtilise?: string | null;
   banqueOuCanal?: string | null;
   titulairePayeur?: string | null;

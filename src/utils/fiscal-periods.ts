@@ -1,13 +1,13 @@
-const comparateurPeriodes = new Intl.Collator("fr", { numeric: true, sensitivity: "base" });
+const periodComparator = new Intl.Collator("fr", { numeric: true, sensitivity: "base" });
 
-/** Retourne les périodes non vides réellement enregistrées, sans normaliser leur format. */
-export function listerPeriodesFiscales(periodes: readonly string[]): string[] {
-  return [...new Set(periodes.filter((periode) => periode.trim().length > 0))].sort(
-    comparateurPeriodes.compare,
+/** Returns the non-empty periods actually recorded, without normalizing their format. */
+export function listFiscalPeriods(periods: readonly string[]): string[] {
+  return [...new Set(periods.filter((period) => period.trim().length > 0))].sort(
+    periodComparator.compare,
   );
 }
 
-/** Une sélection vide désactive le filtre ; sinon la valeur est comparée à l’identique. */
-export function correspondPeriodeFiscale(valeurEnregistree: string, selection: string): boolean {
-  return selection === "" || valeurEnregistree === selection;
+/** An empty selection disables the filter; otherwise the value is compared identically. */
+export function matchesFiscalPeriod(savedValue: string, selection: string): boolean {
+  return selection === "" || savedValue === selection;
 }

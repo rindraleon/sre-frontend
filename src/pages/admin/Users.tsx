@@ -11,161 +11,161 @@ import {
   ConfirmDialog,
   PageHeader,
   DataTable,
-  convertirColonnesTanstack,
+  toTanstackColumns,
   type TableColumn,
 } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 
 export function AdminUsersPage() {
-  const { etat, mettreAJourEtat, notifier } = useSre();
+  const { state, updateState, notify } = useSre();
   const { session } = useAuth();
-  const [recherche, definirRecherche] = useState("");
-  const [roleFiltre, definirRoleFiltre] = useState("TOUS");
-  const [page, definirPage] = useState(1);
-  const [parPage, definirParPage] = useState(10);
-  const [compteCible, definirCompteCible] = useState<AppUser | null>(null);
-  const [traitement, definirTraitement] = useState(false);
-  const [erreurAction, definirErreurAction] = useState("");
-  const utilisateurs = useMemo(
-    () => etat.utilisateurs.filter((compte) => roleFiltre === "TOUS" || compte.role === roleFiltre),
-    [etat.utilisateurs, roleFiltre],
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("TOUS");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [accountTarget, setAccountTarget] = useState<AppUser | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [actionError, setErrorAction] = useState("");
+  const users = useMemo(
+    () => state.users.filter((account) => roleFilter === "TOUS" || account.role === roleFilter),
+    [state.users, roleFilter],
   );
 
-  const colonnes: TableColumn<AppUser>[] = [
+  const columns: TableColumn<AppUser>[] = [
     {
       id: "compte",
-      titre: "Utilisateur",
-      afficher: (compte) => (
-        <div className="lien-identite-tableau-sre">
-          <span className="avatar-ligne-sre">
+      title: "Utilisateur",
+      render: (account) => (
+        <div className="table-identity-link-sre">
+          <span className="row-avatar-sre">
             <UserRoundCog size={15} />
           </span>
           <span>
-            <strong>{compte.nom}</strong>
-            <small>{compte.courriel}</small>
+            <strong>{account.name}</strong>
+            <small>{account.email}</small>
           </span>
         </div>
       ),
-      valeurTri: (compte) => compte.nom,
+      sortValue: (account) => account.name,
     },
     {
       id: "role",
-      titre: "Rôle",
-      afficher: (compte) => <StatusBadge statut={compte.role} />,
-      valeurTri: (compte) => compte.role,
+      title: "Rôle",
+      render: (account) => <StatusBadge status={account.role} />,
+      sortValue: (account) => account.role,
     },
     {
       id: "statut",
-      titre: "Statut",
-      afficher: (compte) => <StatusBadge statut={compte.statut} />,
-      valeurTri: (compte) => compte.statut,
+      title: "Statut",
+      render: (account) => <StatusBadge status={account.status} />,
+      sortValue: (account) => account.status,
     },
     {
       id: "mdp",
-      titre: "Sécurité",
-      afficher: (compte) =>
-        compte.changementMotDePasseRequis ? (
-          <span className="texte-attention-sre">
+      title: "Sécurité",
+      render: (account) =>
+        account.mustChangePassword ? (
+          <span className="attention-text-sre">
             <KeyRound size={13} /> Changement requis
           </span>
         ) : (
-          <span className="texte-succes-sre">Mot de passe défini</span>
+          <span className="success-text-sre">Mot de passe défini</span>
         ),
     },
     {
       id: "cree",
-      titre: "Créé le",
-      afficher: (compte) => formatDate(compte.creeLe),
-      valeurTri: (compte) => compte.creeLe,
+      title: "Créé le",
+      render: (account) => formatDate(account.createdAt),
+      sortValue: (account) => account.createdAt,
     },
     {
       id: "connexion",
-      titre: "Dernière connexion",
-      afficher: (compte) => formatDate(compte.derniereConnexion, true),
-      valeurTri: (compte) => compte.derniereConnexion ?? "",
+      title: "Dernière connexion",
+      render: (account) => formatDate(account.lastLoginAt, true),
+      sortValue: (account) => account.lastLoginAt ?? "",
     },
     {
       id: "action",
-      titre: "Action",
-      afficher: (compte) =>
-        compte.id === session?.utilisateurId ? (
-          <span className="texte-secondaire-sre">Session actuelle</span>
+      title: "Action",
+      render: (account) =>
+        account.id === session?.userId ? (
+          <span className="secondary-text-sre">Session actuelle</span>
         ) : (
           <Button
-            taille="petit"
-            variante={compte.statut === "ACTIF" ? "danger" : "contour"}
-            onClick={() => definirCompteCible(compte)}
+            size="small"
+            variant={account.status === "ACTIF" ? "danger" : "outline"}
+            onClick={() => setAccountTarget(account)}
           >
-            {compte.statut === "ACTIF" ? "Désactiver" : "Réactiver"}
+            {account.status === "ACTIF" ? "Désactiver" : "Réactiver"}
           </Button>
         ),
     },
   ];
 
-  const confirmerChangementStatut = async () => {
-    if (!compteCible || !session?.jetonApi) return;
-    const statut = compteCible.statut === "ACTIF" ? "INACTIF" : "ACTIF";
-    definirErreurAction("");
-    definirTraitement(true);
+  const confirmChangeStatus = async () => {
+    if (!accountTarget || !session?.apiToken) return;
+    const status = accountTarget.status === "ACTIF" ? "INACTIF" : "ACTIF";
+    setErrorAction("");
+    setProcessing(true);
     try {
-      const reponse = await callApi<ApiUser>(
-        `utilisateurs/${encodeURIComponent(compteCible.id)}/statut`,
-        { method: "PATCH", token: session.jetonApi, body: { statut } },
+      const response = await callApi<ApiUser>(
+        `utilisateurs/${encodeURIComponent(accountTarget.id)}/statut`,
+        { method: "PATCH", token: session.apiToken, body: { statut: status } },
       );
-      const utilisateurMisAJour = mapApiUser(reponse);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        utilisateurs: courant.utilisateurs.map((compte) =>
-          compte.id === utilisateurMisAJour.id ? utilisateurMisAJour : compte,
+      const userUpdated = mapApiUser(response);
+      updateState((current) => ({
+        ...current,
+        users: current.users.map((account) =>
+          account.id === userUpdated.id ? userUpdated : account,
         ),
-        contribuables: courant.contribuables.map((contribuable) =>
-          contribuable.utilisateurId === utilisateurMisAJour.id
-            ? { ...contribuable, statut: utilisateurMisAJour.statut }
-            : contribuable,
+        taxpayers: current.taxpayers.map((taxpayer) =>
+          taxpayer.userId === userUpdated.id
+            ? { ...taxpayer, status: userUpdated.status }
+            : taxpayer,
         ),
       }));
-      notifier(
-        statut === "ACTIF"
+      notify(
+        status === "ACTIF"
           ? "Compte réactivé sur le serveur."
           : "Compte désactivé sur le serveur. Les données sont conservées.",
-        "succes",
+        "success",
       );
-      definirCompteCible(null);
+      setAccountTarget(null);
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le compte.";
-      definirErreurAction(message);
-      notifier(message, "erreur");
+      setErrorAction(message);
+      notify(message, "error");
     } finally {
-      definirTraitement(false);
+      setProcessing(false);
     }
   };
 
-  const reactiver = compteCible?.statut !== "ACTIF";
+  const reactivate = accountTarget?.status !== "ACTIF";
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Comptes utilisateurs"
+        title="Comptes utilisateurs"
         description="Consultez les comptes et gérez leur statut d’accès."
-        filAriane={["Accueil", "Comptes utilisateurs"]}
+        breadcrumb={["Accueil", "Comptes utilisateurs"]}
       />
       <DataTable
-        data={utilisateurs}
-        columns={convertirColonnesTanstack(colonnes)}
+        data={users}
+        columns={toTanstackColumns(columns)}
         label="Comptes utilisateurs"
-        getRowId={(compte) => compte.id}
-        getSearchText={(compte) => `${compte.nom} ${compte.courriel} ${compte.role}`}
+        getRowId={(account) => account.id}
+        getSearchText={(account) => `${account.name} ${account.email} ${account.role}`}
         searchPlaceholder="Nom ou adresse e-mail…"
-        searchValue={recherche}
-        onSearchChange={definirRecherche}
+        searchValue={search}
+        onSearchChange={setSearch}
         toolbarActions={
-          <label className="filtre-compact-sre">
+          <label className="compact-filter-sre">
             Rôle
             <Select
-              value={roleFiltre}
+              value={roleFilter}
               onChange={(event) => {
-                definirRoleFiltre(event.target.value);
-                definirPage(1);
+                setRoleFilter(event.target.value);
+                setPage(1);
               }}
             >
               <option value="TOUS">Tous les rôles</option>
@@ -178,24 +178,24 @@ export function AdminUsersPage() {
         emptyTitle="Aucun utilisateur"
         emptyDescription="Aucun utilisateur ne correspond à votre recherche."
         page={page}
-        rowsPerPage={parPage}
-        onPageChange={definirPage}
-        onRowsPerPageChange={definirParPage}
+        rowsPerPage={perPage}
+        onPageChange={setPage}
+        onRowsPerPageChange={setPerPage}
       />
       <ConfirmDialog
-        ouvert={!!compteCible}
-        titre={reactiver ? "Réactiver ce compte ?" : "Désactiver ce compte ?"}
+        open={!!accountTarget}
+        title={reactivate ? "Réactiver ce compte ?" : "Désactiver ce compte ?"}
         description={
-          reactiver
-            ? `L’accès de ${compteCible?.nom} sera réactivé sur le serveur.`
-            : `L’accès de ${compteCible?.nom} sera suspendu. Les données associées seront conservées. Le dernier administrateur actif ne peut pas être désactivé.`
+          reactivate
+            ? `L’accès de ${accountTarget?.name} sera réactivé sur le serveur.`
+            : `L’accès de ${accountTarget?.name} sera suspendu. Les données associées seront conservées. Le dernier administrateur actif ne peut pas être désactivé.`
         }
-        fermer={() => definirCompteCible(null)}
-        confirmer={() => void confirmerChangementStatut()}
-        libelleConfirmer={reactiver ? "Réactiver le compte" : "Désactiver le compte"}
-        danger={!reactiver}
-        chargement={traitement}
-        erreur={erreurAction}
+        close={() => setAccountTarget(null)}
+        confirm={() => void confirmChangeStatus()}
+        confirmLabel={reactivate ? "Réactiver le compte" : "Désactiver le compte"}
+        danger={!reactivate}
+        loading={processing}
+        error={actionError}
       />
     </div>
   );

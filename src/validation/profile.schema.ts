@@ -2,7 +2,7 @@ import { z } from "zod";
 import { SRE_REGION } from "@/utils/constants";
 import { emailSchema, phoneSchema, optionalTextSchema } from "./common";
 
-/** Coordonnées modifiables par le client — ModifierProfilContribuableDto. */
+/** Contact details editable by the client — UpdateTaxpayerProfileDto. */
 export const clientProfileSchema = z.object({
   nomCommercial: optionalTextSchema(1, 180, "Le nom commercial"),
   adresse: z
@@ -17,7 +17,7 @@ export const clientProfileSchema = z.object({
 });
 export type ClientProfileFormValues = z.infer<typeof clientProfileSchema>;
 
-/** Création d'un profil contribuable par l'administration — CreerContribuableDto. */
+/** Taxpayer profile creation by the administration — CreateTaxpayerDto. */
 export const taxpayerFormSchema = z
   .object({
     type: z.enum(["PARTICULIER", "ENTREPRISE"]),
@@ -43,11 +43,11 @@ export const taxpayerFormSchema = z
     courriel: emailSchema,
     telephone: phoneSchema,
   })
-  .superRefine((valeurs, contexte) => {
-    if (valeurs.type === "PARTICULIER" && !valeurs.nom.trim())
-      contexte.addIssue({ code: "custom", path: ["nom"], message: "Le nom est requis." });
-    if (valeurs.type === "ENTREPRISE" && !valeurs.raisonSociale.trim())
-      contexte.addIssue({
+  .superRefine((values, context) => {
+    if (values.type === "PARTICULIER" && !values.nom.trim())
+      context.addIssue({ code: "custom", path: ["nom"], message: "Le nom est requis." });
+    if (values.type === "ENTREPRISE" && !values.raisonSociale.trim())
+      context.addIssue({
         code: "custom",
         path: ["raisonSociale"],
         message: "La raison sociale est requise.",

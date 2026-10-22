@@ -1,18 +1,18 @@
 export interface ImportErrorRow {
-  ligne: number;
-  champ?: string;
+  row: number;
+  field?: string;
   message: string;
-  donnees?: Record<string, unknown>;
+  data?: Record<string, unknown>;
 }
 
 export interface ImportHistoryEntry {
   id: string;
-  nomFichier: string;
+  fileName: string;
   date: string;
-  analysees: number;
-  creees: number;
-  ignorees: number;
-  doublons: number;
-  erreurs: ImportErrorRow[];
-  statut: "TERMINE" | "PARTIEL" | "ERREUR";
+  analyzed: number;
+  created: number;
+  ignored: number;
+  duplicates: number;
+  errors: ImportErrorRow[];
+  status: "TERMINE" | "PARTIEL" | "ERREUR";
 }

@@ -8,41 +8,41 @@ import { ROUTES } from "@/constants";
 
 
 export function LoginPage() {
-  const [administrateurInitialise, setAdministrateurInitialise] = useState<boolean | null>(
+  const [isAdministratorInitialized, setAdministratorInitialized] = useState<boolean | null>(
     null,
   );
 
   useEffect(() => {
-    let actif = true;
+    let isActive = true;
     getRegistrationStateApi()
-      .then((etat) => {
-        if (actif) setAdministrateurInitialise(etat.administrateurInitialise);
+      .then((state) => {
+        if (isActive) setAdministratorInitialized(state.administrateurInitialise);
       })
       .catch(() => {
-        if (actif) setAdministrateurInitialise(true);
+        if (isActive) setAdministratorInitialized(true);
       });
     return () => {
-      actif = false;
+      isActive = false;
     };
   }, []);
 
   return (
     <div className="page-auth-sre">
       <AuthHeader
-        surTitre="ACCÈS AUX SERVICES FISCAUX"
-        libelleLien="Retour au portail"
-        cheminLien="/accueil"
+        overline="ACCÈS AUX SERVICES FISCAUX"
+        linkLabel="Retour au portail"
+        linkPath="/accueil"
       />
-      <main className="auth-cadre-sre">
-        <section className="auth-carte-sre">
+      <main className="auth-frame-sre">
+        <section className="auth-card-sre">
           <LoginForm />
-          <p className="auth-lien-secondaire-sre">
-            Pas encore de compte ? <Link to={ROUTES.inscription}>Créer un compte</Link>
+          <p className="auth-link-secondary-sre">
+            Pas encore de compte ? <Link to={ROUTES.registration}>Créer un compte</Link>
           </p>
-          {administrateurInitialise === false && (
-            <div className="auth-premier-admin-sre">
+          {isAdministratorInitialized === false && (
+            <div className="auth-first-admin-sre">
               <span>Aucun administrateur n’existe encore.</span>
-              <Link to={ROUTES.inscription}>
+              <Link to={ROUTES.registration}>
                 <ShieldCheck size={13} /> Créer le premier administrateur{" "}
                 <ArrowRight size={13} />
               </Link>

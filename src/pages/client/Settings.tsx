@@ -7,17 +7,17 @@ import { EmailVerificationCard } from "@/components/forms/auth/email-verificatio
 
 export function ClientSettingsPage() {
   const { session } = useAuth();
-  const { etat } = useSre();
-  const compte = etat.utilisateurs.find((utilisateur) => utilisateur.id === session?.utilisateurId);
+  const { state } = useSre();
+  const account = state.users.find((user) => user.id === session?.userId);
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Paramètres du compte"
+        title="Paramètres du compte"
         description="Options de sécurité et informations de session."
-        filAriane={["Accueil", "Paramètres"]}
+        breadcrumb={["Accueil", "Paramètres"]}
       />
-      <div className="grille-parametres-sre">
-        <section className="carte-sre parametre-ligne-sre">
+      <div className="settings-grid-sre">
+        <section className="card-sre setting-row-sre">
           <span>
             <KeyRound size={18} />
           </span>
@@ -25,11 +25,11 @@ export function ClientSettingsPage() {
             <h2>Mot de passe</h2>
             <p>
               Modifier le mot de passe
-              {session?.changementMotDePasseRequis ? " · action requise" : ""}.
+              {session?.mustChangePassword ? " · action requise" : ""}.
             </p>
           </div>
           <Link
-            className="bouton-sre bouton-sre--contour bouton-sre--petit"
+            className="button-sre button-sre--outline button-sre--small"
             to="/client/changement-mot-de-passe"
           >
             Modifier <ArrowRight size={14} />
@@ -37,11 +37,11 @@ export function ClientSettingsPage() {
         </section>
         {session && (
           <EmailVerificationCard
-            courriel={session.courriel}
-            courrielVerifie={compte?.courrielVerifie ?? false}
+            email={session.email}
+            isEmailVerified={account?.isEmailVerified ?? false}
           />
         )}
-        <section className="carte-sre parametre-ligne-sre">
+        <section className="card-sre setting-row-sre">
           <span>
             <ShieldCheck size={18} />
           </span>
@@ -51,7 +51,7 @@ export function ClientSettingsPage() {
           </div>
         </section>
       </div>
-      <div className="note-fiscale-sre">
+      <div className="tax-note-sre">
         <span>i</span>
         <p>
           Les rappels d’échéances sont générés par le serveur (centre de notifications et, si le

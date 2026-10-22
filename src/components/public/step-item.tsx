@@ -1,19 +1,19 @@
 export function StepItem({
-  numero,
-  titre,
+  number,
+  title,
   description,
-  delai,
+  delay,
 }: Readonly<{
-  numero: string;
-  titre: string;
+  number: string;
+  title: string;
   description: string;
-  delai?: number;
+  delay?: number;
 }>) {
   return (
-    <article data-revelation="droite" data-delai={delai}>
-      <span>{numero}</span>
+    <article data-reveal="droite" data-delai={delay}>
+      <span>{number}</span>
       <div>
-        <h3>{titre}</h3>
+        <h3>{title}</h3>
         <p>{description}</p>
       </div>
     </article>

@@ -7,167 +7,167 @@ import { formatDate } from "@/utils/format";
 
 export function AdminTaxpayerDetailPage() {
   const { id } = useParams();
-  const emplacement = useLocation();
-  const { etat } = useSre();
-  const listeParente = emplacement.pathname.startsWith("/admin/entreprises")
+  const location = useLocation();
+  const { state } = useSre();
+  const listParent = location.pathname.startsWith("/admin/entreprises")
     ? "Entreprises"
     : "Contribuables";
-  const contribuable = etat.contribuables.find((entree) => entree.id === id);
-  if (!contribuable)
+  const taxpayer = state.taxpayers.find((entry) => entry.id === id);
+  if (!taxpayer)
     return (
-      <div className="page-contenu-sre">
-        <PageHeader titre="Contribuable introuvable" filAriane={["Accueil", listeParente]} />
+      <div className="page-content-sre">
+        <PageHeader title="Contribuable introuvable" breadcrumb={["Accueil", listParent]} />
         <EmptyState
-          titre="Profil non trouvé"
+          title="Profil non trouvé"
           description="Ce profil n’existe pas dans les données accessibles à votre session."
           action={
-            <Link to={ROUTES_ADMIN.contribuables} className="bouton-sre bouton-sre--contour">
+            <Link to={ROUTES_ADMIN.taxpayers} className="button-sre button-sre--outline">
               <ArrowLeft size={14} /> Retour à la liste
             </Link>
           }
         />
       </div>
     );
-  const utilisateur = etat.utilisateurs.find((compte) => compte.id === contribuable.utilisateurId);
-  const obligations = etat.obligations.filter(
-    (entree) => entree.contribuableId === contribuable.id,
+  const user = state.users.find((account) => account.id === taxpayer.userId);
+  const obligations = state.obligations.filter(
+    (entry) => entry.taxpayerId === taxpayer.id,
   );
-  const paiements = etat.paiements.filter((entree) => entree.contribuableId === contribuable.id);
+  const payments = state.payments.filter((entry) => entry.taxpayerId === taxpayer.id);
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre={
-          contribuable.raisonSociale || `${contribuable.prenom ?? ""} ${contribuable.nom}`.trim()
+        title={
+          taxpayer.legalName || `${taxpayer.firstName ?? ""} ${taxpayer.lastName}`.trim()
         }
-        description={`${contribuable.type === "ENTREPRISE" ? "Entreprise" : "Particulier"} · ${SRE_REGION}`}
-        filAriane={["Accueil", listeParente, contribuable.nif || contribuable.id]}
+        description={`${taxpayer.type === "ENTREPRISE" ? "Entreprise" : "Particulier"} · ${SRE_REGION}`}
+        breadcrumb={["Accueil", listParent, taxpayer.nif || taxpayer.id]}
         actions={
-          <Link className="bouton-sre bouton-sre--contour" to={ROUTES_ADMIN.contribuables}>
+          <Link className="button-sre button-sre--outline" to={ROUTES_ADMIN.taxpayers}>
             <ArrowLeft size={14} /> Retour
           </Link>
         }
       />
-      <div className="grille-statistiques-sre">
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--bleu">
+      <div className="statistics-grid-sre">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--blue">
             <UserRound size={18} />
           </span>
           <div>
             <span>Compte lié</span>
-            <strong className="valeur-stat-texte-sre">
-              {utilisateur?.courriel ?? "Sans compte lié"}
+            <strong className="stat-text-value-sre">
+              {user?.email ?? "Sans compte lié"}
             </strong>
-            <small>{utilisateur ? "Compte utilisateur" : "Profil sans compte"}</small>
+            <small>{user ? "Compte utilisateur" : "Profil sans compte"}</small>
           </div>
         </article>
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--orange">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--orange">
             <CirclePlus size={18} />
           </span>
           <div>
             <span>Obligations</span>
             <strong>{obligations.length}</strong>
             <small>
-              {obligations.filter((entree) => entree.statut !== "PAYE").length} à suivre
+              {obligations.filter((entry) => entry.status !== "PAYE").length} à suivre
             </small>
           </div>
         </article>
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--vert">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--green">
             <ArrowRight size={18} />
           </span>
           <div>
             <span>Déclarations</span>
-            <strong>{paiements.length}</strong>
+            <strong>{payments.length}</strong>
             <small>
-              dont {paiements.filter((entree) => entree.statut === "EN_VERIFICATION").length} à
+              dont {payments.filter((entry) => entry.status === "EN_VERIFICATION").length} à
               vérifier
             </small>
           </div>
         </article>
       </div>
-      <div className="grille-contenu-sre">
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+      <div className="content-grid-sre">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Informations du profil</h2>
               <p>Source : dossier enregistré dans le serveur.</p>
             </div>
-            <StatusBadge statut={utilisateur?.statut ?? "SANS_COMPTE"} />
+            <StatusBadge status={user?.status ?? "SANS_COMPTE"} />
           </div>
-          <dl className="liste-details-sre">
+          <dl className="details-list-sre">
             <div>
               <dt>Type</dt>
               <dd>
-                <StatusBadge statut={contribuable.type} />
+                <StatusBadge status={taxpayer.type} />
               </dd>
             </div>
             <div>
               <dt>NIF</dt>
-              <dd>{contribuable.nif || "Non renseigné"}</dd>
+              <dd>{taxpayer.nif || "Non renseigné"}</dd>
             </div>
-            {contribuable.stat && (
+            {taxpayer.stat && (
               <div>
                 <dt>STAT</dt>
-                <dd>{contribuable.stat}</dd>
+                <dd>{taxpayer.stat}</dd>
               </div>
             )}
             <div>
               <dt>Adresse</dt>
               <dd>
-                {contribuable.adresse}, {contribuable.ville}, {contribuable.region}
+                {taxpayer.address}, {taxpayer.city}, {taxpayer.region}
               </dd>
             </div>
             <div>
               <dt>E-mail</dt>
-              <dd>{contribuable.courriel}</dd>
+              <dd>{taxpayer.email}</dd>
             </div>
             <div>
               <dt>Téléphone</dt>
-              <dd>{contribuable.telephone || "—"}</dd>
+              <dd>{taxpayer.phone || "—"}</dd>
             </div>
-            {contribuable.representantLegal && (
+            {taxpayer.legalRepresentative && (
               <div>
                 <dt>Représentant légal</dt>
-                <dd>{contribuable.representantLegal}</dd>
+                <dd>{taxpayer.legalRepresentative}</dd>
               </div>
             )}
             <div>
               <dt>Compte utilisateur</dt>
-              <dd>{utilisateur?.courriel ?? "Aucun compte lié"}</dd>
+              <dd>{user?.email ?? "Aucun compte lié"}</dd>
             </div>
             <div>
               <dt>Créé le</dt>
-              <dd>{formatDate(contribuable.dateCreationCompte, true)}</dd>
+              <dd>{formatDate(taxpayer.accountCreatedAt, true)}</dd>
             </div>
           </dl>
         </section>
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Obligations associées</h2>
               <p>Selon les données renvoyées par le serveur.</p>
             </div>
-            <Link className="lien-discret-sre" to={ROUTES_ADMIN.obligations}>
+            <Link className="subtle-link-sre" to={ROUTES_ADMIN.obligations}>
               Gérer <ArrowRight size={14} />
             </Link>
           </div>
           {obligations.length ? (
             obligations.map((obligation) => (
-              <div className="ligne-obligation-mini-sre" key={obligation.id}>
+              <div className="obligation-mini-row-sre" key={obligation.id}>
                 <div>
-                  <strong>{obligation.typeImpotNom}</strong>
+                  <strong>{obligation.taxTypeName}</strong>
                   <small>
-                    {obligation.referenceFiscale} · {obligation.periode}
+                    {obligation.taxReference} · {obligation.period}
                   </small>
                 </div>
-                <span>{new Intl.NumberFormat("fr-FR").format(obligation.montant)} MGA</span>
-                <StatusBadge statut={obligation.statut} />
+                <span>{new Intl.NumberFormat("fr-FR").format(obligation.amount)} MGA</span>
+                <StatusBadge status={obligation.status} />
               </div>
             ))
           ) : (
             <EmptyState
-              titre="Aucune obligation liée"
+              title="Aucune obligation liée"
               description="Aucune obligation n’est actuellement associée à ce profil."
             />
           )}

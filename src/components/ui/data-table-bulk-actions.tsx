@@ -36,7 +36,7 @@ import { Select } from "./select";
 const FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const SQUIRCLE = "[corner-shape:squircle]";
 
-/** Colonnes du DataTable : le label est aussi repris dans les cartes mobiles. */
+/** DataTable columns: the label is also reused in the mobile cards. */
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData, TValue> {
     align?: "left" | "right" | "center";
@@ -62,35 +62,35 @@ export interface DataTableBulkActionsProps<TData> {
   emptyDescription?: string;
   label?: string;
   className?: string;
-  /** Filtres/action principale affichés sur la même barre que la recherche. */
+  /** Filters/main action displayed on the same bar as the search. */
   toolbarActions?: React.ReactNode;
   actionPrimary?: React.ReactNode;
-  /** Recherche contrôlée facultative, utilisée par les pages existantes. */
+  /** Optional controlled search, used by the existing pages. */
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  /** Texte de recherche dérivé des données liées à une ligne (ex. contribuable associé). */
+  /** Search text derived from data linked to a row (e.g. associated taxpayer). */
   getSearchText?: (row: TData) => string;
-  /** Pagination contrôlée facultative (page numérotée à partir de 1). */
+  /** Optional controlled pagination (page numbered from 1). */
   page?: number;
   onPageChange?: (page: number) => void;
   rowsPerPage?: number;
   onRowsPerPageChange?: (pageSize: number) => void;
-  /** Identifiants sélectionnés contrôlés, utiles aux actions métier. */
+  /** Controlled selected identifiers, useful to business actions. */
   selectedRowIds?: ReadonlySet<string>;
   onSelectedRowIdsChange?: (ids: string[]) => void;
 }
 
-function texteRecherche(valeur: unknown): string {
-  if (valeur == null) return "";
-  if (typeof valeur === "string" || typeof valeur === "number" || typeof valeur === "boolean")
-    return String(valeur);
-  if (valeur instanceof Date) return valeur.toISOString();
-  if (Array.isArray(valeur)) return valeur.map(texteRecherche).join(" ");
-  if (typeof valeur === "object") return Object.values(valeur).map(texteRecherche).join(" ");
+function searchText(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(searchText).join(" ");
+  if (typeof value === "object") return Object.values(value).map(searchText).join(" ");
   return "";
 }
 
-function Case({
+function Checkbox({
   checked,
   onCheckedChange,
   label,
@@ -127,7 +127,7 @@ function Case({
 
 export function DataTableBulkActions<TData>({
   data,
-  columns: colonnesUtilisateur,
+  columns: userColumns,
   searchPlaceholder,
   selectable = false,
   bulkActions,
@@ -172,31 +172,31 @@ export function DataTableBulkActions<TData>({
       ? Object.fromEntries(Array.from(selectedRowIds, (id) => [id, true]))
       : internalRowSelection;
 
-  const colonnes = React.useMemo<ColumnDef<TData, unknown>[]>(() => {
-    const sansRecherche = colonnesUtilisateur.filter((colonne) => colonne.id !== "__globalSearch");
-    if (!searchPlaceholder && searchValue === undefined && !onSearchChange) return sansRecherche;
+  const columnsWithSearch = React.useMemo<ColumnDef<TData, unknown>[]>(() => {
+    const withoutSearch = userColumns.filter((column) => column.id !== "__globalSearch");
+    if (!searchPlaceholder && searchValue === undefined && !onSearchChange) return withoutSearch;
     return [
-      ...sansRecherche,
+      ...withoutSearch,
       {
         id: "__globalSearch",
         header: "",
-        accessorFn: (ligne) => getSearchText?.(ligne) ?? texteRecherche(ligne),
+        accessorFn: (row) => getSearchText?.(row) ?? searchText(row),
         enableSorting: false,
         enableHiding: false,
         meta: { label: "Recherche" },
       },
     ];
-  }, [colonnesUtilisateur, searchPlaceholder, searchValue, onSearchChange, getSearchText]);
+  }, [userColumns, searchPlaceholder, searchValue, onSearchChange, getSearchText]);
 
   const columns = React.useMemo<ColumnDef<TData, unknown>[]>(() => {
-    if (!selectable) return colonnes;
+    if (!selectable) return columnsWithSearch;
     const select: ColumnDef<TData, unknown> = {
       id: "__select",
       enableSorting: false,
       enableHiding: false,
       meta: { width: 44, label: "Sélection" },
       header: ({ table }) => (
-        <Case
+        <Checkbox
           label="Sélectionner toutes les lignes de cette page"
           checked={
             table.getIsAllPageRowsSelected()
@@ -209,7 +209,7 @@ export function DataTableBulkActions<TData>({
         />
       ),
       cell: ({ row }) => (
-        <Case
+        <Checkbox
           label={`Sélectionner la ligne ${row.id}`}
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(value)}
@@ -217,32 +217,32 @@ export function DataTableBulkActions<TData>({
         />
       ),
     };
-    return [select, ...colonnes];
-  }, [colonnes, selectable]);
+    return [select, ...columnsWithSearch];
+  }, [columnsWithSearch, selectable]);
 
-  const gererPagination: OnChangeFn<PaginationState> = (updater) => {
-    const suivante = typeof updater === "function" ? updater(pagination) : updater;
-    if (page !== undefined) onPageChange?.(suivante.pageIndex + 1);
-    else setInternalPagination(suivante);
-    if (rowsPerPage !== undefined) onRowsPerPageChange?.(suivante.pageSize);
+  const handlePaginationChange: OnChangeFn<PaginationState> = (updater) => {
+    const next = typeof updater === "function" ? updater(pagination) : updater;
+    if (page !== undefined) onPageChange?.(next.pageIndex + 1);
+    else setInternalPagination(next);
+    if (rowsPerPage !== undefined) onRowsPerPageChange?.(next.pageSize);
     else if (page !== undefined)
-      setInternalPagination((courante) => ({ ...courante, pageSize: suivante.pageSize }));
+      setInternalPagination((current) => ({ ...current, pageSize: next.pageSize }));
   };
 
-  const gererRecherche = (updater: Updater<unknown>) => {
-    const valeur = typeof updater === "function" ? updater(search) : updater;
-    const suivante = String(valeur ?? "");
-    if (searchValue === undefined) setInternalSearch(suivante);
-    onSearchChange?.(suivante);
+  const handleSearchChange = (updater: Updater<unknown>) => {
+    const value = typeof updater === "function" ? updater(search) : updater;
+    const next = String(value ?? "");
+    if (searchValue === undefined) setInternalSearch(next);
+    onSearchChange?.(next);
     if (page !== undefined) onPageChange?.(1);
-    else setInternalPagination((courante) => ({ ...courante, pageIndex: 0 }));
+    else setInternalPagination((current) => ({ ...current, pageIndex: 0 }));
   };
 
-  const gererSelection: OnChangeFn<RowSelectionState> = (updater) => {
-    const suivante = typeof updater === "function" ? updater(rowSelection) : updater;
+  const handleSelectionChange: OnChangeFn<RowSelectionState> = (updater) => {
+    const next = typeof updater === "function" ? updater(rowSelection) : updater;
     if (selectedRowIds !== undefined) {
-      onSelectedRowIdsChange?.(Object.keys(suivante).filter((id) => suivante[id]));
-    } else setInternalRowSelection(suivante);
+      onSelectedRowIdsChange?.(Object.keys(next).filter((id) => next[id]));
+    } else setInternalRowSelection(next);
   };
 
   const table = useReactTable({
@@ -256,10 +256,10 @@ export function DataTableBulkActions<TData>({
       pagination,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: gererRecherche,
-    onRowSelectionChange: gererSelection,
+    onGlobalFilterChange: handleSearchChange,
+    onRowSelectionChange: handleSelectionChange,
     onColumnVisibilityChange: setVisibility,
-    onPaginationChange: gererPagination,
+    onPaginationChange: handlePaginationChange,
     getRowId,
     enableRowSelection: selectable,
     getCoreRowModel: getCoreRowModel(),
@@ -284,7 +284,7 @@ export function DataTableBulkActions<TData>({
 
   React.useEffect(() => {
     onSelectionChange?.(selectedRows);
-    // Ne notifier le parent qu'au changement réel des identifiants sélectionnés.
+    // Only notify the parent when the selected identifiers actually change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKey]);
 
@@ -305,7 +305,7 @@ export function DataTableBulkActions<TData>({
                 aria-label={searchPlaceholder}
                 placeholder={searchPlaceholder}
                 value={search}
-                onChange={(event) => gererRecherche(event.target.value)}
+                onChange={(event) => handleSearchChange(event.target.value)}
                 className="h-8 min-w-0 border-0 bg-transparent px-0 shadow-none ring-0 focus-visible:ring-0"
               />
             </label>
@@ -325,7 +325,7 @@ export function DataTableBulkActions<TData>({
           {columnToggle && (
             <MenuPrimitive.Root>
               <MenuPrimitive.Trigger asChild>
-                <Button variante="contour" taille="petit" className="ml-auto">
+                <Button variant="outline" size="small" className="ml-auto">
                   <Columns3 aria-hidden /> Colonnes
                 </Button>
               </MenuPrimitive.Trigger>
@@ -374,10 +374,10 @@ export function DataTableBulkActions<TData>({
       )}
 
       {rows.length > 0 && (selectable || sortableColumns.length > 0) && (
-        <div className="tableau-mobile-commandes-sre">
+        <div className="table-mobile-controls-sre">
           {selectable && (
-            <label className="tableau-mobile-selection-sre">
-              <Case
+            <label className="table-mobile-selection-sre">
+              <Checkbox
                 label="Sélectionner toute cette page"
                 checked={
                   table.getIsAllPageRowsSelected()
@@ -392,7 +392,7 @@ export function DataTableBulkActions<TData>({
             </label>
           )}
           {sortableColumns.length > 0 && (
-            <div className="tableau-mobile-tri-sre">
+            <div className="table-mobile-sort-sre">
               <label>
                 <span>Trier par</span>
                 <Select
@@ -402,25 +402,25 @@ export function DataTableBulkActions<TData>({
                     const id = event.target.value;
                     setSorting(id ? [{ id, desc: false }] : []);
                     if (page !== undefined) onPageChange?.(1);
-                    else setInternalPagination((courante) => ({ ...courante, pageIndex: 0 }));
+                    else setInternalPagination((current) => ({ ...current, pageIndex: 0 }));
                   }}
                 >
                   <option value="">Ordre initial</option>
                   {sortableColumns.map((column) => (
                     <option key={column.id} value={column.id}>
-                      {texteEntete(column)}
+                      {headerText(column)}
                     </option>
                   ))}
                 </Select>
               </label>
               <Button
-                variante="contour"
-                taille="petit"
+                variant="outline"
+                size="small"
                 aria-label={currentSort?.desc ? "Tri décroissant" : "Tri croissant"}
                 disabled={!currentSort}
                 onClick={() =>
-                  setSorting((courante) =>
-                    courante.length ? [{ ...courante[0], desc: !courante[0].desc }] : courante,
+                  setSorting((current) =>
+                    current.length ? [{ ...current[0], desc: !current[0].desc }] : current,
                   )
                 }
               >
@@ -436,7 +436,7 @@ export function DataTableBulkActions<TData>({
         <div className="layro-data-table__empty">
           {empty ?? (
             <EmptyState
-              titre={emptyTitle ?? (search ? "Aucun résultat" : "Aucune donnée")}
+              title={emptyTitle ?? (search ? "Aucun résultat" : "Aucune donnée")}
               description={
                 emptyDescription ??
                 (search
@@ -447,10 +447,10 @@ export function DataTableBulkActions<TData>({
           )}
         </div>
       ) : (
-        <div className="tableau-cartes-responsif-sre overflow-x-auto rounded-[14px] bg-card ring-1 ring-border">
+        <div className="responsive-table-cards-sre overflow-x-auto rounded-[14px] bg-card ring-1 ring-border">
           <table
             aria-label={label}
-            className="tableau-cartes-responsif-sre__table w-full border-collapse text-[13px]"
+            className="responsive-table-cards-sre__table w-full border-collapse text-[13px]"
           >
             <thead>
               {table.getHeaderGroups().map((group) => (
@@ -580,8 +580,8 @@ export function DataTableBulkActions<TData>({
           </label>
           <div className="layro-data-table__page-controls">
             <Button
-              variante="fantome"
-              taille="petit"
+              variant="ghost"
+              size="small"
               className="h-8 w-8 !px-0"
               aria-label="Page précédente"
               onClick={() => table.previousPage()}
@@ -593,8 +593,8 @@ export function DataTableBulkActions<TData>({
               Page {currentPage} sur {pageCount}
             </span>
             <Button
-              variante="fantome"
-              taille="petit"
+              variant="ghost"
+              size="small"
               className="h-8 w-8 !px-0"
               aria-label="Page suivante"
               onClick={() => table.nextPage()}
@@ -609,7 +609,7 @@ export function DataTableBulkActions<TData>({
   );
 }
 
-function texteEntete<TData>(column: { id: string; columnDef: ColumnDef<TData, unknown> }): string {
+function headerText<TData>(column: { id: string; columnDef: ColumnDef<TData, unknown> }): string {
   const header = column.columnDef.header;
   return column.columnDef.meta?.label ?? (typeof header === "string" ? header : column.id);
 }

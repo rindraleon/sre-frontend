@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Création d'obligation par l'administration — CreerObligationDto. */
+/** Obligation creation by the administration — CreateObligationDto. */
 export const obligationFormSchema = z.object({
   contribuableId: z.string().min(1, "Sélectionnez un contribuable."),
   typeImpotId: z.string().min(1, "Sélectionnez un type d'impôt actif."),
@@ -17,7 +17,7 @@ export const obligationFormSchema = z.object({
 });
 export type ObligationFormValues = z.infer<typeof obligationFormSchema>;
 
-/** Création / modification d'un type d'impôt — CreerTypeImpotDto. */
+/** Tax type creation / update — CreateTaxTypeDto. */
 export const taxTypeFormSchema = z
   .object({
     code: z
@@ -51,10 +51,10 @@ export const taxTypeFormSchema = z
       .nullable(),
     champsComplementairesTexte: z.string(),
   })
-  .superRefine((valeurs, contexte) => {
-    // Règle métier déjà appliquée par l'ancienne interface (le DTO l'autorise à null).
-    if (valeurs.modeMontant === "FIXE" && valeurs.montantReference == null)
-      contexte.addIssue({
+  .superRefine((values, context) => {
+    // Business rule already applied by the former interface (the DTO allows it to be null).
+    if (values.modeMontant === "FIXE" && values.montantReference == null)
+      context.addIssue({
         code: "custom",
         path: ["montantReference"],
         message: "Indiquez le montant de référence confirmé pour un mode fixe.",

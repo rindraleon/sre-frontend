@@ -8,20 +8,20 @@ import { formatMoney, formatDate } from "@/utils/format";
 export function ClientObligationDetailPage() {
   const { id } = useParams();
   const { session } = useAuth();
-  const { etat } = useSre();
-  const obligation = etat.obligations.find(
-    (entree) => entree.id === id && entree.contribuableId === session?.contribuableId,
+  const { state } = useSre();
+  const obligation = state.obligations.find(
+    (entry) => entry.id === id && entry.taxpayerId === session?.taxpayerId,
   );
 
   if (!obligation) {
     return (
-      <div className="page-contenu-sre">
-        <PageHeader titre="Obligation introuvable" filAriane={["Accueil", "Mes impôts"]} />
+      <div className="page-content-sre">
+        <PageHeader title="Obligation introuvable" breadcrumb={["Accueil", "Mes impôts"]} />
         <EmptyState
-          titre="Cette obligation n’est pas accessible"
+          title="Cette obligation n’est pas accessible"
           description="Elle n’existe pas ou ne fait pas partie des données de votre compte."
           action={
-            <Link className="bouton-sre bouton-sre--contour" to="/client/obligations">
+            <Link className="button-sre button-sre--outline" to="/client/obligations">
               <ArrowLeft size={15} /> Retour aux obligations
             </Link>
           }
@@ -30,59 +30,59 @@ export function ClientObligationDetailPage() {
     );
   }
 
-  const type = etat.typesImpots.find((entree) => entree.id === obligation.typeImpotId);
+  const type = state.taxTypes.find((entry) => entry.id === obligation.taxTypeId);
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre={obligation.typeImpotNom}
-        description={`Référence ${obligation.referenceFiscale}`}
-        filAriane={["Accueil", "Mes impôts", obligation.referenceFiscale]}
+        title={obligation.taxTypeName}
+        description={`Référence ${obligation.taxReference}`}
+        breadcrumb={["Accueil", "Mes impôts", obligation.taxReference]}
         actions={
-          <Link className="bouton-sre bouton-sre--contour" to="/client/obligations">
+          <Link className="button-sre button-sre--outline" to="/client/obligations">
             <ArrowLeft size={15} /> Retour
           </Link>
         }
       />
-      <section className="grille-detail-obligation-sre">
-        <article className="carte-sre carte-montant-obligation-sre">
-          <span className="sur-titre-sre">MONTANT ENREGISTRÉ · MGA</span>
-          <strong>{formatMoney(obligation.montant)}</strong>
-          <StatusBadge statut={obligation.statut} />
+      <section className="obligation-detail-grid-sre">
+        <article className="card-sre obligation-amount-card-sre">
+          <span className="overline-sre">MONTANT ENREGISTRÉ · MGA</span>
+          <strong>{formatMoney(obligation.amount)}</strong>
+          <StatusBadge status={obligation.status} />
           <small>Valeur transmise par le serveur</small>
         </article>
-        <article className="carte-sre">
+        <article className="card-sre">
           <h2>Détails de l’obligation</h2>
-          <dl className="liste-details-sre">
+          <dl className="details-list-sre">
             <div>
               <dt>Catégorie</dt>
-              <dd>{type?.categorie || "Non renseignée"}</dd>
+              <dd>{type?.category || "Non renseignée"}</dd>
             </div>
             <div>
               <dt>Type d’impôt</dt>
-              <dd>{obligation.typeImpotNom}</dd>
+              <dd>{obligation.taxTypeName}</dd>
             </div>
             <div>
               <dt>Période</dt>
-              <dd>{obligation.periode}</dd>
+              <dd>{obligation.period}</dd>
             </div>
             <div>
               <dt>Échéance enregistrée</dt>
               <dd>
-                <CalendarDays size={14} /> {formatDate(obligation.echeance)}
+                <CalendarDays size={14} /> {formatDate(obligation.dueDate)}
               </dd>
             </div>
             <div>
               <dt>Référence</dt>
-              <dd>{obligation.referenceFiscale}</dd>
+              <dd>{obligation.taxReference}</dd>
             </div>
             <div>
               <dt>Périodicité configurée</dt>
-              <dd>{type?.periodicite || "Non renseignée"}</dd>
+              <dd>{type?.periodicity || "Non renseignée"}</dd>
             </div>
           </dl>
         </article>
       </section>
-      <section className="note-fiscale-sre">
+      <section className="tax-note-sre">
         <span>i</span>
         <p>
           <strong>À noter :</strong> les données affichées reflètent les informations enregistrées
@@ -90,15 +90,15 @@ export function ClientObligationDetailPage() {
           confirmée automatiquement.
         </p>
       </section>
-      {obligation.statut !== "PAYE" && (
-        <div className="actions-bas-page-sre">
+      {obligation.status !== "PAYE" && (
+        <div className="page-bottom-actions-sre">
           <Link
-            className="bouton-sre bouton-sre--primaire"
+            className="button-sre button-sre--primary"
             to={`/client/paiements/nouveau?obligationId=${encodeURIComponent(obligation.id)}`}
           >
             <CircleDollarSign size={16} /> Déclarer une opération
           </Link>
-          <Link className="lien-action-sre" to="/client/paiements">
+          <Link className="action-link-sre" to="/client/paiements">
             Consulter l’historique <ArrowRight size={14} />
           </Link>
         </div>

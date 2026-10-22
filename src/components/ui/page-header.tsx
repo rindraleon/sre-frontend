@@ -1,15 +1,15 @@
 import { type ReactNode } from "react";
 
-/** En-tête de page (fil d'Ariane + titre + actions), utilitaires Tailwind. */
+/** Page header (breadcrumb + title + actions), Tailwind utilities. */
 export function PageHeader({
-  titre,
+  title,
   description,
-  filAriane = [],
+  breadcrumb = [],
   actions,
 }: Readonly<{
-  titre: string;
+  title: string;
   description?: string;
-  filAriane?: string[];
+  breadcrumb?: string[];
   actions?: ReactNode;
 }>) {
   return (
@@ -18,7 +18,7 @@ export function PageHeader({
         className="mb-1.5 flex flex-wrap items-center gap-1 text-[11px] font-semibold text-muted-foreground"
         aria-label="Fil d’Ariane"
       >
-        {filAriane.map((element, index) => (
+        {breadcrumb.map((element, index) => (
           <span key={`${element}-${index}`} className="inline-flex items-center gap-1">
             {index > 0 && <i aria-hidden="true">/</i>}
             {element}
@@ -27,7 +27,7 @@ export function PageHeader({
       </nav>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-extrabold tracking-tight text-foreground">{titre}</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">{title}</h1>
           {description && (
             <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-muted-foreground">
               {description}

@@ -1,36 +1,36 @@
 import { useState } from "react";
 
 export function useConfirmation<T>() {
-  const [cible, setCible] = useState<T | null>(null);
-  const [enCours, setEnCours] = useState(false);
-  const [erreur, setErreur] = useState("");
+  const [target, setTarget] = useState<T | null>(null);
+  const [inProgress, setInProgress] = useState(false);
+  const [error, setError] = useState("");
 
   return {
-    cible,
-    enCours,
-    erreur,
-    ouvrir: (valeur: T) => {
-      setCible(valeur);
-      setErreur("");
+    target,
+    inProgress,
+    error,
+    open: (value: T) => {
+      setTarget(value);
+      setError("");
     },
-    fermer: () => {
-      setCible(null);
-      setErreur("");
+    close: () => {
+      setTarget(null);
+      setError("");
     },
-    executer: async (
-      action: (valeur: T) => Promise<void>,
-      messageRepli = "Le serveur n’a pas effectué l’action. Réessayez.",
+    execute: async (
+      action: (value: T) => Promise<void>,
+      fallbackMessage = "Le serveur n’a pas effectué l’action. Réessayez.",
     ) => {
-      if (!cible) return;
-      setEnCours(true);
-      setErreur("");
+      if (!target) return;
+      setInProgress(true);
+      setError("");
       try {
-        await action(cible);
-        setCible(null);
+        await action(target);
+        setTarget(null);
       } catch (cause) {
-        setErreur(cause instanceof Error ? cause.message : messageRepli);
+        setError(cause instanceof Error ? cause.message : fallbackMessage);
       } finally {
-        setEnCours(false);
+        setInProgress(false);
       }
     },
   };

@@ -6,7 +6,7 @@ import { FormField, FormError } from "@/components/forms/form-field";
 import { useSre } from "@/context/SreContext";
 import type { ObligationFormValues } from "@/validation/admin.schema";
 
-export const OBLIGATION_VIDE: ObligationFormValues = {
+export const OBLIGATION_EMPTY: ObligationFormValues = {
   contribuableId: "",
   typeImpotId: "",
   periode: "",
@@ -15,70 +15,70 @@ export const OBLIGATION_VIDE: ObligationFormValues = {
 };
 
 export function ObligationFormFields({
-  formulaire,
-  erreur,
-}: Readonly<{ formulaire: UseFormReturn<ObligationFormValues>; erreur?: string }>) {
-  const { etat } = useSre();
+  form,
+  error,
+}: Readonly<{ form: UseFormReturn<ObligationFormValues>; error?: string }>) {
+  const { state } = useSre();
   const {
     register,
     watch,
     setValue,
     formState: { errors },
-  } = formulaire;
-  const contribuableChoisi = watch("contribuableId");
+  } = form;
+  const selectedTaxpayer = watch("contribuableId");
   return (
-    <div className="formulaire-sre grille-formulaire-sre formulaire-compact-sre">
+    <div className="form-sre form-grid-sre compact-form-sre">
       <FormField
-        libelle="Contribuable"
-        erreur={errors.contribuableId}
-        requis
-        classeSupplementaire="champ-sre-large"
+        label="Contribuable"
+        error={errors.contribuableId}
+        required
+        className="field-sre-wide"
       >
         {(p) => (
           <SearchableSelect
             {...p}
-            valeur={contribuableChoisi}
-            onChoisir={(valeur) =>
-              setValue("contribuableId", valeur, { shouldValidate: true, shouldTouch: true })
+            value={selectedTaxpayer}
+            onChoose={(value) =>
+              setValue("contribuableId", value, { shouldValidate: true, shouldTouch: true })
             }
             placeholder="Rechercher un contribuable (nom, NIF, e-mail)…"
-            options={etat.contribuables.map((contribuable) => ({
-              valeur: contribuable.id,
-              libelle:
-                contribuable.raisonSociale ||
-                `${contribuable.prenom ?? ""} ${contribuable.nom}`.trim(),
-              description: contribuable.nif || contribuable.courriel,
+            options={state.taxpayers.map((taxpayer) => ({
+              value: taxpayer.id,
+              label:
+                taxpayer.legalName ||
+                `${taxpayer.firstName ?? ""} ${taxpayer.lastName}`.trim(),
+              description: taxpayer.nif || taxpayer.email,
             }))}
           />
         )}
       </FormField>
       <FormField
-        libelle="Type d’impôt"
-        erreur={errors.typeImpotId}
-        requis
-        classeSupplementaire="champ-sre-large"
+        label="Type d’impôt"
+        error={errors.typeImpotId}
+        required
+        className="field-sre-wide"
       >
         {(p) => (
-          <Select {...p} className="champ-simple-sre" {...register("typeImpotId")}>
+          <Select {...p} className="field-simple-sre" {...register("typeImpotId")}>
             <option value="">Choisir un type actif</option>
-            {etat.typesImpots
-              .filter((type) => type.actif)
+            {state.taxTypes
+              .filter((type) => type.isActive)
               .map((type) => (
                 <option key={type.id} value={type.id}>
-                  {type.nom} · {type.categorie}
+                  {type.name} · {type.category}
                 </option>
               ))}
           </Select>
         )}
       </FormField>
-      <FormField libelle="Période" erreur={errors.periode} requis>
-        {(p) => <input {...p} className="champ-simple-sre" {...register("periode")} />}
+      <FormField label="Période" error={errors.periode} required>
+        {(p) => <input {...p} className="field-simple-sre" {...register("periode")} />}
       </FormField>
-      <FormField libelle="Montant validé (MGA)" erreur={errors.montant} requis>
+      <FormField label="Montant validé (MGA)" error={errors.montant} required>
         {(p) => (
           <input
             {...p}
-            className="champ-simple-sre"
+            className="field-simple-sre"
             type="number"
             inputMode="numeric"
             min="1"
@@ -88,17 +88,17 @@ export function ObligationFormFields({
         )}
       </FormField>
       <FormField
-        libelle="Échéance"
-        erreur={errors.echeance}
-        requis
-        classeSupplementaire="champ-sre-large"
+        label="Échéance"
+        error={errors.echeance}
+        required
+        className="field-sre-wide"
       >
-        {(p) => <input {...p} className="champ-simple-sre" type="date" {...register("echeance")} />}
+        {(p) => <input {...p} className="field-simple-sre" type="date" {...register("echeance")} />}
       </FormField>
-      <div className="champ-sre-large">
-        <FormError message={erreur} />
+      <div className="field-sre-wide">
+        <FormError message={error} />
       </div>
-      <div className="note-fiscale-sre champ-sre-large">
+      <div className="tax-note-sre field-sre-wide">
         <span>
           <CalendarDays size={15} />
         </span>

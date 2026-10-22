@@ -6,38 +6,38 @@ const classesAction =
   "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 
 /**
- * Icône d'action de tableau avec infobulle (title + aria-label) : consulter,
- * modifier, supprimer ou toute opération autorisée. Taille et style harmonisés
- * sur toutes les colonnes « Actions ».
+ * Table action icon with tooltip (title + aria-label): view,
+ * edit, delete or any allowed operation. Size and style harmonized
+ * across all "Actions" columns.
  */
 export function ActionIcon({
-  titre,
+  title,
   onClick,
   children,
   danger = false,
   disabled = false,
   href,
 }: Readonly<{
-  /** Libellé de l'infobulle et du lecteur d'écran (ex. « Voir le dossier »). */
-  titre: string;
+  /** Tooltip and screen-reader label (e.g. "View the record"). */
+  title: string;
   onClick?: () => void;
   children: ReactNode;
   danger?: boolean;
   disabled?: boolean;
-  /** Si fourni, rend un lien de navigation au lieu d'un bouton. */
+  /** When provided, renders a navigation link instead of a button. */
   href?: string;
 }>) {
   const className = cn(classesAction, danger && "hover:bg-destructive/10 hover:text-destructive");
-  const contenu = (
+  const content = (
     <>
       {children}
-      <span className="sr-only">{titre}</span>
+      <span className="sr-only">{title}</span>
     </>
   );
   if (href) {
     return (
-      <Link className={className} to={href} title={titre} aria-label={titre}>
-        {contenu}
+      <Link className={className} to={href} title={title} aria-label={title}>
+        {content}
       </Link>
     );
   }
@@ -46,20 +46,21 @@ export function ActionIcon({
       type="button"
       className={className}
       onClick={onClick}
-      title={titre}
-      aria-label={titre}
+      title={title}
+      aria-label={title}
       disabled={disabled}
     >
-      {contenu}
+      {content}
     </button>
   );
 }
 
-/** Groupe d'actions aligné dans la colonne « Actions ». */
+/** Group of actions aligned in the "Actions" column. */
 export function ActionGroup({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="flex items-center justify-end gap-1" role="group" aria-label="Actions">
+    <fieldset className="flex items-center justify-end gap-1">
+      <legend className="sr-only">Actions</legend>
       {children}
-    </div>
+    </fieldset>
   );
 }

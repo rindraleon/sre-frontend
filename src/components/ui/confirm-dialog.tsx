@@ -1,56 +1,56 @@
 import { Button } from "./button";
 import { Modal } from "./modal";
 
-/** Confirmation pour mutations sensibles; les commandes restent bloquées pendant l'envoi. */
+/** Confirmation for sensitive mutations; controls stay blocked while sending. */
 export function ConfirmDialog({
-  ouvert,
-  titre,
+  open,
+  title,
   description,
-  fermer,
-  confirmer,
-  libelleConfirmer = "Confirmer",
+  close,
+  confirm,
+  confirmLabel = "Confirmer",
   danger = false,
-  chargement = false,
-  erreur,
+  loading = false,
+  error,
 }: Readonly<{
-  ouvert: boolean;
-  titre: string;
+  open: boolean;
+  title: string;
   description: string;
-  fermer: () => void;
-  confirmer: () => void;
-  libelleConfirmer?: string;
+  close: () => void;
+  confirm: () => void;
+  confirmLabel?: string;
   danger?: boolean;
-  chargement?: boolean;
-  erreur?: string | null;
+  loading?: boolean;
+  error?: string | null;
 }>) {
-  const fermerSiDisponible = () => {
-    if (!chargement) fermer();
+  const closeIfAvailable = () => {
+    if (!loading) close();
   };
 
   return (
     <Modal
-      ouvert={ouvert}
-      titre={titre}
+      open={open}
+      title={title}
       description={description}
-      fermer={fermerSiDisponible}
-      pied={
+      close={closeIfAvailable}
+      footer={
         <>
-          <Button variante="contour" onClick={fermerSiDisponible} disabled={chargement}>
+          <Button variant="outline" onClick={closeIfAvailable} disabled={loading}>
             Annuler
           </Button>
           <Button
-            variante={danger ? "danger" : "primaire"}
-            onClick={confirmer}
-            chargement={chargement}
+            variant={danger ? "danger" : "primary"}
+            onClick={confirm}
+            loading={loading}
           >
-            {chargement ? "Traitement…" : libelleConfirmer}
+            {loading ? "Traitement…" : confirmLabel}
           </Button>
         </>
       }
     >
-      {erreur && (
-        <p className="message-erreur-sre" role="alert" aria-live="assertive">
-          {erreur}
+      {error && (
+        <p className="error-message-sre" role="alert" aria-live="assertive">
+          {error}
         </p>
       )}
     </Modal>

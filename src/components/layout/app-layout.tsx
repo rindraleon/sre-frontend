@@ -8,47 +8,47 @@ import { Sidebar, ADMIN_MENU, CLIENT_MENU } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
 export function AppLayout() {
-  const emplacement = useLocation();
-  const [menuMobile, setMenuMobile] = useState(false);
+  const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { session } = useAuth();
-  const { etat } = useSre();
+  const { state } = useSre();
   if (!session) return null;
-  const estAdmin = session.role === "ADMIN";
-  const menus = estAdmin ? ADMIN_MENU : CLIENT_MENU;
-  const notificationsNonLues = etat.notifications.filter(
+  const isAdmin = session.role === "ADMIN";
+  const menus = isAdmin ? ADMIN_MENU : CLIENT_MENU;
+  const unreadNotifications = state.notifications.filter(
     (notification) =>
-      !notification.lue &&
-      (estAdmin
-        ? notification.roleDestinataire === "ADMIN" ||
-          notification.utilisateurId === session.utilisateurId
-        : notification.utilisateurId === session.utilisateurId),
+      !notification.isRead &&
+      (isAdmin
+        ? notification.recipientRole === "ADMIN" ||
+          notification.userId === session.userId
+        : notification.userId === session.userId),
   ).length;
-  const titreEspace = estAdmin ? "Administration" : "Mon espace contribuable";
-  const titrePageDefaut = emplacement.pathname.endsWith("/aide")
+  const workspaceTitle = isAdmin ? "Administration" : "Mon espace contribuable";
+  const defaultPageTitle = location.pathname.endsWith("/aide")
     ? "Aide & documentation"
-    : titreEspace;
-  const titrePage =
+    : workspaceTitle;
+  const pageTitle =
     menus.find(
       (element) =>
-        element.chemin === emplacement.pathname ||
-        (element.chemin !== "/admin" &&
-          element.chemin !== "/client" &&
-          emplacement.pathname.startsWith(`${element.chemin}/`)),
-    )?.titre ?? titrePageDefaut;
+        element.path === location.pathname ||
+        (element.path !== "/admin" &&
+          element.path !== "/client" &&
+          location.pathname.startsWith(`${element.path}/`)),
+    )?.title ?? defaultPageTitle;
 
   return (
-    <div className="application-sre">
-      <Sidebar menuMobileOuvert={menuMobile} fermerMenuMobile={() => setMenuMobile(false)} />
-      <div className="contenu-application-sre">
+    <div className="app-sre">
+      <Sidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
+      <div className="app-content-sre">
         <Topbar
-          titrePage={titrePage}
-          notificationsNonLues={notificationsNonLues}
-          ouvrirMenuMobile={() => setMenuMobile(true)}
+          pageTitle={pageTitle}
+          unreadNotifications={unreadNotifications}
+          openMobileMenu={() => setIsMobileMenuOpen(true)}
         />
-        <main className="zone-contenu-sre">
+        <main className="content-area-sre">
           <Outlet />
         </main>
-        <footer className="pied-application-sre">
+        <footer className="app-footer-sre">
           <span>Service régional des entreprises · {SRE_REGION}</span>
           <span> Copyright © {new Date().getFullYear()} Harena</span>
           

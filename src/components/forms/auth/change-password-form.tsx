@@ -8,16 +8,16 @@ import { useApiForm } from "@/hooks";
 import { passwordChangeSchema, type PasswordChangeFormValues } from "@/validation/auth.schema";
 import { PasswordField, SubmitButton, FormError } from "@/components/forms/form-field";
 
-export const CHANGE_PASSWORD_VIDE: PasswordChangeFormValues = {
+export const CHANGE_PASSWORD_EMPTY: PasswordChangeFormValues = {
   motDePasseActuel: "",
   nouveauMotDePasse: "",
   confirmation: "",
 };
 
 export function ChangePasswordForm() {
-  const [termine, definirTermine] = useState(false);
-  const { changerMotDePasse, session } = useAuth();
-  const { notifier } = useSre();
+  const [completed, setCompleted] = useState(false);
+  const { changePassword, session } = useAuth();
+  const { notify } = useSre();
   const navigation = useNavigate();
   const {
     register,
@@ -25,19 +25,19 @@ export function ChangePasswordForm() {
     setError,
     errors,
     isSubmitting,
-    erreur,
-    reinitialiserErreur,
-    traiterEchec,
+    error,
+    resetError,
+    handleFailure,
   } = useApiForm<PasswordChangeFormValues>({
     schema: passwordChangeSchema,
-    valeursInitiales: CHANGE_PASSWORD_VIDE,
-    messageRepli: "Impossible de mettre à jour le mot de passe.",
+    initialValues: CHANGE_PASSWORD_EMPTY,
+    fallbackMessage: "Impossible de mettre à jour le mot de passe.",
   });
 
-  const soumettre = handleSubmit(async (valeurs) => {
-    reinitialiserErreur();
+  const onSubmit = handleSubmit(async (values) => {
+    resetError();
     try {
-      const reussi = await changerMotDePasse(valeurs.motDePasseActuel, valeurs.nouveauMotDePasse);
+      const reussi = await changePassword(values.motDePasseActuel, values.nouveauMotDePasse);
       if (!reussi) {
         setError("motDePasseActuel", {
           type: "server",
@@ -45,55 +45,55 @@ export function ChangePasswordForm() {
         });
         return;
       }
-      definirTermine(true);
-      notifier("Votre mot de passe a été modifié.", "succes");
+      setCompleted(true);
+      notify("Votre mot de passe a été modifié.", "success");
     } catch (cause) {
-      traiterEchec(cause);
+      handleFailure(cause);
     }
   });
 
   return (
-    <section className="carte-sre changement-mdp-sre">
-      <span className="auth-icone-sre">
+    <section className="card-sre password-change-sre">
+      <span className="auth-icon-sre">
         <KeyRound size={20} />
       </span>
-      <span className="sur-titre-sre">SÉCURITÉ DU COMPTE</span>
+      <span className="overline-sre">SÉCURITÉ DU COMPTE</span>
       <h1>
-        {session?.changementMotDePasseRequis
+        {session?.mustChangePassword
           ? "Première connexion : changez le mot de passe"
           : "Changer mon mot de passe"}
       </h1>
       <p>
-        {session?.changementMotDePasseRequis
+        {session?.mustChangePassword
           ? "Votre compte exige un changement de mot de passe. Choisissez un nouveau mot de passe avant de continuer."
           : "Le nouveau mot de passe sera vérifié et enregistré par le serveur."}
       </p>
-      {!termine ? (
-        <form className="formulaire-sre" onSubmit={soumettre} noValidate>
+      {!completed ? (
+        <form className="form-sre" onSubmit={onSubmit} noValidate>
           <PasswordField
-            libelle="Mot de passe temporaire ou actuel"
-            erreur={errors.motDePasseActuel}
-            requis
+            label="Mot de passe temporaire ou actuel"
+            error={errors.motDePasseActuel}
+            required
             autoComplete="current-password"
             {...register("motDePasseActuel")}
           />
           <PasswordField
-            libelle="Nouveau mot de passe"
-            erreur={errors.nouveauMotDePasse}
-            aide="10 caractères minimum, une majuscule, une minuscule et un chiffre."
-            requis
+            label="Nouveau mot de passe"
+            error={errors.nouveauMotDePasse}
+            help="10 caractères minimum, une majuscule, une minuscule et un chiffre."
+            required
             autoComplete="new-password"
             {...register("nouveauMotDePasse")}
           />
           <PasswordField
-            libelle="Confirmer le nouveau mot de passe"
-            erreur={errors.confirmation}
-            requis
+            label="Confirmer le nouveau mot de passe"
+            error={errors.confirmation}
+            required
             autoComplete="new-password"
             {...register("confirmation")}
           />
-          <FormError message={erreur} />
-          <SubmitButton enCours={isSubmitting} libelleEnCours="Mise à jour…">
+          <FormError message={error} />
+          <SubmitButton inProgress={isSubmitting} pendingLabel="Mise à jour…">
             Mettre à jour <ArrowRight size={15} />
           </SubmitButton>
         </form>

@@ -3,14 +3,14 @@ export type AccountStatus = "ACTIF" | "EN_ATTENTE" | "INACTIF" | "SUSPENDU";
 
 export interface AppUser {
   id: string;
-  nom: string;
-  courriel: string;
+  name: string;
+  email: string;
   role: UserRole;
-  contribuableId?: string;
-  statut: AccountStatus;
-  changementMotDePasseRequis: boolean;
-  profilComplete?: boolean;
-  courrielVerifie?: boolean;
-  creeLe: string;
-  derniereConnexion?: string;
+  taxpayerId?: string;
+  status: AccountStatus;
+  mustChangePassword: boolean;
+  isProfileComplete?: boolean;
+  isEmailVerified?: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
 }

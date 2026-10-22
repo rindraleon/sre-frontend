@@ -2,83 +2,83 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import type { PlatformState } from "@/types";
 import { SRE_REGION } from "@/utils/constants";
 
-export type ToastType = "succes" | "erreur" | "avertissement" | "info";
+export type ToastType = "success" | "error" | "warning" | "info";
 export interface ToastItem {
   id: string;
   message: string;
   description?: string;
   type: ToastType;
 }
-type MiseAJourSre = (etat: PlatformState) => PlatformState;
+type SreStateUpdater = (state: PlatformState) => PlatformState;
 
 interface SreContextValue {
-  etat: PlatformState;
-  chargementInitial: boolean;
+  state: PlatformState;
+  isInitialLoading: boolean;
   toasts: ToastItem[];
-  mettreAJourEtat: (miseAJour: MiseAJourSre) => void;
-  notifier: (message: string, type?: ToastType, description?: string) => void;
-  retirerToast: (id: string) => void;
+  updateState: (update: SreStateUpdater) => void;
+  notify: (message: string, type?: ToastType, description?: string) => void;
+  removeToast: (id: string) => void;
 }
 
-const Contexte = createContext<SreContextValue | null>(null);
-let compteurToastSre = 0;
+const Context = createContext<SreContextValue | null>(null);
+let counterToastSre = 0;
 
 export function createEmptyState(): PlatformState {
   return {
     version: 1,
-    administrateurInitialise: false,
-    utilisateurs: [],
-    contribuables: [],
-    typesImpots: [],
+    isAdministratorInitialized: false,
+    users: [],
+    taxpayers: [],
+    taxTypes: [],
     obligations: [],
-    paiements: [],
-    documentsPaiement: [],
+    payments: [],
+    paymentDocuments: [],
     notifications: [],
-    journauxActivite: [],
-    parametres: { institution: `SRE · ${SRE_REGION}`, regions: [SRE_REGION] },
+    logsActivity: [],
+    settings: { institution: `SRE · ${SRE_REGION}`, regions: [SRE_REGION] },
   };
 }
 
 export function SreProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [etat, setEtat] = useState<PlatformState>(() => createEmptyState());
+  const [state, setState] = useState<PlatformState>(() => createEmptyState());
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const retirerToast = useCallback((id: string) => {
-    setToasts((courants) => courants.filter((toast) => toast.id !== id));
+  const removeToast = useCallback((id: string) => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
 
-  const notifier = useCallback(
-    (message: string, type: ToastType = "succes", description?: string) => {
-      const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${++compteurToastSre}`;
-      setToasts((courants) => {
-        if (courants.some((toast) => toast.message === message && toast.type === type))
-          return courants;
-        return [...courants.slice(-3), { id, message, type, description }];
+  const notify = useCallback(
+    (message: string, type: ToastType = "success", description?: string) => {
+      const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${++counterToastSre}`;
+      setToasts((current) => {
+        if (current.some((toast) => toast.message === message && toast.type === type))
+          return current;
+        return [...current.slice(-3), { id, message, type, description }];
       });
-      let duree = 4500;
-      if (type === "erreur") duree = 8000;
-      else if (type === "avertissement") duree = 6000;
+      let duration = 4500;
+      if (type === "error") duration = 8000;
+      else if (type === "warning") duration = 6000;
       window.setTimeout(
-        () => setToasts((courants) => courants.filter((toast) => toast.id !== id)),
-        duree,
+        () => setToasts((current) => current.filter((toast) => toast.id !== id)),
+        duration,
       );
     },
     [],
   );
 
-  const mettreAJourEtat = useCallback((miseAJour: MiseAJourSre) => {
-    setEtat((courant) => miseAJour(courant));
+  const updateState = useCallback((update: SreStateUpdater) => {
+    setState((current) => update(current));
   }, []);
 
-  const valeur = useMemo(
-    () => ({ etat, chargementInitial: false, toasts, mettreAJourEtat, notifier, retirerToast }),
-    [etat, toasts, mettreAJourEtat, notifier, retirerToast],
+  const value = useMemo(
+    (): SreContextValue => ({ state, isInitialLoading: false, toasts, updateState, notify, removeToast }),
+    [state, toasts, updateState, notify, removeToast],
   );
-  return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
 export function useSre(): SreContextValue {
-  const contexte = useContext(Contexte);
-  if (!contexte) throw new Error("useSre doit être utilisé à l’intérieur de SreProvider.");
-  return contexte;
+  const context = useContext(Context);
+  if (!context) throw new Error("useSre doit être utilisé à l’intérieur de SreProvider.");
+  return context;
 }

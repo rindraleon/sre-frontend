@@ -12,349 +12,360 @@ import {
 } from "@/services/api-client";
 import { SRE_REGION } from "@/utils/constants";
 
-const cleSession = "sre-session-api-v1";
-const dureeSession = 4 * 60 * 60 * 1000;
+const sessionKey = "sre-session-api-v1";
+const sessionDuration = 4 * 60 * 60 * 1000;
 
-interface ResultatInscriptionSre {
+interface SreRegistrationResult {
   role: UserRole;
-  utilisateur: AppUser;
+  user: AppUser;
 }
+/**
+ * Profile body sent as-is to the API (initial-setup DTO):
+ * the field names are the JSON contract and must not be renamed.
+ */
+export interface InitialSetupProfilePayload {
+  adresse?: string;
+  ville?: string;
+  telephone?: string;
+  nomCommercial?: string;
+}
+
 interface AuthContextValue {
   session: ApiSession | null;
-  verificationApiEnCours: boolean;
-  erreurVerificationApi: string | null;
-  reessayerVerificationApi: () => void;
-  connecter: (courriel: string, motDePasse: string) => Promise<ApiSession | null>;
-  inscrire: (profil: RegistrationProfile, motDePasse: string) => Promise<ResultatInscriptionSre>;
-  deconnecter: () => void;
-  changerMotDePasse: (ancienMotDePasse: string, nouveauMotDePasse: string) => Promise<boolean>;
-  configurerPremiereConnexion: (
-    motDePasseActuel: string,
-    nouveauMotDePasse: string,
-    profil?: { adresse?: string; ville?: string; telephone?: string; nomCommercial?: string },
+  isApiVerificationInProgress: boolean;
+  apiVerificationError: string | null;
+  retryApiVerification: () => void;
+  logIn: (email: string, password: string) => Promise<ApiSession | null>;
+  register: (profile: RegistrationProfile, password: string) => Promise<SreRegistrationResult>;
+  logOut: () => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  completeInitialSetup: (
+    currentPassword: string,
+    newPassword: string,
+    profile?: InitialSetupProfilePayload,
   ) => Promise<boolean>;
 }
 
-const Contexte = createContext<AuthContextValue | null>(null);
+const Context = createContext<AuthContextValue | null>(null);
 
-function lireSession(): ApiSession | null {
+function readSession(): ApiSession | null {
   try {
-    const valeur = window.sessionStorage.getItem(cleSession);
-    if (!valeur) return null;
-    const session = JSON.parse(valeur) as ApiSession;
+    const value = window.sessionStorage.getItem(sessionKey);
+    if (!value) return null;
+    const session = JSON.parse(value) as ApiSession;
     if (
       !isApiConfigured ||
-      !session.utilisateurId ||
-      !session.jetonApi ||
-      !session.courriel ||
+      !session.userId ||
+      !session.apiToken ||
+      !session.email ||
       !["ADMIN", "CLIENT"].includes(session.role) ||
-      !Number.isFinite(session.expireLe) ||
-      session.expireLe < Date.now()
+      !Number.isFinite(session.expiresAt) ||
+      session.expiresAt < Date.now()
     ) {
-      window.sessionStorage.removeItem(cleSession);
+      window.sessionStorage.removeItem(sessionKey);
       return null;
     }
     return session;
   } catch {
     try {
-      window.sessionStorage.removeItem(cleSession);
+      window.sessionStorage.removeItem(sessionKey);
     } catch {
-      /* Le stockage de session peut être bloqué par le navigateur. */
+      /* Session storage may be blocked by the browser. */
     }
     return null;
   }
 }
 
-function effacerSessionPersistante() {
+function clearPersistedSession() {
   try {
-    window.sessionStorage.removeItem(cleSession);
+    window.sessionStorage.removeItem(sessionKey);
   } catch {
-    /* La session mémoire reste prioritaire. */
+    /* The in-memory session takes precedence. */
   }
 }
 
-function construireSession(utilisateur: AppUser, jetonApi: string): ApiSession {
+function buildSession(user: AppUser, apiToken: string): ApiSession {
   return {
-    utilisateurId: utilisateur.id,
-    nom: utilisateur.nom,
-    courriel: utilisateur.courriel,
-    role: utilisateur.role,
-    contribuableId: utilisateur.contribuableId,
-    changementMotDePasseRequis: utilisateur.changementMotDePasseRequis,
-    profilComplete: utilisateur.profilComplete ?? true,
-    expireLe: Date.now() + dureeSession,
-    modeApi: true,
-    jetonApi,
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    taxpayerId: user.taxpayerId,
+    mustChangePassword: user.mustChangePassword,
+    isProfileComplete: user.isProfileComplete ?? true,
+    expiresAt: Date.now() + sessionDuration,
+    apiMode: true,
+    apiToken,
   };
 }
 
-function sessionDepuisApi(reponse: ApiAuthResponse) {
-  const utilisateur = mapApiUser(reponse.utilisateur);
-  return { utilisateur, session: construireSession(utilisateur, reponse.accessToken) };
+function sessionFromApi(response: ApiAuthResponse) {
+  const user = mapApiUser(response.utilisateur);
+  return { user, session: buildSession(user, response.accessToken) };
 }
 
-function nomComplet(profil: RegistrationProfile) {
-  return profil.type === "ENTREPRISE"
-    ? profil.raisonSociale?.trim() || profil.nom.trim()
-    : `${profil.prenom?.trim() ?? ""} ${profil.nom.trim()}`.trim();
+function fullName(profile: RegistrationProfile) {
+  return profile.type === "ENTREPRISE"
+    ? profile.raisonSociale?.trim() || profile.nom.trim()
+    : `${profile.prenom?.trim() ?? ""} ${profile.nom.trim()}`.trim();
 }
 
-function profilPourApi(profil: RegistrationProfile) {
-  if (profil.region.trim() !== SRE_REGION)
+function profileForApi(profile: RegistrationProfile) {
+  if (profile.region.trim() !== SRE_REGION)
     throw new Error(`Le service est limité à la région ${SRE_REGION}.`);
   return {
-    type: profil.type,
-    nom: profil.nom.trim() || profil.raisonSociale?.trim() || "Contribuable",
-    ...(profil.prenom?.trim() ? { prenom: profil.prenom.trim() } : {}),
-    ...(profil.raisonSociale?.trim() ? { raisonSociale: profil.raisonSociale.trim() } : {}),
-    ...(profil.nomCommercial?.trim() ? { nomCommercial: profil.nomCommercial.trim() } : {}),
-    ...(profil.nif?.trim() ? { nif: profil.nif.trim() } : {}),
-    ...(profil.stat?.trim() ? { stat: profil.stat.trim() } : {}),
-    adresse: profil.adresse.trim(),
+    type: profile.type,
+    nom: profile.nom.trim() || profile.raisonSociale?.trim() || "Contribuable",
+    ...(profile.prenom?.trim() ? { prenom: profile.prenom.trim() } : {}),
+    ...(profile.raisonSociale?.trim() ? { raisonSociale: profile.raisonSociale.trim() } : {}),
+    ...(profile.nomCommercial?.trim() ? { nomCommercial: profile.nomCommercial.trim() } : {}),
+    ...(profile.nif?.trim() ? { nif: profile.nif.trim() } : {}),
+    ...(profile.stat?.trim() ? { stat: profile.stat.trim() } : {}),
+    adresse: profile.adresse.trim(),
     region: SRE_REGION,
-    ville: profil.ville.trim(),
-    courriel: profil.courriel.trim().toLowerCase(),
-    telephone: profil.telephone.trim(),
-    ...(profil.representantLegal?.trim()
-      ? { representantLegal: profil.representantLegal.trim() }
+    ville: profile.ville.trim(),
+    courriel: profile.courriel.trim().toLowerCase(),
+    telephone: profile.telephone.trim(),
+    ...(profile.representantLegal?.trim()
+      ? { representantLegal: profile.representantLegal.trim() }
       : {}),
-    ...(profil.nomContact?.trim() ? { nomContact: profil.nomContact.trim() } : {}),
-    ...(profil.prenomContact?.trim() ? { prenomContact: profil.prenomContact.trim() } : {}),
-    ...(profil.fonctionContact?.trim() ? { fonctionContact: profil.fonctionContact.trim() } : {}),
+    ...(profile.nomContact?.trim() ? { nomContact: profile.nomContact.trim() } : {}),
+    ...(profile.prenomContact?.trim() ? { prenomContact: profile.prenomContact.trim() } : {}),
+    ...(profile.fonctionContact?.trim() ? { fonctionContact: profile.fonctionContact.trim() } : {}),
   };
 }
 
-function sessionPersistee(session: ApiSession) {
+function persistSession(session: ApiSession) {
   try {
-    window.sessionStorage.setItem(cleSession, JSON.stringify(session));
+    window.sessionStorage.setItem(sessionKey, JSON.stringify(session));
   } catch {
-    /* La session reste disponible en mémoire. */
+    /* The session remains available in memory. */
   }
 }
 
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { mettreAJourEtat, notifier } = useSre();
-  const [session, setSession] = useState<ApiSession | null>(() => lireSession());
-  const [verificationApiEnCours, setVerificationApiEnCours] = useState(
-    () => isApiConfigured && Boolean(lireSession()),
+  const { updateState, notify } = useSre();
+  const [session, setSession] = useState<ApiSession | null>(() => readSession());
+  const [isApiVerificationInProgress, setIsApiVerificationInProgress] = useState(
+    () => isApiConfigured && Boolean(readSession()),
   );
-  const [erreurVerificationApi, setErreurVerificationApi] = useState<string | null>(null);
-  const [tentativeVerificationApi, setTentativeVerificationApi] = useState(0);
-  const jetonApiCourant = session?.jetonApi;
+  const [apiVerificationError, setApiVerificationError] = useState<string | null>(null);
+  const [apiVerificationAttempt, setApiVerificationAttempt] = useState(0);
+  const currentApiToken = session?.apiToken;
 
-  const reessayerVerificationApi = useCallback(() => {
-    setErreurVerificationApi(null);
-    setVerificationApiEnCours(true);
-    setTentativeVerificationApi((tentative) => tentative + 1);
+  const retryApiVerification = useCallback(() => {
+    setApiVerificationError(null);
+    setIsApiVerificationInProgress(true);
+    setApiVerificationAttempt((attempt) => attempt + 1);
   }, []);
 
   useEffect(() => {
-    const invaliderSession = () => {
-      effacerSessionPersistante();
-      mettreAJourEtat(() => createEmptyState());
+    const invalidateSession = () => {
+      clearPersistedSession();
+      updateState(() => createEmptyState());
       setSession(null);
-      setErreurVerificationApi(null);
-      setVerificationApiEnCours(false);
-      notifier("Votre session serveur a expiré. Reconnectez-vous.", "avertissement");
+      setApiVerificationError(null);
+      setIsApiVerificationInProgress(false);
+      notify("Votre session serveur a expiré. Reconnectez-vous.", "warning");
     };
-    window.addEventListener("sre:session-invalidee", invaliderSession);
-    return () => window.removeEventListener("sre:session-invalidee", invaliderSession);
-  }, [mettreAJourEtat, notifier]);
+    window.addEventListener("sre:session-invalidated", invalidateSession);
+    return () => window.removeEventListener("sre:session-invalidated", invalidateSession);
+  }, [updateState, notify]);
 
   useEffect(() => {
-    if (!isApiConfigured || !jetonApiCourant) {
-      setVerificationApiEnCours(false);
+    if (!isApiConfigured || !currentApiToken) {
+      setIsApiVerificationInProgress(false);
       return;
     }
-    let actif = true;
-    setVerificationApiEnCours(true);
-    setErreurVerificationApi(null);
-    const rechargerSessionApi = async () => {
+    let isActive = true;
+    setIsApiVerificationInProgress(true);
+    setApiVerificationError(null);
+    const reloadSessionApi = async () => {
       try {
-        const compteApi = await callApi<ApiUser>("auth/moi", {
-          token: jetonApiCourant,
+        const apiAccount = await callApi<ApiUser>("auth/moi", {
+          token: currentApiToken,
         });
-        const utilisateur = mapApiUser(compteApi);
-        const configurationRequise =
-          utilisateur.changementMotDePasseRequis || utilisateur.profilComplete === false;
-        const etatApi = configurationRequise
+        const user = mapApiUser(apiAccount);
+        const configurationRequired =
+          user.mustChangePassword || user.isProfileComplete === false;
+        const apiState = configurationRequired
           ? {}
-          : await loadApiState(jetonApiCourant, utilisateur.role, compteApi);
-        if (!actif) return;
-        mettreAJourEtat(() => ({ ...createEmptyState(), ...etatApi }));
-        const sessionMiseAJour = construireSession(utilisateur, jetonApiCourant);
-        sessionPersistee(sessionMiseAJour);
-        setSession(sessionMiseAJour);
+          : await loadApiState(currentApiToken, user.role, apiAccount);
+        if (!isActive) return;
+        updateState(() => ({ ...createEmptyState(), ...apiState }));
+        const updatedSession = buildSession(user, currentApiToken);
+        persistSession(updatedSession);
+        setSession(updatedSession);
       } catch (cause) {
-        if (!actif) return;
-        if (cause instanceof ApiError && cause.statutHttp === 401) return;
-        setErreurVerificationApi(
+        if (!isActive) return;
+        if (cause instanceof ApiError && cause.httpStatus === 401) return;
+        setApiVerificationError(
           cause instanceof Error ? cause.message : "Impossible de charger les données du serveur.",
         );
       } finally {
-        if (actif) setVerificationApiEnCours(false);
+        if (isActive) setIsApiVerificationInProgress(false);
       }
     };
-    void rechargerSessionApi();
+    void reloadSessionApi();
     return () => {
-      actif = false;
+      isActive = false;
     };
-  }, [jetonApiCourant, tentativeVerificationApi, mettreAJourEtat]);
+  }, [currentApiToken, apiVerificationAttempt, updateState]);
 
-  const connecter = useCallback(
-    async (courriel: string, motDePasse: string) => {
+  const logIn = useCallback(
+    async (email: string, password: string) => {
       if (!isApiConfigured)
         throw new Error(
           "Le service serveur n’est pas configuré. Aucun mode de connexion local n’est disponible.",
         );
-      const reponse = await callApi<ApiAuthResponse>("auth/connexion", {
+      const response = await callApi<ApiAuthResponse>("auth/connexion", {
         method: "POST",
         body: {
-          courriel: courriel.trim().toLowerCase(),
-          motDePasse,
+          courriel: email.trim().toLowerCase(),
+          motDePasse: password,
         },
       });
-      const { session: sessionNouvelle } = sessionDepuisApi(reponse);
-      mettreAJourEtat(() => createEmptyState());
-      setErreurVerificationApi(null);
-      setVerificationApiEnCours(true);
-      sessionPersistee(sessionNouvelle);
-      setSession(sessionNouvelle);
-      return sessionNouvelle;
+      const { session: newSession } = sessionFromApi(response);
+      updateState(() => createEmptyState());
+      setApiVerificationError(null);
+      setIsApiVerificationInProgress(true);
+      persistSession(newSession);
+      setSession(newSession);
+      return newSession;
     },
-    [mettreAJourEtat],
+    [updateState],
   );
 
-  const inscrire = useCallback(
-    async (profil: RegistrationProfile, motDePasse: string) => {
+  const register = useCallback(
+    async (profile: RegistrationProfile, password: string) => {
       if (!isApiConfigured)
         throw new Error(
           "Le service serveur n’est pas configuré; la création locale de compte est désactivée.",
         );
-      const email = profil.courriel.trim().toLowerCase();
-      const etatInscription = await callApi<{ administrateurInitialise: boolean }>(
+      const email = profile.courriel.trim().toLowerCase();
+      const registrationState = await callApi<{ administrateurInitialise: boolean }>(
         "auth/etat-inscription",
       );
-      const premierAdministrateur = !etatInscription.administrateurInitialise;
-      const corps = {
-        nom: nomComplet(profil),
+      const isFirstAdministrator = !registrationState.administrateurInitialise;
+      const body = {
+        nom: fullName(profile),
         courriel: email,
-        motDePasse,
-        ...(!premierAdministrateur ? { profil: profilPourApi(profil) } : {}),
+        motDePasse: password,
+        ...(!isFirstAdministrator ? { profil: profileForApi(profile) } : {}),
       };
-      const reponse = await callApi<ApiAuthResponse>("auth/inscription", {
+      const response = await callApi<ApiAuthResponse>("auth/inscription", {
         method: "POST",
-        body: corps,
+        body: body,
       });
-      const { utilisateur, session: sessionNouvelle } = sessionDepuisApi(reponse);
-      mettreAJourEtat(() => createEmptyState());
-      setErreurVerificationApi(null);
-      setVerificationApiEnCours(true);
-      sessionPersistee(sessionNouvelle);
-      setSession(sessionNouvelle);
-      return { role: utilisateur.role, utilisateur };
+      const { user, session: newSession } = sessionFromApi(response);
+      updateState(() => createEmptyState());
+      setApiVerificationError(null);
+      setIsApiVerificationInProgress(true);
+      persistSession(newSession);
+      setSession(newSession);
+      return { role: user.role, user };
     },
-    [mettreAJourEtat],
+    [updateState],
   );
 
-  const deconnecter = useCallback(() => {
-    effacerSessionPersistante();
-    mettreAJourEtat(() => createEmptyState());
+  const logOut = useCallback(() => {
+    clearPersistedSession();
+    updateState(() => createEmptyState());
     setSession(null);
-    setErreurVerificationApi(null);
-    setVerificationApiEnCours(false);
-  }, [mettreAJourEtat]);
+    setApiVerificationError(null);
+    setIsApiVerificationInProgress(false);
+  }, [updateState]);
 
-  const changerMotDePasse = useCallback(
-    async (ancienMotDePasse: string, nouveauMotDePasse: string) => {
-      if (!isApiConfigured || !session?.jetonApi)
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      if (!isApiConfigured || !session?.apiToken)
         throw new Error("Une session serveur est nécessaire pour modifier le mot de passe.");
       await callApi<{ message: string }>("auth/mot-de-passe", {
         method: "PATCH",
-        token: session.jetonApi,
-        body: { motDePasseActuel: ancienMotDePasse, nouveauMotDePasse },
+        token: session.apiToken,
+        body: { motDePasseActuel: currentPassword, nouveauMotDePasse: newPassword },
       });
-      const sessionMiseAJour = {
+      const updatedSession = {
         ...session,
         changementMotDePasseRequis: false,
-        expireLe: Date.now() + dureeSession,
+        expireLe: Date.now() + sessionDuration,
       };
-      sessionPersistee(sessionMiseAJour);
-      setSession(sessionMiseAJour);
+      persistSession(updatedSession);
+      setSession(updatedSession);
       return true;
     },
     [session],
   );
 
-  const configurerPremiereConnexion = useCallback(
+  const completeInitialSetup = useCallback(
     async (
-      motDePasseActuel: string,
-      nouveauMotDePasse: string,
-      profil?: { adresse?: string; ville?: string; telephone?: string; nomCommercial?: string },
+      currentPassword: string,
+      newPassword: string,
+      profile?: InitialSetupProfilePayload,
     ) => {
-      if (!isApiConfigured || !session?.jetonApi)
+      if (!isApiConfigured || !session?.apiToken)
         throw new Error("Une session serveur est nécessaire pour la configuration initiale.");
       await callApi<{ message: string }>("auth/configuration-initiale", {
         method: "POST",
-        token: session.jetonApi,
+        token: session.apiToken,
         body: {
-          motDePasseActuel,
-          nouveauMotDePasse,
-          ...(profil ? { profil } : {}),
+          motDePasseActuel: currentPassword,
+          nouveauMotDePasse: newPassword,
+          ...(profile ? { profil: profile } : {}),
         },
       });
-      const sessionMiseAJour = {
+      const updatedSession = {
         ...session,
         changementMotDePasseRequis: false,
         profilComplete: true,
-        expireLe: Date.now() + dureeSession,
+        expireLe: Date.now() + sessionDuration,
       };
-      sessionPersistee(sessionMiseAJour);
-      setSession(sessionMiseAJour);
+      persistSession(updatedSession);
+      setSession(updatedSession);
       return true;
     },
     [session],
   );
 
-  const valeur = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({
       session,
-      verificationApiEnCours,
-      erreurVerificationApi,
-      reessayerVerificationApi,
-      connecter,
-      inscrire,
-      deconnecter,
-      changerMotDePasse,
-      configurerPremiereConnexion,
+      isApiVerificationInProgress,
+      apiVerificationError,
+      retryApiVerification,
+      logIn,
+      register,
+      logOut,
+      changePassword,
+      completeInitialSetup,
     }),
     [
       session,
-      verificationApiEnCours,
-      erreurVerificationApi,
-      reessayerVerificationApi,
-      connecter,
-      inscrire,
-      deconnecter,
-      changerMotDePasse,
-      configurerPremiereConnexion,
+      isApiVerificationInProgress,
+      apiVerificationError,
+      retryApiVerification,
+      logIn,
+      register,
+      logOut,
+      changePassword,
+      completeInitialSetup,
     ],
   );
-  return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
 export function useAuth(): AuthContextValue {
-  const contexte = useContext(Contexte);
-  if (!contexte) throw new Error("useAuth doit être utilisé dans AuthProvider.");
-  return contexte;
+  const context = useContext(Context);
+  if (!context) throw new Error("useAuth doit être utilisé dans AuthProvider.");
+  return context;
 }
 
 export function roleHomePath(role: UserRole) {
   return role === "ADMIN" ? "/admin" : "/client";
 }
 
-export function pathMatchesRole(chemin: string, role: UserRole) {
+export function pathMatchesRole(path: string, role: UserRole) {
   return role === "ADMIN"
-    ? chemin === "/admin" || chemin.startsWith("/admin/")
-    : chemin === "/client" || chemin.startsWith("/client/");
+    ? path === "/admin" || path.startsWith("/admin/")
+    : path === "/client" || path.startsWith("/client/");
 }

@@ -1,12 +1,12 @@
 import type { ApiErrorCategory } from "@/types/api";
 
-/** Erreur HTTP/API présentable au client, sans détails techniques ou pile d'exécution. */
+/** HTTP/API error presentable to the client, without technical details or stack trace. */
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly statutHttp?: number,
-    readonly erreurs?: Record<string, string[]>,
-    readonly categorie: ApiErrorCategory = "http",
+    readonly httpStatus?: number,
+    readonly errors?: Record<string, string[]>,
+    readonly category: ApiErrorCategory = "http",
   ) {
     super(message);
     this.name = "ApiError";
@@ -14,35 +14,35 @@ export class ApiError extends Error {
   }
 }
 
-function extractApiMessage(contenu: unknown): string | undefined {
-  if (typeof contenu === "string" && contenu.trim()) return contenu.trim();
-  if (!contenu || typeof contenu !== "object") return undefined;
+function extractApiMessage(content: unknown): string | undefined {
+  if (typeof content === "string" && content.trim()) return content.trim();
+  if (!content || typeof content !== "object") return undefined;
 
-  const reponse = contenu as { message?: unknown; error?: unknown };
-  if (Array.isArray(reponse.message)) {
-    const messages = reponse.message.filter(
+  const response = content as { message?: unknown; error?: unknown };
+  if (Array.isArray(response.message)) {
+    const messages = response.message.filter(
       (element): element is string => typeof element === "string" && element.trim().length > 0,
     );
     return messages.length ? messages.join(" ") : undefined;
   }
-  if (typeof reponse.message === "string" && reponse.message.trim()) {
-    return reponse.message.trim();
+  if (typeof response.message === "string" && response.message.trim()) {
+    return response.message.trim();
   }
-  if (typeof reponse.error === "string" && reponse.error.trim()) {
-    return reponse.error.trim();
+  if (typeof response.error === "string" && response.error.trim()) {
+    return response.error.trim();
   }
   return undefined;
 }
 
-function extractFieldErrors(contenu: unknown): Record<string, string[]> | undefined {
-  if (!contenu || typeof contenu !== "object") return undefined;
-  const erreurs = (contenu as { errors?: unknown }).errors;
-  if (!erreurs || typeof erreurs !== "object" || Array.isArray(erreurs)) return undefined;
+function extractFieldErrors(content: unknown): Record<string, string[]> | undefined {
+  if (!content || typeof content !== "object") return undefined;
+  const errors = (content as { errors?: unknown }).errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return undefined;
 
-  const resultat = Object.fromEntries(
-    Object.entries(erreurs as Record<string, unknown>)
-      .map(([champ, messages]) => [
-        champ,
+  const result = Object.fromEntries(
+    Object.entries(errors as Record<string, unknown>)
+      .map(([field, messages]) => [
+        field,
         Array.isArray(messages)
           ? messages.filter(
               (element): element is string => typeof element === "string" && element.trim().length > 0,
@@ -52,47 +52,47 @@ function extractFieldErrors(contenu: unknown): Record<string, string[]> | undefi
       .filter(([, messages]) => (messages as string[]).length > 0),
   ) as Record<string, string[]>;
 
-  return Object.keys(resultat).length ? resultat : undefined;
+  return Object.keys(result).length ? result : undefined;
 }
 
-/** Convertit la réponse HTTP en message utilisateur selon le contrat existant du backend. */
-export function createHttpApiError(statut: number, contenu: unknown): ApiError {
-  if (statut === 401) {
-    return new ApiError("Votre session a expiré ou n'est plus valide. Reconnectez-vous.", statut);
+/** Converts the HTTP response into a user message according to the backend's existing contract. */
+export function createHttpApiError(status: number, content: unknown): ApiError {
+  if (status === 401) {
+    return new ApiError("Votre session a expiré ou n'est plus valide. Reconnectez-vous.", status);
   }
-  if (statut === 403) {
-    return new ApiError("Vous n'avez pas l'autorisation d'effectuer cette action.", statut);
+  if (status === 403) {
+    return new ApiError("Vous n'avez pas l'autorisation d'effectuer cette action.", status);
   }
-  if (statut === 404) {
-    return new ApiError("Cette ressource n'est pas disponible ou n'existe plus.", statut);
+  if (status === 404) {
+    return new ApiError("Cette ressource n'est pas disponible ou n'existe plus.", status);
   }
-  if (statut === 413) {
-    return new ApiError("Le contenu transmis est trop volumineux. Réduisez-le puis réessayez.", statut);
+  if (status === 413) {
+    return new ApiError("Le contenu transmis est trop volumineux. Réduisez-le puis réessayez.", status);
   }
-  if (statut === 429) {
-    return new ApiError("Trop de requêtes ont été envoyées. Patientez un instant puis réessayez.", statut);
+  if (status === 429) {
+    return new ApiError("Trop de requêtes ont été envoyées. Patientez un instant puis réessayez.", status);
   }
-  if (statut >= 500) {
-    return new ApiError("Le serveur SRE rencontre une erreur. Réessayez dans quelques instants.", statut);
+  if (status >= 500) {
+    return new ApiError("Le serveur SRE rencontre une erreur. Réessayez dans quelques instants.", status);
   }
 
-  const messageServeur = extractApiMessage(contenu);
+  const serverMessage = extractApiMessage(content);
   const message =
-    messageServeur ??
-    (statut === 409
+    serverMessage ??
+    (status === 409
       ? "Cette opération est en conflit avec l'état actuel des données. Actualisez puis réessayez."
       : "Les données transmises ne sont pas valides. Vérifiez les champs puis réessayez.");
-  return new ApiError(message, statut, extractFieldErrors(contenu));
+  return new ApiError(message, status, extractFieldErrors(content));
 }
 
 export function createTransportApiError(
   cause: unknown,
-  requeteMutative: boolean,
-  delaiDepasse: boolean,
+  isMutatingRequest: boolean,
+  isTimedOut: boolean,
 ): ApiError {
-  if (delaiDepasse || (cause instanceof Error && cause.name === "AbortError")) {
+  if (isTimedOut || (cause instanceof Error && cause.name === "AbortError")) {
     return new ApiError(
-      requeteMutative
+      isMutatingRequest
         ? "Le serveur n'a pas répondu dans le délai prévu. Votre demande peut avoir été reçue : actualisez les données avant de la soumettre à nouveau."
         : "Le serveur SRE n'a pas répondu dans le délai prévu. Réessayez.",
       undefined,
@@ -102,7 +102,7 @@ export function createTransportApiError(
   }
 
   return new ApiError(
-    requeteMutative
+    isMutatingRequest
       ? "La connexion au serveur a été interrompue. Vérifiez l'état de la demande avant de la renvoyer."
       : "Impossible de joindre le serveur SRE. Vérifiez votre connexion puis réessayez.",
     undefined,

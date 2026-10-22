@@ -5,58 +5,58 @@ import { ROUTES_CLIENT } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
-/** Colonnes du tableau des obligations fiscales du contribuable (espace client). */
-export function creerColonnesObligations(): TableColumn<TaxObligation>[] {
+/** Columns of the taxpayer's tax obligations table (client workspace). */
+export function createObligationColumns(): TableColumn<TaxObligation>[] {
   return [
     {
       id: "reference",
-      titre: "Référence",
-      afficher: (obligation) => (
+      title: "Référence",
+      render: (obligation) => (
         <Link className="reference-sre" to={ROUTES_CLIENT.obligation(obligation.id)}>
-          {obligation.referenceFiscale}
+          {obligation.taxReference}
         </Link>
       ),
-      valeurTri: (obligation) => obligation.referenceFiscale,
+      sortValue: (obligation) => obligation.taxReference,
     },
     {
-      id: "impot",
-      titre: "Impôt / catégorie",
-      afficher: (obligation) => <strong>{obligation.typeImpotNom}</strong>,
-      valeurTri: (obligation) => obligation.typeImpotNom,
+      id: "tax",
+      title: "Impôt / catégorie",
+      render: (obligation) => <strong>{obligation.taxTypeName}</strong>,
+      sortValue: (obligation) => obligation.taxTypeName,
     },
     {
-      id: "periode",
-      titre: "Période",
-      afficher: (obligation) => obligation.periode,
-      valeurTri: (obligation) => obligation.periode,
+      id: "period",
+      title: "Période",
+      render: (obligation) => obligation.period,
+      sortValue: (obligation) => obligation.period,
     },
     {
-      id: "echeance",
-      titre: "Échéance enregistrée",
-      afficher: (obligation) => formatDate(obligation.echeance),
-      valeurTri: (obligation) => obligation.echeance,
+      id: "dueDate",
+      title: "Échéance enregistrée",
+      render: (obligation) => formatDate(obligation.dueDate),
+      sortValue: (obligation) => obligation.dueDate,
     },
     {
-      id: "montant",
-      titre: "Montant enregistré",
-      afficher: (obligation) => (
-        <span className="montant-sre">{formatMoney(obligation.montant)}</span>
+      id: "amount",
+      title: "Montant enregistré",
+      render: (obligation) => (
+        <span className="amount-sre">{formatMoney(obligation.amount)}</span>
       ),
-      valeurTri: (obligation) => obligation.montant,
+      sortValue: (obligation) => obligation.amount,
     },
     {
-      id: "statut",
-      titre: "Statut",
-      afficher: (obligation) => <StatusBadge statut={obligation.statut} />,
-      valeurTri: (obligation) => obligation.statut,
+      id: "status",
+      title: "Statut",
+      render: (obligation) => <StatusBadge status={obligation.status} />,
+      sortValue: (obligation) => obligation.status,
     },
     {
       id: "action",
-      titre: "Actions",
-      afficher: (obligation) => (
+      title: "Actions",
+      render: (obligation) => (
         <ActionGroup>
           <ActionIcon
-            titre="Consulter l’obligation"
+            title="Consulter l’obligation"
             href={ROUTES_CLIENT.obligation(obligation.id)}
           >
             <Eye size={15} />

@@ -10,15 +10,15 @@ import {
   PageHeader,
   Modal,
   DataTable,
-  convertirColonnesTanstack,
+  toTanstackColumns,
 } from "@/components/ui";
 import { SubmitButton } from "@/components/forms/form-field";
-import { TaxTypeFormFields, TAX_TYPE_VIDE } from "@/components/forms/admin/tax-type-form";
-import { creerColonnesTypesImpot } from "@/components/tables/admin/tax-types-columns";
+import { TaxTypeFormFields, TAX_TYPE_EMPTY } from "@/components/forms/admin/tax-type-form";
+import { createTaxTypeColumns } from "@/components/tables/admin/tax-types-columns";
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
 import { taxTypeFormSchema, type TaxTypeFormValues } from "@/validation/admin.schema";
 
-const CHAMPS_ETAPES_TYPE_IMPOT = [
+const TAX_TYPE_STEP_FIELDS = [
   ["code", "nom", "categorie", "description"],
   [
     "contribuablesConcernes",
@@ -31,166 +31,166 @@ const CHAMPS_ETAPES_TYPE_IMPOT = [
 ] as const;
 
 export function AdminTaxTypesPage() {
-  const { etat, mettreAJourEtat, notifier } = useSre();
+  const { state, updateState, notify } = useSre();
   const { session } = useAuth();
   const table = useTableState();
   const [modal, setModal] = useState(false);
-  const [etapeFormulaire, setEtapeFormulaire] = useState<0 | 1>(0);
+  const [formStep, setStepForm] = useState<0 | 1>(0);
   const [typeModifie, setTypeModifie] = useState<string | null>(null);
-  const basculement = useConfirmation<TaxType>();
-  const formulaire = useApiForm<TaxTypeFormValues>({
+  const toggleConfirmation = useConfirmation<TaxType>();
+  const form = useApiForm<TaxTypeFormValues>({
     schema: taxTypeFormSchema,
-    valeursInitiales: TAX_TYPE_VIDE,
-    messageRepli: "Le serveur n’a pas enregistré le type d’impôt.",
+    initialValues: TAX_TYPE_EMPTY,
+    fallbackMessage: "Le serveur n’a pas enregistré le type d’impôt.",
   });
 
-  const types = etat.typesImpots;
+  const types = state.taxTypes;
 
-  const ouvrirEdition = (type?: TaxType) => {
-    setEtapeFormulaire(0);
-    formulaire.reinitialiserErreur();
+  const openEditing = (type?: TaxType) => {
+    setStepForm(0);
+    form.resetError();
     setTypeModifie(type?.id ?? null);
-    formulaire.reinitialiserFormulaire(
+    form.resetForm(
       type
         ? {
             code: type.code,
-            nom: type.nom,
+            nom: type.name,
             description: type.description,
-            categorie: type.categorie,
-            contribuablesConcernes: type.contribuablesConcernes,
-            periodicite: type.periodicite,
-            regleEcheance: type.regleEcheance,
-            modeMontant: type.modeMontant,
-            montantReference: type.montantReference,
-            champsComplementairesTexte: type.champsComplementaires.join(", "),
+            categorie: type.category,
+            contribuablesConcernes: type.applicableTaxpayers,
+            periodicite: type.periodicity,
+            regleEcheance: type.dueDateRule,
+            modeMontant: type.amountMode,
+            montantReference: type.referenceAmount,
+            champsComplementairesTexte: type.additionalFields.join(", "),
           }
-        : TAX_TYPE_VIDE,
+        : TAX_TYPE_EMPTY,
     );
     setModal(true);
   };
 
-  const fermer = () => {
+  const close = () => {
     setModal(false);
-    setEtapeFormulaire(0);
+    setStepForm(0);
     setTypeModifie(null);
-    formulaire.reinitialiserFormulaire();
+    form.resetForm();
   };
 
-  const avancerEtape = async () => {
-    const valide = await formulaire.trigger([...CHAMPS_ETAPES_TYPE_IMPOT[etapeFormulaire]], {
+  const advanceStep = async () => {
+    const valid = await form.trigger([...TAX_TYPE_STEP_FIELDS[formStep]], {
       shouldFocus: true,
     });
-    if (valide) setEtapeFormulaire(1);
+    if (valid) setStepForm(1);
   };
 
-  const colonnes = creerColonnesTypesImpot({
-    onModifier: ouvrirEdition,
-    onBasculer: basculement.ouvrir,
+  const columns = createTaxTypeColumns({
+    onUpdate: openEditing,
+    onToggle: toggleConfirmation.open,
   });
 
-  const enregistrer = formulaire.handleSubmit(async (valeurs) => {
-    formulaire.reinitialiserErreur();
-    if (!session?.jetonApi) {
-      formulaire.definirErreur("Session serveur introuvable. Reconnectez-vous.");
+  const save = form.handleSubmit(async (values) => {
+    form.resetError();
+    if (!session?.apiToken) {
+      form.setError("Session serveur introuvable. Reconnectez-vous.");
       return;
     }
     if (
-      etat.typesImpots.some(
+      state.taxTypes.some(
         (type) =>
-          type.code.toLowerCase() === valeurs.code.trim().toLowerCase() && type.id !== typeModifie,
+          type.code.toLowerCase() === values.code.trim().toLowerCase() && type.id !== typeModifie,
       )
     ) {
-      formulaire.setError("code", { type: "server", message: "Ce code est déjà utilisé." });
-      setEtapeFormulaire(0);
+      form.setError("code", { type: "server", message: "Ce code est déjà utilisé." });
+      setStepForm(0);
       return;
     }
     try {
-      const corps = {
-        periodicite: valeurs.periodicite,
-        contribuablesConcernes: valeurs.contribuablesConcernes,
-        modeMontant: valeurs.modeMontant,
-        code: valeurs.code.trim().toUpperCase(),
-        nom: valeurs.nom.trim(),
-        description: valeurs.description.trim(),
-        categorie: valeurs.categorie.trim(),
-        regleEcheance: valeurs.regleEcheance.trim(),
-        montantReference: valeurs.montantReference,
-        champsComplementaires: valeurs.champsComplementairesTexte
+      const body = {
+        periodicite: values.periodicite,
+        contribuablesConcernes: values.contribuablesConcernes,
+        modeMontant: values.modeMontant,
+        code: values.code.trim().toUpperCase(),
+        nom: values.nom.trim(),
+        description: values.description.trim(),
+        categorie: values.categorie.trim(),
+        regleEcheance: values.regleEcheance.trim(),
+        montantReference: values.montantReference,
+        champsComplementaires: values.champsComplementairesTexte
           .split(",")
-          .map((champ) => champ.trim())
+          .map((field) => field.trim())
           .filter(Boolean),
       };
-      const reponse = await callApi<ApiTaxType>(
+      const response = await callApi<ApiTaxType>(
         typeModifie ? `types-impots/${encodeURIComponent(typeModifie)}` : "types-impots",
-        { method: typeModifie ? "PATCH" : "POST", token: session.jetonApi, body: corps },
+        { method: typeModifie ? "PATCH" : "POST", token: session.apiToken, body: body },
       );
-      const typeSauvegarde = mapApiTaxType(reponse);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        typesImpots: [
-          typeSauvegarde,
-          ...courant.typesImpots.filter((type) => type.id !== typeSauvegarde.id),
+      const typeBackup = mapApiTaxType(response);
+      updateState((current) => ({
+        ...current,
+        taxTypes: [
+          typeBackup,
+          ...current.taxTypes.filter((type) => type.id !== typeBackup.id),
         ],
       }));
-      notifier(
+      notify(
         typeModifie
           ? "Type d’impôt modifié sur le serveur."
           : "Type d’impôt enregistré sur le serveur.",
-        "succes",
+        "success",
       );
-      fermer();
+      close();
     } catch (cause) {
-      formulaire.traiterEchec(cause);
+      form.handleFailure(cause);
     }
   });
 
-  const basculer = async (type: TaxType) => {
-    if (!session?.jetonApi) throw new Error("Session serveur introuvable. Reconnectez-vous.");
-    const actif = !type.actif;
+  const toggleActive = async (type: TaxType) => {
+    if (!session?.apiToken) throw new Error("Session serveur introuvable. Reconnectez-vous.");
+    const isActive = !type.isActive;
     try {
-      const reponse = await callApi<ApiTaxType>(
+      const response = await callApi<ApiTaxType>(
         `types-impots/${encodeURIComponent(type.id)}/activite`,
-        { method: "PATCH", token: session.jetonApi, body: { actif } },
+        { method: "PATCH", token: session.apiToken, body: { actif: isActive } },
       );
-      const typeSauvegarde = mapApiTaxType(reponse);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        typesImpots: courant.typesImpots.map((entree) =>
-          entree.id === type.id ? typeSauvegarde : entree,
+      const typeBackup = mapApiTaxType(response);
+      updateState((current) => ({
+        ...current,
+        taxTypes: current.taxTypes.map((entry) =>
+          entry.id === type.id ? typeBackup : entry,
         ),
       }));
-      notifier(
-        actif
+      notify(
+        isActive
           ? "Type d’impôt réactivé sur le serveur."
           : "Type d’impôt désactivé. L’historique associé est conservé.",
-        "succes",
+        "success",
       );
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Le serveur n’a pas modifié le statut.";
-      notifier(message, "erreur");
+      notify(message, "error");
       throw new Error(message);
     }
   };
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Types d’impôts"
+        title="Types d’impôts"
         description="Paramètres fiscaux validés par l’administration."
-        filAriane={["Accueil", "Types d’impôts"]}
+        breadcrumb={["Accueil", "Types d’impôts"]}
       />
       <DataTable
         data={types}
-        columns={convertirColonnesTanstack(colonnes)}
+        columns={toTanstackColumns(columns)}
         label="Types d’impôts"
         getRowId={(type) => type.id}
-        getSearchText={(type) => `${type.code} ${type.nom} ${type.categorie} ${type.description}`}
+        getSearchText={(type) => `${type.code} ${type.name} ${type.category} ${type.description}`}
         searchPlaceholder="Code, nom ou catégorie…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         actionPrimary={
-          <Button onClick={() => ouvrirEdition()}>
+          <Button onClick={() => openEditing()}>
             <CirclePlus size={15} /> Ajouter un type
           </Button>
         }
@@ -198,40 +198,40 @@ export function AdminTaxTypesPage() {
         emptyTitle="Aucun type d’impôt"
         emptyDescription="Les types enregistrés par l’administration apparaîtront ici."
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
       <Modal
-        ouvert={modal}
-        titre={typeModifie ? "Modifier le type d’impôt" : "Ajouter un type d’impôt"}
+        open={modal}
+        title={typeModifie ? "Modifier le type d’impôt" : "Ajouter un type d’impôt"}
         description="Formulaire en deux étapes. Saisissez uniquement des règles fiscales approuvées et applicables."
-        fermer={fermer}
-        fermetureBloquee={formulaire.isSubmitting}
-        largeur="large"
-        pied={
+        close={close}
+        disableClose={form.isSubmitting}
+        width="large"
+        footer={
           <>
-            <Button variante="contour" onClick={fermer} disabled={formulaire.isSubmitting}>
+            <Button variant="outline" onClick={close} disabled={form.isSubmitting}>
               Annuler
             </Button>
-            {etapeFormulaire > 0 && (
+            {formStep > 0 && (
               <Button
-                variante="contour"
-                onClick={() => setEtapeFormulaire(0)}
-                disabled={formulaire.isSubmitting}
+                variant="outline"
+                onClick={() => setStepForm(0)}
+                disabled={form.isSubmitting}
               >
                 <ArrowLeft size={15} /> Précédent
               </Button>
             )}
-            {etapeFormulaire === 0 ? (
-              <Button onClick={() => void avancerEtape()} disabled={formulaire.isSubmitting}>
+            {formStep === 0 ? (
+              <Button onClick={() => void advanceStep()} disabled={form.isSubmitting}>
                 Suivant <ArrowRight size={15} />
               </Button>
             ) : (
               <SubmitButton
                 form="formulaire-type-impot"
-                enCours={formulaire.isSubmitting}
-                libelleEnCours="Enregistrement…"
+                inProgress={form.isSubmitting}
+                pendingLabel="Enregistrement…"
               >
                 Enregistrer
               </SubmitButton>
@@ -242,36 +242,36 @@ export function AdminTaxTypesPage() {
         <form
           id="formulaire-type-impot"
           onSubmit={
-            etapeFormulaire === 1
-              ? enregistrer
+            formStep === 1
+              ? save
               : (event) => {
                   event.preventDefault();
-                  void avancerEtape();
+                  void advanceStep();
                 }
           }
           noValidate
         >
           <TaxTypeFormFields
-            formulaire={formulaire}
-            erreur={formulaire.erreur}
-            etape={etapeFormulaire}
+            form={form}
+            error={form.error}
+            step={formStep}
           />
         </form>
       </Modal>
       <ConfirmDialog
-        ouvert={!!basculement.cible}
-        titre={basculement.cible?.actif ? "Désactiver ce type ?" : "Réactiver ce type ?"}
+        open={!!toggleConfirmation.target}
+        title={toggleConfirmation.target?.isActive ? "Désactiver ce type ?" : "Réactiver ce type ?"}
         description={
-          basculement.cible?.actif
-            ? `Le type « ${basculement.cible?.nom} » ne sera plus proposé dans les nouvelles opérations. Son historique sera conservé.`
-            : `Le type « ${basculement.cible?.nom} » sera réactivé.`
+          toggleConfirmation.target?.isActive
+            ? `Le type « ${toggleConfirmation.target?.name} » ne sera plus proposé dans les nouvelles opérations. Son historique sera conservé.`
+            : `Le type « ${toggleConfirmation.target?.name} » sera réactivé.`
         }
-        fermer={basculement.fermer}
-        confirmer={() => void basculement.executer(basculer)}
-        libelleConfirmer={basculement.cible?.actif ? "Désactiver" : "Réactiver"}
-        danger={!!basculement.cible?.actif}
-        chargement={basculement.enCours}
-        erreur={basculement.erreur}
+        close={toggleConfirmation.close}
+        confirm={() => void toggleConfirmation.execute(toggleActive)}
+        confirmLabel={toggleConfirmation.target?.isActive ? "Désactiver" : "Réactiver"}
+        danger={!!toggleConfirmation.target?.isActive}
+        loading={toggleConfirmation.inProgress}
+        error={toggleConfirmation.error}
       />
     </div>
   );

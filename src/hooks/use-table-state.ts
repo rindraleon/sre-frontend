@@ -1,23 +1,23 @@
 import { useState } from "react";
 
-export function useTableState(parPageInitial = 10) {
-  const [recherche, setRecherche] = useState("");
+export function useTableState(initialPerPage = 10) {
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [parPage, setParPage] = useState(parPageInitial);
+  const [perPage, setPerPage] = useState(initialPerPage);
 
   return {
-    recherche,
+    search,
     page,
-    parPage,
-    rechercher: (valeur: string) => {
-      setRecherche(valeur);
+    perPage,
+    changeSearch: (value: string) => {
+      setSearch(value);
       setPage(1);
     },
-    changerPage: setPage,
-    changerParPage: (nombre: number) => {
-      setParPage(nombre);
+    changePage: setPage,
+    changePerPage: (count: number) => {
+      setPerPage(count);
       setPage(1);
     },
-    reinitialiserPage: () => setPage(1),
+    resetPage: () => setPage(1),
   };
 }

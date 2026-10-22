@@ -1,9 +1,9 @@
-import { TOUS, type OptionSelect } from "./options";
+import { ALL, type OptionSelect } from "./options";
 
-export const OPTIONS_STATUT_PAIEMENT_FILTRE: OptionSelect[] = [
-  { valeur: TOUS, libelle: "Tous" },
-  { valeur: "EN_VERIFICATION", libelle: "En vérification" },
-  { valeur: "CONFIRME", libelle: "Confirmé par l’administration" },
-  { valeur: "REJETE", libelle: "Rejeté" },
-  { valeur: "CORRECTION_DEMANDEE", libelle: "Correction demandée" },
+export const PAYMENT_STATUS_FILTER_OPTIONS: OptionSelect[] = [
+  { value: ALL, label: "Tous" },
+  { value: "EN_VERIFICATION", label: "En vérification" },
+  { value: "CONFIRME", label: "Confirmé par l’administration" },
+  { value: "REJETE", label: "Rejeté" },
+  { value: "CORRECTION_DEMANDEE", label: "Correction demandée" },
 ];

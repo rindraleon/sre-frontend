@@ -5,83 +5,83 @@ import { ROUTES_ADMIN } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 
-/** Colonnes du tableau des profils contribuables (back-office). */
-export function creerColonnesContribuables({
-  onSupprimer,
-}: Readonly<{ onSupprimer: (contribuable: Taxpayer) => void }>): TableColumn<Taxpayer>[] {
+/** Columns of the taxpayer profiles table (back office). */
+export function createTaxpayerColumns({
+  onDelete,
+}: Readonly<{ onDelete: (taxpayer: Taxpayer) => void }>): TableColumn<Taxpayer>[] {
   return [
     {
-      id: "nom",
-      titre: "Contribuable",
-      afficher: (entree) => (
-        <Link className="lien-identite-tableau-sre" to={ROUTES_ADMIN.contribuable(entree.id)}>
-          <span className="avatar-ligne-sre">
-            {entree.type === "ENTREPRISE" ? <Building2 size={15} /> : <UserRound size={15} />}
+      id: "name",
+      title: "Contribuable",
+      render: (entry) => (
+        <Link className="table-identity-link-sre" to={ROUTES_ADMIN.taxpayer(entry.id)}>
+          <span className="row-avatar-sre">
+            {entry.type === "ENTREPRISE" ? <Building2 size={15} /> : <UserRound size={15} />}
           </span>
           <span>
-            <strong>{entree.raisonSociale || `${entree.prenom ?? ""} ${entree.nom}`.trim()}</strong>
-            <small>{entree.courriel}</small>
+            <strong>{entry.legalName || `${entry.firstName ?? ""} ${entry.lastName}`.trim()}</strong>
+            <small>{entry.email}</small>
           </span>
         </Link>
       ),
-      valeurTri: (entree) => entree.raisonSociale || `${entree.prenom ?? ""} ${entree.nom}`,
+      sortValue: (entry) => entry.legalName || `${entry.firstName ?? ""} ${entry.lastName}`,
     },
     {
       id: "type",
-      titre: "Type",
-      afficher: (entree) => <StatusBadge statut={entree.type} />,
-      valeurTri: (entree) => entree.type,
+      title: "Type",
+      render: (entry) => <StatusBadge status={entry.type} />,
+      sortValue: (entry) => entry.type,
     },
     {
       id: "nif",
-      titre: "NIF",
-      afficher: (entree) => entree.nif || "—",
-      valeurTri: (entree) => entree.nif,
+      title: "NIF",
+      render: (entry) => entry.nif || "—",
+      sortValue: (entry) => entry.nif,
     },
     {
       id: "stat",
-      titre: "STAT",
-      afficher: (entree) => entree.stat || "—",
-      valeurTri: (entree) => entree.stat ?? "",
+      title: "STAT",
+      render: (entry) => entry.stat || "—",
+      sortValue: (entry) => entry.stat ?? "",
     },
     {
       id: "region",
-      titre: "Localisation",
-      afficher: (entree) => (
+      title: "Localisation",
+      render: (entry) => (
         <>
-          {entree.ville}
-          <small className="sous-ligne-sre">{entree.region}</small>
+          {entry.city}
+          <small className="sub-row-sre">{entry.region}</small>
         </>
       ),
-      valeurTri: (entree) => entree.region,
+      sortValue: (entry) => entry.region,
     },
     {
-      id: "statut",
-      titre: "Compte",
-      afficher: (entree) => <StatusBadge statut={entree.statut ?? "SANS_COMPTE"} />,
-      valeurTri: (entree) => entree.statut ?? "SANS_COMPTE",
+      id: "status",
+      title: "Compte",
+      render: (entry) => <StatusBadge status={entry.status ?? "SANS_COMPTE"} />,
+      sortValue: (entry) => entry.status ?? "SANS_COMPTE",
     },
     {
-      id: "cree",
-      titre: "Créé le",
-      afficher: (entree) => formatDate(entree.dateCreationCompte),
-      valeurTri: (entree) => entree.dateCreationCompte,
+      id: "created",
+      title: "Créé le",
+      render: (entry) => formatDate(entry.accountCreatedAt),
+      sortValue: (entry) => entry.accountCreatedAt,
     },
     {
       id: "action",
-      titre: "Actions",
-      afficher: (entree) => (
+      title: "Actions",
+      render: (entry) => (
         <ActionGroup>
           <ActionIcon
-            titre="Consulter le profil"
-            href={ROUTES_ADMIN.contribuable(entree.id)}
+            title="Consulter le profil"
+            href={ROUTES_ADMIN.taxpayer(entry.id)}
           >
             <Eye size={15} />
           </ActionIcon>
           <ActionIcon
-            titre="Supprimer le profil"
+            title="Supprimer le profil"
             danger
-            onClick={() => onSupprimer(entree)}
+            onClick={() => onDelete(entry)}
           >
             <Trash2 size={15} />
           </ActionIcon>

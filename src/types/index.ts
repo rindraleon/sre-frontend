@@ -6,5 +6,6 @@ export * from "./obligation";
 export * from "./payment";
 export * from "./notification";
 export * from "./activity";
+export * from "./contact";
 export * from "./platform";
 export * from "@/types/api";

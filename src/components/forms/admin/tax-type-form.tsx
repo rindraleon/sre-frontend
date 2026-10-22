@@ -5,7 +5,7 @@ import { FormField, FormError } from "@/components/forms/form-field";
 import { FormStepIndicator } from "@/components/forms/form-step-indicator";
 import type { TaxTypeFormValues } from "@/validation/admin.schema";
 
-export const TAX_TYPE_VIDE: TaxTypeFormValues = {
+export const TAX_TYPE_EMPTY: TaxTypeFormValues = {
   code: "",
   nom: "",
   description: "",
@@ -19,43 +19,43 @@ export const TAX_TYPE_VIDE: TaxTypeFormValues = {
 };
 
 export function TaxTypeFormFields({
-  formulaire,
-  erreur,
-  etape,
+  form,
+  error,
+  step,
 }: Readonly<{
-  formulaire: UseFormReturn<TaxTypeFormValues>;
-  erreur?: string;
-  etape: number;
+  form: UseFormReturn<TaxTypeFormValues>;
+  error?: string;
+  step: number;
 }>) {
   const {
     register,
     formState: { errors },
-  } = formulaire;
+  } = form;
   return (
-    <div className="formulaire-sre grille-formulaire-sre formulaire-compact-sre">
-      <FormStepIndicator etape={etape} etapes={["Informations", "Règles fiscales"]} />
-      {etape === 0 && (
+    <div className="form-sre form-grid-sre compact-form-sre">
+      <FormStepIndicator step={step} steps={["Informations", "Règles fiscales"]} />
+      {step === 0 && (
         <>
-          <FormField libelle="Code" erreur={errors.code} requis>
+          <FormField label="Code" error={errors.code} required>
             {(p) => (
-              <input {...p} className="champ-simple-sre" maxLength={32} {...register("code")} />
+              <input {...p} className="field-simple-sre" maxLength={32} {...register("code")} />
             )}
           </FormField>
-          <FormField libelle="Nom du type" erreur={errors.nom} requis>
-            {(p) => <input {...p} className="champ-simple-sre" {...register("nom")} />}
+          <FormField label="Nom du type" error={errors.nom} required>
+            {(p) => <input {...p} className="field-simple-sre" {...register("nom")} />}
           </FormField>
-          <FormField libelle="Catégorie" erreur={errors.categorie} requis>
-            {(p) => <input {...p} className="champ-simple-sre" {...register("categorie")} />}
+          <FormField label="Catégorie" error={errors.categorie} required>
+            {(p) => <input {...p} className="field-simple-sre" {...register("categorie")} />}
           </FormField>
           <FormField
-            libelle="Description"
-            erreur={errors.description}
-            classeSupplementaire="champ-sre-large"
+            label="Description"
+            error={errors.description}
+            className="field-sre-wide"
           >
             {(p) => (
               <Textarea
                 {...p}
-                className="champ-simple-sre champ-texte-sre"
+                className="field-simple-sre field-text-sre"
                 rows={2}
                 {...register("description")}
               />
@@ -63,15 +63,15 @@ export function TaxTypeFormFields({
           </FormField>
         </>
       )}
-      {etape === 1 && (
+      {step === 1 && (
         <>
           <FormField
-            libelle="Contribuables concernés"
-            erreur={errors.contribuablesConcernes}
-            requis
+            label="Contribuables concernés"
+            error={errors.contribuablesConcernes}
+            required
           >
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("contribuablesConcernes")}>
+              <Select {...p} className="field-simple-sre" {...register("contribuablesConcernes")}>
                 <option value="" disabled>
                   Choisir…
                 </option>
@@ -81,9 +81,9 @@ export function TaxTypeFormFields({
               </Select>
             )}
           </FormField>
-          <FormField libelle="Périodicité" erreur={errors.periodicite} requis>
+          <FormField label="Périodicité" error={errors.periodicite} required>
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("periodicite")}>
+              <Select {...p} className="field-simple-sre" {...register("periodicite")}>
                 <option value="" disabled>
                   Choisir…
                 </option>
@@ -94,9 +94,9 @@ export function TaxTypeFormFields({
               </Select>
             )}
           </FormField>
-          <FormField libelle="Mode de montant" erreur={errors.modeMontant} requis>
+          <FormField label="Mode de montant" error={errors.modeMontant} required>
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("modeMontant")}>
+              <Select {...p} className="field-simple-sre" {...register("modeMontant")}>
                 <option value="" disabled>
                   Choisir…
                 </option>
@@ -106,42 +106,42 @@ export function TaxTypeFormFields({
               </Select>
             )}
           </FormField>
-          <FormField libelle="Montant de référence (MGA)" erreur={errors.montantReference}>
+          <FormField label="Montant de référence (MGA)" error={errors.montantReference}>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="number"
                 inputMode="numeric"
                 min="0"
                 step="1"
                 {...register("montantReference", {
-                  setValueAs: (valeur: string) => (valeur === "" ? null : Number(valeur)),
+                  setValueAs: (value: string) => (value === "" ? null : Number(value)),
                 })}
               />
             )}
           </FormField>
-          <FormField libelle="Règle d’échéance validée" erreur={errors.regleEcheance}>
-            {(p) => <input {...p} className="champ-simple-sre" {...register("regleEcheance")} />}
+          <FormField label="Règle d’échéance validée" error={errors.regleEcheance}>
+            {(p) => <input {...p} className="field-simple-sre" {...register("regleEcheance")} />}
           </FormField>
           <FormField
-            libelle="Champs complémentaires"
-            erreur={errors.champsComplementairesTexte}
-            aide="Séparés par des virgules"
-            classeSupplementaire="champ-sre-large"
+            label="Champs complémentaires"
+            error={errors.champsComplementairesTexte}
+            help="Séparés par des virgules"
+            className="field-sre-wide"
           >
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 {...register("champsComplementairesTexte")}
               />
             )}
           </FormField>
         </>
       )}
-      <div className="champ-sre-large">
-        <FormError message={erreur} />
+      <div className="field-sre-wide">
+        <FormError message={error} />
       </div>
     </div>
   );

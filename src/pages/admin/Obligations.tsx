@@ -4,123 +4,123 @@ import { CirclePlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { callApi, mapApiObligation, type ApiObligation } from "@/services/api-client";
-import { Button, PageHeader, Modal, DataTable, convertirColonnesTanstack } from "@/components/ui";
+import { Button, PageHeader, Modal, DataTable, toTanstackColumns } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { SubmitButton } from "@/components/forms/form-field";
-import { ObligationFormFields, OBLIGATION_VIDE } from "@/components/forms/admin/obligation-form";
-import { creerColonnesObligations } from "@/components/tables/admin/obligations-columns";
+import { ObligationFormFields, OBLIGATION_EMPTY } from "@/components/forms/admin/obligation-form";
+import { createObligationColumns } from "@/components/tables/admin/obligations-columns";
 import { useApiForm, useTableState } from "@/hooks";
-import { OPTIONS_STATUT_OBLIGATION_FILTRE } from "@/constants/admin-obligations";
-import { TOUS } from "@/constants";
+import { OBLIGATION_STATUS_FILTER_OPTIONS } from "@/constants/admin-obligations";
+import { ALL } from "@/constants";
 import { obligationFormSchema, type ObligationFormValues } from "@/validation/admin.schema";
 
 export function AdminObligationsPage() {
-  const { etat, mettreAJourEtat, notifier } = useSre();
+  const { state, updateState, notify } = useSre();
   const { session } = useAuth();
   const table = useTableState();
-  const [statut, setStatut] = useState<string>(TOUS);
+  const [status, setStatus] = useState<string>(ALL);
   const [modal, setModal] = useState(false);
-  const formulaire = useApiForm<ObligationFormValues>({
+  const form = useApiForm<ObligationFormValues>({
     schema: obligationFormSchema,
-    valeursInitiales: OBLIGATION_VIDE,
-    messageRepli: "Le serveur n’a pas créé l’obligation.",
+    initialValues: OBLIGATION_EMPTY,
+    fallbackMessage: "Le serveur n’a pas créé l’obligation.",
   });
 
   const obligations = useMemo(
     () =>
-      etat.obligations
-        .filter((obligation) => statut === TOUS || obligation.statut === statut)
-        .sort((a, b) => b.creeLe.localeCompare(a.creeLe)),
-    [etat.obligations, statut],
+      state.obligations
+        .filter((obligation) => status === ALL || obligation.status === status)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [state.obligations, status],
   );
 
-  const colonnes = creerColonnesObligations({ contribuables: etat.contribuables });
+  const columns = createObligationColumns({ taxpayers: state.taxpayers });
 
-  const ouvrir = () => {
-    formulaire.reinitialiserFormulaire();
+  const open = () => {
+    form.resetForm();
     setModal(true);
   };
-  const fermer = () => {
+  const close = () => {
     setModal(false);
-    formulaire.reinitialiserFormulaire();
+    form.resetForm();
   };
 
-  const creer = formulaire.handleSubmit(async (valeurs) => {
-    formulaire.reinitialiserErreur();
-    if (!session?.jetonApi) {
-      formulaire.definirErreur("Session serveur introuvable. Reconnectez-vous.");
+  const create = form.handleSubmit(async (values) => {
+    form.resetError();
+    if (!session?.apiToken) {
+      form.setError("Session serveur introuvable. Reconnectez-vous.");
       return;
     }
-    const contribuable = etat.contribuables.some((entree) => entree.id === valeurs.contribuableId);
-    const type = etat.typesImpots.some(
-      (entree) => entree.id === valeurs.typeImpotId && entree.actif,
+    const taxpayer = state.taxpayers.some((entry) => entry.id === values.contribuableId);
+    const type = state.taxTypes.some(
+      (entry) => entry.id === values.typeImpotId && entry.isActive,
     );
-    if (!contribuable || !type) {
-      formulaire.definirErreur("Sélectionnez un contribuable et un type d’impôt actif.");
+    if (!taxpayer || !type) {
+      form.setError("Sélectionnez un contribuable et un type d’impôt actif.");
       return;
     }
     try {
-      const reponse = await callApi<ApiObligation>("obligations", {
+      const response = await callApi<ApiObligation>("obligations", {
         method: "POST",
-        token: session.jetonApi,
+        token: session.apiToken,
         body: {
-          contribuableId: valeurs.contribuableId,
-          typeImpotId: valeurs.typeImpotId,
-          periode: valeurs.periode.trim(),
-          montant: valeurs.montant,
-          echeance: valeurs.echeance,
+          contribuableId: values.contribuableId,
+          typeImpotId: values.typeImpotId,
+          periode: values.periode.trim(),
+          montant: values.montant,
+          echeance: values.echeance,
         },
       });
-      const obligation = mapApiObligation(reponse);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        obligations: [obligation, ...courant.obligations],
+      const obligation = mapApiObligation(response);
+      updateState((current) => ({
+        ...current,
+        obligations: [obligation, ...current.obligations],
       }));
-      notifier("Obligation enregistrée sur le serveur.", "succes");
-      fermer();
+      notify("Obligation enregistrée sur le serveur.", "success");
+      close();
     } catch (cause) {
-      formulaire.traiterEchec(cause);
+      form.handleFailure(cause);
     }
   });
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Obligations fiscales"
+        title="Obligations fiscales"
         description="Obligations enregistrées dans le périmètre du service."
-        filAriane={["Accueil", "Obligations fiscales"]}
+        breadcrumb={["Accueil", "Obligations fiscales"]}
       />
       
       <DataTable
         data={obligations}
-        columns={convertirColonnesTanstack(colonnes)}
+        columns={toTanstackColumns(columns)}
         label="Obligations fiscales"
         getRowId={(obligation) => obligation.id}
         getSearchText={(obligation) => {
-          const contribuable = etat.contribuables.find(
-            (entree) => entree.id === obligation.contribuableId,
+          const taxpayer = state.taxpayers.find(
+            (entry) => entry.id === obligation.taxpayerId,
           );
-          return `${obligation.referenceFiscale} ${obligation.typeImpotNom} ${obligation.periode} ${contribuable?.raisonSociale ?? ""} ${contribuable?.prenom ?? ""} ${contribuable?.nom ?? ""} ${contribuable?.nif ?? ""} ${contribuable?.courriel ?? ""}`;
+          return `${obligation.taxReference} ${obligation.taxTypeName} ${obligation.period} ${taxpayer?.legalName ?? ""} ${taxpayer?.firstName ?? ""} ${taxpayer?.lastName ?? ""} ${taxpayer?.nif ?? ""} ${taxpayer?.email ?? ""}`;
         }}
         searchPlaceholder="Référence, nom, NIF ou impôt…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         toolbarActions={
-          <label className="filtre-compact-sre">
+          <label className="compact-filter-sre">
             Statut
             <Select
-              value={statut}
+              value={status}
               onChange={(event) => {
-                setStatut(event.target.value);
-                table.reinitialiserPage();
+                setStatus(event.target.value);
+                table.resetPage();
               }}
             >
-              <OptionsSelect options={OPTIONS_STATUT_OBLIGATION_FILTRE} />
+              <OptionsSelect options={OBLIGATION_STATUS_FILTER_OPTIONS} />
             </Select>
           </label>
         }
         actionPrimary={
-          <Button onClick={ouvrir}>
+          <Button onClick={open}>
             <CirclePlus size={15} /> Créer une obligation
           </Button>
         }
@@ -128,34 +128,34 @@ export function AdminObligationsPage() {
         emptyTitle="Aucune obligation"
         emptyDescription="Aucune obligation ne correspond à vos critères."
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
       <Modal
-        ouvert={modal}
-        titre="Créer une obligation"
+        open={modal}
+        title="Créer une obligation"
         description="Les valeurs seront persistées par le serveur et doivent correspondre aux règles validées."
-        fermer={fermer}
-        fermetureBloquee={formulaire.isSubmitting}
-        largeur="large"
-        pied={
+        close={close}
+        disableClose={form.isSubmitting}
+        width="large"
+        footer={
           <>
-            <Button variante="contour" onClick={fermer} disabled={formulaire.isSubmitting}>
+            <Button variant="outline" onClick={close} disabled={form.isSubmitting}>
               Annuler
             </Button>
             <SubmitButton
               form="formulaire-obligation-admin"
-              enCours={formulaire.isSubmitting}
-              libelleEnCours="Enregistrement…"
+              inProgress={form.isSubmitting}
+              pendingLabel="Enregistrement…"
             >
               Créer l’obligation
             </SubmitButton>
           </>
         }
       >
-        <form id="formulaire-obligation-admin" onSubmit={creer} noValidate>
-          <ObligationFormFields formulaire={formulaire} erreur={formulaire.erreur} />
+        <form id="formulaire-obligation-admin" onSubmit={create} noValidate>
+          <ObligationFormFields form={form} error={form.error} />
         </form>
       </Modal>
     </div>

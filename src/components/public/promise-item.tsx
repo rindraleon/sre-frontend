@@ -1,25 +1,25 @@
 import { FileCheck2, ShieldCheck, UserRound } from "lucide-react";
 
-const ICONES = { UserRound, FileCheck2, ShieldCheck } as const;
+const ICONS = { UserRound, FileCheck2, ShieldCheck } as const;
 
 export function PromiseItem({
-  icone,
-  titre,
+  icon,
+  title,
   description,
-  delai,
+  delay,
 }: Readonly<{
-  icone: keyof typeof ICONES;
-  titre: string;
+  icon: keyof typeof ICONS;
+  title: string;
   description: string;
-  delai?: number;
+  delay?: number;
 }>) {
-  const Icône = ICONES[icone];
+  const Icon = ICONS[icon];
   return (
-    <div data-revelation data-delai={delai}>
+    <div data-reveal data-delai={delay}>
       <span>
-        <Icône size={17} />
+        <Icon size={17} />
       </span>
-      <strong>{titre}</strong>
+      <strong>{title}</strong>
       <small>{description}</small>
     </div>
   );

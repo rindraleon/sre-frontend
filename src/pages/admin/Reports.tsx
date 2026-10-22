@@ -4,176 +4,176 @@ import { ArrowDownToLine, ChartNoAxesCombined, CircleDollarSign, Users } from "l
 import { useSre } from "@/context/SreContext";
 import { StatusBadge, Button, PageHeader, EmptyState } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
-import { OPTIONS_TYPE_CONTRIBUABLE, TOUS } from "@/constants";
+import { TAXPAYER_TYPE_OPTIONS, ALL } from "@/constants";
 import { formatMoney } from "@/utils/format";
-import { correspondPeriodeFiscale, listerPeriodesFiscales } from "@/utils/fiscal-periods";
+import { matchesFiscalPeriod, listFiscalPeriods } from "@/utils/fiscal-periods";
 
-function protegerCsv(valeur: string | number) {
-  return `"${String(valeur).replaceAll('"', '""')}"`;
+function protectCsv(value: string | number) {
+  return `"${String(value).replaceAll('"', '""')}"`;
 }
 export function AdminReportsPage() {
-  const { etat, notifier } = useSre();
-  const aujourdHui = new Date().toISOString().slice(0, 10);
-  const ilYADouzeMois = new Date();
-  ilYADouzeMois.setFullYear(ilYADouzeMois.getFullYear() - 1);
-  const [debut, setDebut] = useState(ilYADouzeMois.toISOString().slice(0, 10));
-  const [fin, setFin] = useState(aujourdHui);
-  const [typeContribuable, setTypeContribuable] = useState<string>(TOUS);
-  const [periodeFiscale, setPeriodeFiscale] = useState("");
-  const periodesFiscales = useMemo(
-    () => listerPeriodesFiscales(etat.paiements.map((paiement) => paiement.periode)),
-    [etat.paiements],
+  const { state, notify } = useSre();
+  const today = new Date().toISOString().slice(0, 10);
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+  const [start, setStart] = useState(twelveMonthsAgo.toISOString().slice(0, 10));
+  const [end, setEnd] = useState(today);
+  const [taxpayerType, setTaxpayerType] = useState<string>(ALL);
+  const [fiscalPeriod, setFiscalPeriod] = useState("");
+  const fiscalPeriods = useMemo(
+    () => listFiscalPeriods(state.payments.map((payment) => payment.period)),
+    [state.payments],
   );
-  const contribuablesFiltres = useMemo(
+  const filteredTaxpayers = useMemo(
     () =>
-      etat.contribuables
+      state.taxpayers
         .filter(
-          (contribuable) => typeContribuable === "TOUS" || contribuable.type === typeContribuable,
+          (taxpayer) => taxpayerType === "TOUS" || taxpayer.type === taxpayerType,
         )
-        .filter((contribuable) => !debut || contribuable.dateCreationCompte.slice(0, 10) >= debut)
-        .filter((contribuable) => !fin || contribuable.dateCreationCompte.slice(0, 10) <= fin),
-    [etat.contribuables, typeContribuable, debut, fin],
+        .filter((taxpayer) => !start || taxpayer.accountCreatedAt.slice(0, 10) >= start)
+        .filter((taxpayer) => !end || taxpayer.accountCreatedAt.slice(0, 10) <= end),
+    [state.taxpayers, taxpayerType, start, end],
   );
-  const paiementsFiltres = useMemo(
+  const filteredPayments = useMemo(
     () =>
-      etat.paiements
-        .filter((paiement) => {
-          const contribuable = etat.contribuables.find(
-            (entree) => entree.id === paiement.contribuableId,
+      state.payments
+        .filter((payment) => {
+          const taxpayer = state.taxpayers.find(
+            (entry) => entry.id === payment.taxpayerId,
           );
           return (
-            contribuable && (typeContribuable === "TOUS" || contribuable.type === typeContribuable)
+            taxpayer && (taxpayerType === "TOUS" || taxpayer.type === taxpayerType)
           );
         })
-        .filter((paiement) => correspondPeriodeFiscale(paiement.periode, periodeFiscale))
-        .filter((paiement) => !debut || paiement.soumisLe.slice(0, 10) >= debut)
-        .filter((paiement) => !fin || paiement.soumisLe.slice(0, 10) <= fin),
-    [etat.paiements, etat.contribuables, typeContribuable, periodeFiscale, debut, fin],
+        .filter((payment) => matchesFiscalPeriod(payment.period, fiscalPeriod))
+        .filter((payment) => !start || payment.submittedAt.slice(0, 10) >= start)
+        .filter((payment) => !end || payment.submittedAt.slice(0, 10) <= end),
+    [state.payments, state.taxpayers, taxpayerType, fiscalPeriod, start, end],
   );
-  const confirmes = paiementsFiltres.filter((paiement) => paiement.statut === "CONFIRME");
-  const attente = paiementsFiltres.filter((paiement) => paiement.statut === "EN_VERIFICATION");
-  const montantConfirme = confirmes.reduce((somme, paiement) => somme + paiement.montant, 0);
-  const montantAttente = attente.reduce((somme, paiement) => somme + paiement.montant, 0);
-  const donneesParType = ["PARTICULIER", "ENTREPRISE"].map((type) => {
-    const comptes = contribuablesFiltres.filter((contribuable) => contribuable.type === type);
-    const paiements = paiementsFiltres.filter((paiement) =>
-      comptes.some((contribuable) => contribuable.id === paiement.contribuableId),
+  const confirmed = filteredPayments.filter((payment) => payment.status === "CONFIRME");
+  const waiting = filteredPayments.filter((payment) => payment.status === "EN_VERIFICATION");
+  const confirmedAmount = confirmed.reduce((sum, payment) => sum + payment.amount, 0);
+  const pendingAmount = waiting.reduce((sum, payment) => sum + payment.amount, 0);
+  const dataByType = ["PARTICULIER", "ENTREPRISE"].map((type) => {
+    const accounts = filteredTaxpayers.filter((taxpayer) => taxpayer.type === type);
+    const payments = filteredPayments.filter((payment) =>
+      accounts.some((taxpayer) => taxpayer.id === payment.taxpayerId),
     );
     return {
       type,
-      comptes: comptes.length,
-      paiements: paiements.length,
-      confirme: paiements
-        .filter((paiement) => paiement.statut === "CONFIRME")
-        .reduce((somme, paiement) => somme + paiement.montant, 0),
+      accounts: accounts.length,
+      payments: payments.length,
+      confirmedAmount: payments
+        .filter((payment) => payment.status === "CONFIRME")
+        .reduce((sum, payment) => sum + payment.amount, 0),
     };
   });
-  const donneesParStatut = ["EN_VERIFICATION", "CONFIRME", "REJETE", "CORRECTION_DEMANDEE"].map(
-    (statut) => ({
-      statut,
-      nombre: paiementsFiltres.filter((paiement) => paiement.statut === statut).length,
-      montant: paiementsFiltres
-        .filter((paiement) => paiement.statut === statut)
-        .reduce((somme, paiement) => somme + paiement.montant, 0),
+  const dataByStatus = ["EN_VERIFICATION", "CONFIRME", "REJETE", "CORRECTION_DEMANDEE"].map(
+    (status) => ({
+      status,
+      count: filteredPayments.filter((payment) => payment.status === status).length,
+      amount: filteredPayments
+        .filter((payment) => payment.status === status)
+        .reduce((sum, payment) => sum + payment.amount, 0),
     }),
   );
-  const exporter = () => {
-    const lignes = [
-      ["Période début", debut],
-      ["Période fin", fin],
-      ["Période fiscale", periodeFiscale || "Toutes les périodes"],
+  const exportCsv = () => {
+    const rows = [
+      ["Période début", start],
+      ["Période fin", end],
+      ["Période fiscale", fiscalPeriod || "Toutes les périodes"],
       [],
       ["Type contribuable", "Comptes", "Déclarations", "Montant confirmé en interne (MGA)"],
-      ...donneesParType.map((entree) => [
-        entree.type,
-        entree.comptes,
-        entree.paiements,
-        entree.confirme,
+      ...dataByType.map((entry) => [
+        entry.type,
+        entry.accounts,
+        entry.payments,
+        entry.confirmedAmount,
       ]),
       [],
       ["Statut déclaration", "Nombre", "Montant déclaré (MGA)"],
-      ...donneesParStatut.map((entree) => [entree.statut, entree.nombre, entree.montant]),
+      ...dataByStatus.map((entry) => [entry.status, entry.count, entry.amount]),
     ];
     const csv =
       "\uFEFF" +
-      lignes
-        .map((ligne) => ligne.map((cellule) => protegerCsv(cellule ?? "")).join(";"))
+      rows
+        .map((row) => row.map((cell) => protectCsv(cell ?? "")).join(";"))
         .join("\r\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const lien = document.createElement("a");
-    lien.href = url;
-    lien.download = `rapport-sre-${aujourdHui}.csv`;
-    lien.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rapport-sre-${today}.csv`;
+    link.click();
     URL.revokeObjectURL(url);
-    notifier("Rapport agrégé exporté en CSV.", "succes");
+    notify("Rapport agrégé exporté en CSV.", "success");
   };
-  const serieMensuelle = useMemo(
+  const monthlySeries = useMemo(
     () =>
       Array.from({ length: 6 }, (_, index) => {
         const date = new Date();
         date.setMonth(date.getMonth() - (5 - index));
-        const lignes = paiementsFiltres.filter((paiement) => {
-          const dateRef = new Date(paiement.valideLe ?? paiement.soumisLe);
+        const rows = filteredPayments.filter((payment) => {
+          const dateRef = new Date(payment.validatedAt ?? payment.submittedAt);
           return (
             dateRef.getMonth() === date.getMonth() &&
             dateRef.getFullYear() === date.getFullYear() &&
-            paiement.statut === "CONFIRME"
+            payment.status === "CONFIRME"
           );
         });
         return {
-          mois: new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date),
-          montant: lignes.reduce((somme, paiement) => somme + paiement.montant, 0),
+          month: new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date),
+          amount: rows.reduce((sum, payment) => sum + payment.amount, 0),
         };
       }),
-    [paiementsFiltres],
+    [filteredPayments],
   );
-  const maximum = Math.max(...serieMensuelle.map((mois) => mois.montant), 1);
+  const maximum = Math.max(...monthlySeries.map((entry) => entry.amount), 1);
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Rapports & statistiques"
+        title="Rapports & statistiques"
         description="Indicateurs calculés à partir des données transmises par le serveur."
-        filAriane={["Accueil", "Rapports & statistiques"]}
+        breadcrumb={["Accueil", "Rapports & statistiques"]}
         actions={
-          <Button variante="contour" onClick={exporter}>
+          <Button variant="outline" onClick={exportCsv}>
             <ArrowDownToLine size={15} /> Exporter CSV
           </Button>
         }
       />
-      <div className="carte-sre filtres-rapport-sre">
+      <div className="card-sre report-filters-sre">
         <label>
           Période du
           <input
-            className="champ-simple-sre"
+            className="field-simple-sre"
             type="date"
-            value={debut}
-            max={fin || aujourdHui}
-            onChange={(event) => setDebut(event.target.value)}
+            value={start}
+            max={end || today}
+            onChange={(event) => setStart(event.target.value)}
           />
         </label>
         <label>
           Au
           <input
-            className="champ-simple-sre"
+            className="field-simple-sre"
             type="date"
-            value={fin}
-            min={debut}
-            max={aujourdHui}
-            onChange={(event) => setFin(event.target.value)}
+            value={end}
+            min={start}
+            max={today}
+            onChange={(event) => setEnd(event.target.value)}
           />
         </label>
         <label>
           Période fiscale
           <Select
-            className="champ-simple-sre"
-            value={periodeFiscale}
-            onChange={(event) => setPeriodeFiscale(event.target.value)}
+            className="field-simple-sre"
+            value={fiscalPeriod}
+            onChange={(event) => setFiscalPeriod(event.target.value)}
             aria-label="Période fiscale"
           >
             <option value="">Toutes les périodes</option>
-            {periodesFiscales.map((periode) => (
-              <option key={periode} value={periode}>
-                {periode}
+            {fiscalPeriods.map((period) => (
+              <option key={period} value={period}>
+                {period}
               </option>
             ))}
           </Select>
@@ -181,107 +181,107 @@ export function AdminReportsPage() {
         <label>
           Type de contribuable
           <Select
-            className="champ-simple-sre"
-            value={typeContribuable}
-            onChange={(event) => setTypeContribuable(event.target.value)}
+            className="field-simple-sre"
+            value={taxpayerType}
+            onChange={(event) => setTaxpayerType(event.target.value)}
           >
-            <OptionsSelect options={OPTIONS_TYPE_CONTRIBUABLE} />
+            <OptionsSelect options={TAXPAYER_TYPE_OPTIONS} />
           </Select>
         </label>
         <span aria-live="polite">
-          {contribuablesFiltres.length} contribuable(s) · {paiementsFiltres.length} déclaration(s)
+          {filteredTaxpayers.length} contribuable(s) · {filteredPayments.length} déclaration(s)
         </span>
       </div>
-      <section className="grille-statistiques-sre">
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--bleu">
+      <section className="statistics-grid-sre">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--blue">
             <Users size={18} />
           </span>
           <div>
             <span>Comptes créés</span>
-            <strong>{contribuablesFiltres.length}</strong>
+            <strong>{filteredTaxpayers.length}</strong>
             <small>Profils dans la période choisie</small>
           </div>
         </article>
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--vert">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--green">
             <CircleDollarSign size={18} />
           </span>
           <div>
             <span>Montants confirmés</span>
-            <strong className="valeur-stat-texte-sre">{formatMoney(montantConfirme)}</strong>
-            <small>{confirmes.length} décision(s) explicite(s)</small>
+            <strong className="stat-text-value-sre">{formatMoney(confirmedAmount)}</strong>
+            <small>{confirmed.length} décision(s) explicite(s)</small>
           </div>
         </article>
-        <article className="carte-stat-sre">
-          <span className="carte-stat-sre__icone carte-stat-sre__icone--orange">
+        <article className="stat-card-sre">
+          <span className="stat-card-sre__icon stat-card-sre__icon--orange">
             <ChartNoAxesCombined size={18} />
           </span>
           <div>
             <span>En vérification</span>
-            <strong>{attente.length}</strong>
-            <small>{formatMoney(montantAttente)} déclaré(s), non confirmé(s)</small>
+            <strong>{waiting.length}</strong>
+            <small>{formatMoney(pendingAmount)} déclaré(s), non confirmé(s)</small>
           </div>
         </article>
       </section>
-      <div className="grille-contenu-sre">
-        <section className="carte-sre graphique-sre">
-          <div className="carte-sre__entete">
+      <div className="content-grid-sre">
+        <section className="card-sre chart-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Montants confirmés par mois</h2>
               <p>Six derniers mois de la période · MGA</p>
             </div>
             <ChartNoAxesCombined size={18} />
           </div>
-          {paiementsFiltres.length ? (
-            <div className="graphique-sre__contenu">
-              <div className="graphique-sre__valeur">{formatMoney(montantConfirme)}</div>
-              <div className="barres-mois-sre">
-                {serieMensuelle.map((mois) => (
-                  <div key={mois.mois}>
+          {filteredPayments.length ? (
+            <div className="chart-sre__content">
+              <div className="chart-sre__value">{formatMoney(confirmedAmount)}</div>
+              <div className="month-bars-sre">
+                {monthlySeries.map((month) => (
+                  <div key={month.month}>
                     <span
-                      title={formatMoney(mois.montant)}
-                      style={{ height: `${Math.max(6, (mois.montant / maximum) * 100)}%` }}
+                      title={formatMoney(month.amount)}
+                      style={{ height: `${Math.max(6, (month.amount / maximum) * 100)}%` }}
                     />
-                    <small>{mois.mois}</small>
+                    <small>{month.month}</small>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
             <EmptyState
-              titre="Aucune déclaration sur la période"
+              title="Aucune déclaration sur la période"
               description="Modifiez les dates ou consultez le rapport lorsque des déclarations seront enregistrées."
             />
           )}
         </section>
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Répartition par statut</h2>
               <p>Montants déclarés, sans confirmation automatique</p>
             </div>
           </div>
-          {donneesParStatut.map((entree) => (
-            <div className="ligne-statut-rapport-sre" key={entree.statut}>
-              <StatusBadge statut={entree.statut} />
+          {dataByStatus.map((entry) => (
+            <div className="report-status-row-sre" key={entry.status}>
+              <StatusBadge status={entry.status} />
               <div>
-                <strong>{entree.nombre}</strong>
-                <small>{formatMoney(entree.montant)}</small>
+                <strong>{entry.count}</strong>
+                <small>{formatMoney(entry.amount)}</small>
               </div>
             </div>
           ))}
         </section>
       </div>
-      <section className="carte-sre">
-        <div className="carte-sre__entete">
+      <section className="card-sre">
+        <div className="card-sre__header">
           <div>
             <h2>Répartition par profil</h2>
             <p>Comptes et décisions agrégés</p>
           </div>
         </div>
-        <div className="tableau-defilement-sre">
-          <table className="tableau-sre">
+        <div className="table-scroll-sre">
+          <table className="table-sre">
             <thead>
               <tr>
                 <th>Type de contribuable</th>
@@ -291,21 +291,21 @@ export function AdminReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {donneesParType.map((entree) => (
-                <tr key={entree.type}>
+              {dataByType.map((entry) => (
+                <tr key={entry.type}>
                   <td data-label="Type de contribuable">
-                    <StatusBadge statut={entree.type} />
+                    <StatusBadge status={entry.type} />
                   </td>
-                  <td data-label="Profils">{entree.comptes}</td>
-                  <td data-label="Déclarations">{entree.paiements}</td>
-                  <td data-label="Montant confirmé en interne">{formatMoney(entree.confirme)}</td>
+                  <td data-label="Profils">{entry.accounts}</td>
+                  <td data-label="Déclarations">{entry.payments}</td>
+                  <td data-label="Montant confirmé en interne">{formatMoney(entry.confirmedAmount)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-      <div className="note-fiscale-sre">
+      <div className="tax-note-sre">
         <span>i</span>
         <p>
           Les montants confirmés reflètent les décisions administratives enregistrées. Ils ne

@@ -1,26 +1,26 @@
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
-/** CoreSpin animé en CSS : aucune minuterie, aucun état asynchrone à nettoyer. */
+/** CoreSpin animated in CSS: no timer, no async state to clean up. */
 export function CoreSpinLoader({
-  libelle = "Chargement…",
-  taille = 28,
+  label = "Chargement…",
+  size = 28,
   compact = false,
   className,
 }: Readonly<{
-  libelle?: string;
-  taille?: number;
-  /** Présentation compacte pour une action locale ou un bouton. */
+  label?: string;
+  size?: number;
+  /** Compact presentation for a local action or a button. */
   compact?: boolean;
   className?: string;
 }>) {
-  const style = { "--core-spin-size": `${Math.max(12, taille)}px` } as CSSProperties;
+  const style = { "--core-spin-size": `${Math.max(12, size)}px` } as CSSProperties;
 
   return (
     <span
       className={cn("core-spin-sre", compact && "core-spin-sre--compact", className)}
       role="status"
-      aria-label={libelle}
+      aria-label={label}
       style={style}
     >
       <span className="core-spin-sre__visual" aria-hidden="true">
@@ -29,24 +29,24 @@ export function CoreSpinLoader({
         <i className="core-spin-sre__arc core-spin-sre__arc--main" />
         <i className="core-spin-sre__arc core-spin-sre__arc--reverse" />
         <i className="core-spin-sre__orbit">
-          <i className="core-spin-sre__point" />
+          <i className="core-spin-sre__dot" />
         </i>
         <i className="core-spin-sre__core" />
       </span>
-      <span className="sr-only">{libelle}</span>
+      <span className="sr-only">{label}</span>
     </span>
   );
 }
 
-/** Loader centré dans la zone disponible pour une initialisation de page ou de route. */
+/** Loader centered in the available area for a page or route initialization. */
 export function PageLoader({
-  libelle = "Chargement…",
+  label = "Chargement…",
   detail,
-}: Readonly<{ libelle?: string; detail?: string }>) {
+}: Readonly<{ label?: string; detail?: string }>) {
   return (
     <div className="page-loader-sre" aria-busy="true">
-      <CoreSpinLoader libelle={libelle} taille={42} />
-      <strong>{libelle}</strong>
+      <CoreSpinLoader label={label} size={42} />
+      <strong>{label}</strong>
       {detail && <small>{detail}</small>}
     </div>
   );

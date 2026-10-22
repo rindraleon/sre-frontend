@@ -1,30 +1,30 @@
-/** Indicateur accessible commun aux formulaires découpés en étapes courtes. */
+/** Accessible indicator shared by forms split into short steps. */
 export function FormStepIndicator({
-  etape,
-  etapes,
-}: Readonly<{ etape: number; etapes: readonly string[] }>) {
-  const valeur = Math.min(Math.max(etape + 1, 1), etapes.length);
-  const progression = etapes.length ? (valeur / etapes.length) * 100 : 0;
+  step,
+  steps,
+}: Readonly<{ step: number; steps: readonly string[] }>) {
+  const value = Math.min(Math.max(step + 1, 1), steps.length);
+  const progression = steps.length ? (value / steps.length) * 100 : 0;
   return (
     <div
-      className="indicateur-etape-formulaire-sre"
-      aria-label={`Étape ${valeur} sur ${etapes.length}`}
+      className="form-step-indicator-sre"
+      aria-label={`Étape ${value} sur ${steps.length}`}
     >
       <div
-        className="indicateur-etape-formulaire-sre__barre"
+        className="form-step-indicator-sre__bar"
         role="progressbar"
         aria-valuemin={1}
-        aria-valuemax={etapes.length}
-        aria-valuenow={valeur}
+        aria-valuemax={steps.length}
+        aria-valuenow={value}
         aria-label="Progression du formulaire"
       >
         <span style={{ width: `${progression}%` }} />
       </div>
-      <div className="indicateur-etape-formulaire-sre__texte">
+      <div className="form-step-indicator-sre__text">
         <span>
-          Étape {valeur} sur {etapes.length}
+          Étape {value} sur {steps.length}
         </span>
-        <strong>{etapes[valeur - 1]}</strong>
+        <strong>{steps[value - 1]}</strong>
       </div>
     </div>
   );

@@ -4,30 +4,30 @@ import type { LucideIcon } from "lucide-react";
 
 export function FeatureCard({
   index,
-  Icône,
-  titre,
+  Icon,
+  title,
   description,
-  lienTexte,
-  delai,
+  linkText,
+  delay,
 }: Readonly<{
   index: string;
-  Icône: LucideIcon;
-  titre: string;
+  Icon: LucideIcon;
+  title: string;
   description: string;
-  lienTexte: string;
-  /** Index de cascade pour l'animation « reveal » (optionnel). */
-  delai?: number;
+  linkText: string;
+  /** Cascade index for the "reveal" animation (optional). */
+  delay?: number;
 }>) {
   return (
-    <article data-revelation="zoom" data-delai={delai}>
-      <span className="service-icone-sre service-icone-sre--bleu">
-        <Icône size={20} />
+    <article data-reveal="zoom" data-delai={delay}>
+      <span className="service-icon-sre service-icon-sre--blue">
+        <Icon size={20} />
       </span>
       <span className="service-index-sre">{index}</span>
-      <h3>{titre}</h3>
+      <h3>{title}</h3>
       <p>{description}</p>
       <Link to="/connexion">
-        {lienTexte} <ArrowRight size={14} />
+        {linkText} <ArrowRight size={14} />
       </Link>
     </article>
   );

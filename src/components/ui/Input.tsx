@@ -1,7 +1,7 @@
 import { forwardRef, type InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-/** Input shadcn/ui (design SRE via les variables CSS du thème). */
+/** shadcn/ui input (SRE design through the theme's CSS variables). */
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, type = "text", ...props }, ref) => (
     <input

@@ -8,115 +8,115 @@ import { formatMoney, formatDate } from "@/utils/format";
 export function ClientPaymentDetailPage() {
   const { id } = useParams();
   const { session } = useAuth();
-  const { etat } = useSre();
-  const paiement = etat.paiements.find(
-    (entree) => entree.id === id && entree.contribuableId === session?.contribuableId,
+  const { state } = useSre();
+  const payment = state.payments.find(
+    (entry) => entry.id === id && entry.taxpayerId === session?.taxpayerId,
   );
-  if (!paiement)
+  if (!payment)
     return (
-      <div className="page-contenu-sre">
+      <div className="page-content-sre">
         <PageHeader
-          titre="Déclaration introuvable"
-          filAriane={["Accueil", "Historique des paiements"]}
+          title="Déclaration introuvable"
+          breadcrumb={["Accueil", "Historique des paiements"]}
         />
         <EmptyState
-          titre="Cette déclaration n’est pas accessible"
+          title="Cette déclaration n’est pas accessible"
           description="Elle n’existe pas ou ne fait pas partie de votre espace contribuable."
           action={
-            <Link className="bouton-sre bouton-sre--contour" to="/client/paiements">
+            <Link className="button-sre button-sre--outline" to="/client/paiements">
               <ArrowLeft size={14} /> Retour à l’historique
             </Link>
           }
         />
       </div>
     );
-  const obligation = etat.obligations.find(
-    (entree) =>
-      entree.id === paiement.obligationId && entree.contribuableId === session?.contribuableId,
+  const obligation = state.obligations.find(
+    (entry) =>
+      entry.id === payment.obligationId && entry.taxpayerId === session?.taxpayerId,
   );
-  const documentsPaiement = etat.documentsPaiement.filter(
+  const paymentDocuments = state.paymentDocuments.filter(
     (document) =>
-      document.paiementId === paiement.id &&
-      document.contribuableId === session?.contribuableId &&
-      document.statut === "VALIDE",
+      document.paymentId === payment.id &&
+      document.taxpayerId === session?.taxpayerId &&
+      document.status === "VALIDE",
   );
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Suivi de la déclaration"
-        description={`Référence interne ${paiement.referenceInterne}`}
-        filAriane={["Accueil", "Historique des paiements", paiement.referenceInterne]}
+        title="Suivi de la déclaration"
+        description={`Référence interne ${payment.internalReference}`}
+        breadcrumb={["Accueil", "Historique des paiements", payment.internalReference]}
         actions={
-          <Link className="bouton-sre bouton-sre--contour" to="/client/paiements">
+          <Link className="button-sre button-sre--outline" to="/client/paiements">
             <ArrowLeft size={14} /> Retour à l’historique
           </Link>
         }
       />
-      <div className="grille-detail-paiement-sre">
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+      <div className="payment-detail-grid-sre">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
-              <h2>{paiement.typeImpotNom}</h2>
-              <p>Période {paiement.periode}</p>
+              <h2>{payment.taxTypeName}</h2>
+              <p>Période {payment.period}</p>
             </div>
-            <StatusBadge statut={paiement.statut} />
+            <StatusBadge status={payment.status} />
           </div>
-          <div className="montant-detail-paiement-sre">
+          <div className="payment-detail-amount-sre">
             <span>Montant déclaré</span>
-            <strong>{formatMoney(paiement.montant)}</strong>
+            <strong>{formatMoney(payment.amount)}</strong>
             <small>Montant transmis pour examen · MGA</small>
           </div>
-          <dl className="liste-details-sre">
+          <dl className="details-list-sre">
             <div>
               <dt>Référence de l’opération déclarée</dt>
-              <dd>{paiement.referenceTransaction}</dd>
+              <dd>{payment.transactionReference}</dd>
             </div>
             <div>
               <dt>Mode déclaré</dt>
               <dd>
-                <StatusBadge statut={paiement.mode} />
+                <StatusBadge status={payment.mode} />
               </dd>
             </div>
-            {paiement.operateur && (
+            {payment.operator && (
               <div>
                 <dt>Opérateur / téléphone</dt>
                 <dd>
-                  {paiement.operateur.replace("_", " ")} · {paiement.telephoneUtilise}
+                  {payment.operator.replace("_", " ")} · {payment.usedPhone}
                 </dd>
               </div>
             )}
-            {paiement.banqueOuCanal && (
+            {payment.bankOrChannel && (
               <div>
                 <dt>Canal indiqué</dt>
-                <dd>{paiement.banqueOuCanal}</dd>
+                <dd>{payment.bankOrChannel}</dd>
               </div>
             )}
             <div>
               <dt>Date déclarée</dt>
-              <dd>{formatDate(paiement.dateTransaction)}</dd>
+              <dd>{formatDate(payment.transactionDate)}</dd>
             </div>
             <div>
               <dt>Soumise le</dt>
-              <dd>{formatDate(paiement.soumisLe, true)}</dd>
+              <dd>{formatDate(payment.submittedAt, true)}</dd>
             </div>
           </dl>
-          <div className="documents-paiement-liste-sre">
-            <div className="carte-sre__entete">
+          <div className="payment-documents-list-sre">
+            <div className="card-sre__header">
               <div>
                 <h3>Documents associés</h3>
                 <p>Émis par le serveur selon l’état du dossier</p>
               </div>
               <FileCheck2 size={17} />
             </div>
-            {documentsPaiement.length ? (
-              documentsPaiement.map((document) => (
+            {paymentDocuments.length ? (
+              paymentDocuments.map((document) => (
                 <Link
-                  className="documents-paiement-ligne-sre"
+                  className="payment-documents-row-sre"
                   key={document.id}
                   to={`/client/documents/${document.id}`}
                 >
                   <span>
-                    <strong>{document.numero}</strong>
+                    <strong>{document.number}</strong>
                     <small>
                       {document.type === "ACCUSE_DECLARATION"
                         ? "Accusé de soumission · ne prouve pas le règlement"
@@ -127,58 +127,58 @@ export function ClientPaymentDetailPage() {
                 </Link>
               ))
             ) : (
-              <p className="texte-aide-sre">
+              <p className="text-help-sre">
                 Aucun document n’est disponible pour cette déclaration.
               </p>
             )}
           </div>
-          {paiement.motifRejet && (
-            <div className="motif-decision-sre">
+          {payment.rejectionReason && (
+            <div className="decision-reason-sre">
               <strong>
-                {paiement.statut === "REJETE" ? "Motif de rejet" : "Correction demandée"}
+                {payment.status === "REJETE" ? "Motif de rejet" : "Correction demandée"}
               </strong>
-              <p>{paiement.motifRejet}</p>
+              <p>{payment.rejectionReason}</p>
             </div>
           )}
         </section>
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Historique de traitement</h2>
               <p>Étapes enregistrées par le serveur</p>
             </div>
           </div>
-          <ol className="historique-vertical-sre">
-            {paiement.historique
+          <ol className="vertical-history-sre">
+            {payment.history
               .slice()
               .sort((a, b) => a.date.localeCompare(b.date))
-              .map((etape, index) => (
-                <li key={`${etape.date}-${index}`}>
+              .map((step, index) => (
+                <li key={`${step.date}-${index}`}>
                   <i
                     className={
-                      index === paiement.historique.length - 1
-                        ? "historique-vertical-sre__actif"
+                      index === payment.history.length - 1
+                        ? "vertical-history-sre__active"
                         : ""
                     }
                   />
                   <div>
-                    <strong>{etape.libelle}</strong>
+                    <strong>{step.label}</strong>
                     <p>
-                      {etape.acteur}
-                      {etape.motif ? ` · ${etape.motif}` : ""}
+                      {step.actor}
+                      {step.reason ? ` · ${step.reason}` : ""}
                     </p>
-                    <small>{formatDate(etape.date, true)}</small>
+                    <small>{formatDate(step.date, true)}</small>
                   </div>
                 </li>
               ))}
           </ol>
           {obligation && (
-            <div className="note-fiscale-sre">
+            <div className="tax-note-sre">
               <span>i</span>
               <p>
                 Obligation associée :{" "}
                 <Link to={`/client/obligations/${obligation.id}`}>
-                  {obligation.referenceFiscale}
+                  {obligation.taxReference}
                 </Link>
                 . Une référence déclarée ne confirme pas un règlement.
               </p>

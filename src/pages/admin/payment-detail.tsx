@@ -23,7 +23,7 @@ import { formatMoney, formatDate } from "@/utils/format";
 import { SubmitButton } from "@/components/forms/form-field";
 import {
   PaymentDecisionFormFields,
-  MOTIF_VIDE,
+  REASON_EMPTY,
 } from "@/components/forms/admin/payment-decision-form";
 import { useApiForm, useConfirmation } from "@/hooks";
 import { decisionReasonSchema, type DecisionReasonFormValues } from "@/validation/payment.schema";
@@ -31,33 +31,33 @@ import { decisionReasonSchema, type DecisionReasonFormValues } from "@/validatio
 export function AdminPaymentDetailPage() {
   const { id } = useParams();
   const { session } = useAuth();
-  const { etat, mettreAJourEtat, notifier } = useSre();
-  const paiement = etat.paiements.find((entree) => entree.id === id);
-  const contribuable = etat.contribuables.find((entree) => entree.id === paiement?.contribuableId);
-  const obligation = etat.obligations.find((entree) => entree.id === paiement?.obligationId);
+  const { state, updateState, notify } = useSre();
+  const payment = state.payments.find((entry) => entry.id === id);
+  const taxpayer = state.taxpayers.find((entry) => entry.id === payment?.taxpayerId);
+  const obligation = state.obligations.find((entry) => entry.id === payment?.obligationId);
   const confirmation = useConfirmation<Payment>();
-  const [dialogueMotif, setDialogueMotif] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
+  const [reasonDialog, setReasonDialog] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
     null,
   );
-  const [chargementDecision, setChargementDecision] = useState(false);
-  const formulaireMotif = useApiForm<DecisionReasonFormValues>({
+  const [loadingDecision, setLoadingDecision] = useState(false);
+  const formReason = useApiForm<DecisionReasonFormValues>({
     schema: decisionReasonSchema,
-    valeursInitiales: MOTIF_VIDE,
-    messageRepli: "Le serveur n’a pas enregistré la décision.",
+    initialValues: REASON_EMPTY,
+    fallbackMessage: "Le serveur n’a pas enregistré la décision.",
   });
 
-  if (!paiement)
+  if (!payment)
     return (
-      <div className="page-contenu-sre">
+      <div className="page-content-sre">
         <PageHeader
-          titre="Déclaration introuvable"
-          filAriane={["Accueil", "Historique des paiements"]}
+          title="Déclaration introuvable"
+          breadcrumb={["Accueil", "Historique des paiements"]}
         />
         <EmptyState
-          titre="Cette déclaration n’existe pas"
+          title="Cette déclaration n’existe pas"
           description="Elle n’a pas été trouvée dans les données accessibles à la session."
           action={
-            <Link className="bouton-sre bouton-sre--contour" to="/admin/paiements">
+            <Link className="button-sre button-sre--outline" to="/admin/paiements">
               Retour aux paiements
             </Link>
           }
@@ -65,111 +65,111 @@ export function AdminPaymentDetailPage() {
       </div>
     );
 
-  const enregistrerDecision = async (
-    statut: "CONFIRME" | "REJETE" | "CORRECTION_DEMANDEE",
-    motifOptionnel?: string,
+  const saveDecision = async (
+    status: "CONFIRME" | "REJETE" | "CORRECTION_DEMANDEE",
+    reasonOptional?: string,
   ) => {
-    if (paiement.statut !== "EN_VERIFICATION") return;
-    if (!session?.jetonApi) {
+    if (payment.status !== "EN_VERIFICATION") return;
+    if (!session?.apiToken) {
       throw new Error("Session serveur introuvable. Reconnectez-vous.");
     }
-    setChargementDecision(true);
-    formulaireMotif.reinitialiserErreur();
+    setLoadingDecision(true);
+    formReason.resetError();
     try {
-      const resultatApi = await callApi<ApiPayment>(
-        `paiements/${encodeURIComponent(paiement.id)}/decision`,
+      const apiResult = await callApi<ApiPayment>(
+        `paiements/${encodeURIComponent(payment.id)}/decision`,
         {
           method: "PATCH",
-          token: session.jetonApi,
-          body: { statut, ...(motifOptionnel ? { motif: motifOptionnel } : {}) },
+          token: session.apiToken,
+          body: { statut: status, ...(reasonOptional ? { motif: reasonOptional } : {}) },
         },
       );
-      const paiementMisAJour = mapApiPayment(resultatApi);
-      const documentsApi = mapApiPaymentDocuments(resultatApi);
-      let statutObligation: "PAYE" | "REJETE" | "CORRECTION_DEMANDEE";
-      if (statut === "CONFIRME") {
-        statutObligation = "PAYE";
-      } else if (statut === "REJETE") {
-        statutObligation = "REJETE";
+      const updatedPayment = mapApiPayment(apiResult);
+      const documentsApi = mapApiPaymentDocuments(apiResult);
+      let statusObligation: "PAYE" | "REJETE" | "CORRECTION_DEMANDEE";
+      if (status === "CONFIRME") {
+        statusObligation = "PAYE";
+      } else if (status === "REJETE") {
+        statusObligation = "REJETE";
       } else {
-        statutObligation = "CORRECTION_DEMANDEE";
+        statusObligation = "CORRECTION_DEMANDEE";
       }
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        paiements: [
-          paiementMisAJour,
-          ...courant.paiements.filter((entree) => entree.id !== paiementMisAJour.id),
+      updateState((current) => ({
+        ...current,
+        payments: [
+          updatedPayment,
+          ...current.payments.filter((entry) => entry.id !== updatedPayment.id),
         ],
-        documentsPaiement: [
-          ...courant.documentsPaiement.filter(
-            (document) => document.paiementId !== paiementMisAJour.id,
+        paymentDocuments: [
+          ...current.paymentDocuments.filter(
+            (document) => document.paymentId !== updatedPayment.id,
           ),
           ...documentsApi,
         ],
-        obligations: courant.obligations.map((entree) =>
-          entree.id === paiementMisAJour.obligationId
-            ? { ...entree, statut: statutObligation }
-            : entree,
+        obligations: current.obligations.map((entry) =>
+          entry.id === updatedPayment.obligationId
+            ? { ...entry, status: statusObligation }
+            : entry,
         ),
       }));
       let messageDecision: string;
-      if (statut === "CONFIRME") {
+      if (status === "CONFIRME") {
         messageDecision =
           "Décision enregistrée. Le reçu est interne et ne prouve pas un transfert bancaire.";
-      } else if (statut === "REJETE") {
+      } else if (status === "REJETE") {
         messageDecision = "Rejet enregistré sur le serveur.";
       } else {
         messageDecision = "Demande de correction enregistrée sur le serveur.";
       }
-      notifier(messageDecision, statut === "CONFIRME" ? "succes" : "avertissement");
-      confirmation.fermer();
-      setDialogueMotif(null);
-      formulaireMotif.reinitialiserFormulaire();
+      notify(messageDecision, status === "CONFIRME" ? "success" : "warning");
+      confirmation.close();
+      setReasonDialog(null);
+      formReason.resetForm();
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Le serveur n’a pas enregistré la décision.";
-      notifier(message, "erreur");
+      notify(message, "error");
       throw new Error(message);
     } finally {
-      setChargementDecision(false);
+      setLoadingDecision(false);
     }
   };
 
-  const soumettreMotif = formulaireMotif.handleSubmit(async (valeurs) => {
-    if (!dialogueMotif) return;
+  const submitReason = formReason.handleSubmit(async (values) => {
+    if (!reasonDialog) return;
     try {
-      await enregistrerDecision(dialogueMotif, valeurs.motif.trim());
+      await saveDecision(reasonDialog, values.motif.trim());
     } catch (cause) {
-      formulaireMotif.definirErreur(
+      formReason.setError(
         cause instanceof Error ? cause.message : "Le serveur n’a pas enregistré la décision.",
       );
     }
   });
 
-  const nomContribuable =
-    contribuable?.raisonSociale ||
-    `${contribuable?.prenom ?? ""} ${contribuable?.nom ?? ""}`.trim() ||
+  const taxpayerName =
+    taxpayer?.legalName ||
+    `${taxpayer?.firstName ?? ""} ${taxpayer?.lastName ?? ""}`.trim() ||
     "Contribuable";
-  const documents = etat.documentsPaiement.filter(
-    (document) => document.paiementId === paiement.id && document.statut === "VALIDE",
+  const documents = state.paymentDocuments.filter(
+    (document) => document.paymentId === payment.id && document.status === "VALIDE",
   );
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Examen d’une déclaration"
-        description={`Référence interne ${paiement.referenceInterne}`}
-        filAriane={[
+        title="Examen d’une déclaration"
+        description={`Référence interne ${payment.internalReference}`}
+        breadcrumb={[
           "Accueil",
-          paiement.statut === "EN_VERIFICATION"
+          payment.status === "EN_VERIFICATION"
             ? "Vérification des paiements"
             : "Historique des paiements",
-          paiement.referenceInterne,
+          payment.internalReference,
         ]}
         actions={
           <Link
-            className="bouton-sre bouton-sre--contour"
+            className="button-sre button-sre--outline"
             to={
-              paiement.statut === "EN_VERIFICATION"
+              payment.status === "EN_VERIFICATION"
                 ? "/admin/paiements-a-verifier"
                 : "/admin/paiements"
             }
@@ -178,86 +178,86 @@ export function AdminPaymentDetailPage() {
           </Link>
         }
       />
-      <div className="grille-detail-paiement-sre">
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+      <div className="payment-detail-grid-sre">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
-              <h2>Déclaration {paiement.referenceInterne}</h2>
+              <h2>Déclaration {payment.internalReference}</h2>
               <p>
-                {paiement.typeImpotNom} · période {paiement.periode}
+                {payment.taxTypeName} · période {payment.period}
               </p>
             </div>
-            <StatusBadge statut={paiement.statut} />
+            <StatusBadge status={payment.status} />
           </div>
-          <div className="montant-detail-paiement-sre">
+          <div className="payment-detail-amount-sre">
             <span>Montant déclaré</span>
-            <strong>{formatMoney(paiement.montant)}</strong>
+            <strong>{formatMoney(payment.amount)}</strong>
             <small>Montant transmis pour examen · MGA</small>
           </div>
-          <dl className="liste-details-sre">
+          <dl className="details-list-sre">
             <div>
               <dt>Contribuable</dt>
-              <dd>{nomContribuable}</dd>
+              <dd>{taxpayerName}</dd>
             </div>
             <div>
               <dt>NIF / STAT</dt>
               <dd>
-                {contribuable?.nif || "—"}
-                {contribuable?.stat ? ` / ${contribuable.stat}` : ""}
+                {taxpayer?.nif || "—"}
+                {taxpayer?.stat ? ` / ${taxpayer.stat}` : ""}
               </dd>
             </div>
             <div>
               <dt>Adresse e-mail</dt>
-              <dd>{contribuable?.courriel || "—"}</dd>
+              <dd>{taxpayer?.email || "—"}</dd>
             </div>
             <div>
               <dt>Mode déclaré</dt>
               <dd>
-                <StatusBadge statut={paiement.mode} />
+                <StatusBadge status={payment.mode} />
               </dd>
             </div>
-            {paiement.operateur && (
+            {payment.operator && (
               <div>
                 <dt>Opérateur / téléphone</dt>
                 <dd>
-                  {paiement.operateur.replaceAll("_", " ")} · {paiement.telephoneUtilise}
+                  {payment.operator.replaceAll("_", " ")} · {payment.usedPhone}
                 </dd>
               </div>
             )}
-            {paiement.banqueOuCanal && (
+            {payment.bankOrChannel && (
               <div>
                 <dt>Établissement / canal indiqué</dt>
                 <dd>
-                  {paiement.banqueOuCanal}
-                  {paiement.titulairePayeur ? ` · ${paiement.titulairePayeur}` : ""}
+                  {payment.bankOrChannel}
+                  {payment.payerName ? ` · ${payment.payerName}` : ""}
                 </dd>
               </div>
             )}
             <div>
               <dt>Référence de transaction déclarée</dt>
               <dd>
-                <strong>{paiement.referenceTransaction}</strong>
+                <strong>{payment.transactionReference}</strong>
               </dd>
             </div>
             <div>
               <dt>Date indiquée</dt>
-              <dd>{formatDate(paiement.dateTransaction)}</dd>
+              <dd>{formatDate(payment.transactionDate)}</dd>
             </div>
             <div>
               <dt>Obligation liée</dt>
               <dd>
-                {obligation?.referenceFiscale ?? "—"} ·{" "}
-                <StatusBadge statut={obligation?.statut ?? "INACTIF"} />
+                {obligation?.taxReference ?? "—"} ·{" "}
+                <StatusBadge status={obligation?.status ?? "INACTIF"} />
               </dd>
             </div>
             <div>
               <dt>Soumise le</dt>
-              <dd>{formatDate(paiement.soumisLe, true)}</dd>
+              <dd>{formatDate(payment.submittedAt, true)}</dd>
             </div>
           </dl>
           {documents.length > 0 && (
-            <div className="documents-paiement-liste-sre">
-              <div className="carte-sre__entete">
+            <div className="payment-documents-list-sre">
+              <div className="card-sre__header">
                 <div>
                   <h3>Documents du serveur</h3>
                   <p>Documents associés à l’état de cette déclaration</p>
@@ -265,9 +265,9 @@ export function AdminPaymentDetailPage() {
                 <BadgeCheck size={16} />
               </div>
               {documents.map((document) => (
-                <div className="documents-paiement-ligne-sre" key={document.id}>
+                <div className="payment-documents-row-sre" key={document.id}>
                   <span>
-                    <strong>{document.numero}</strong>
+                    <strong>{document.number}</strong>
                     <small>
                       {document.type === "ACCUSE_DECLARATION"
                         ? "Accusé de soumission · ne prouve pas le règlement"
@@ -278,40 +278,40 @@ export function AdminPaymentDetailPage() {
               ))}
             </div>
           )}
-          {paiement.motifRejet && (
-            <div className="motif-decision-sre">
+          {payment.rejectionReason && (
+            <div className="decision-reason-sre">
               <strong>
-                {paiement.statut === "REJETE" ? "Motif de rejet" : "Motif de correction"}
+                {payment.status === "REJETE" ? "Motif de rejet" : "Motif de correction"}
               </strong>
-              <p>{paiement.motifRejet}</p>
+              <p>{payment.rejectionReason}</p>
             </div>
           )}
-          {paiement.statut === "EN_VERIFICATION" ? (
-            <div className="actions-decision-paiement-sre">
-              <Button onClick={() => confirmation.ouvrir(paiement)}>
+          {payment.status === "EN_VERIFICATION" ? (
+            <div className="payment-decision-actions-sre">
+              <Button onClick={() => confirmation.open(payment)}>
                 <CheckCircle2 size={15} /> Confirmer la déclaration
               </Button>
               <Button
-                variante="danger"
+                variant="danger"
                 onClick={() => {
-                  setDialogueMotif("REJETE");
-                  formulaireMotif.reinitialiserFormulaire();
+                  setReasonDialog("REJETE");
+                  formReason.resetForm();
                 }}
               >
                 <XCircle size={15} /> Rejeter avec motif
               </Button>
               <Button
-                variante="contour"
+                variant="outline"
                 onClick={() => {
-                  setDialogueMotif("CORRECTION_DEMANDEE");
-                  formulaireMotif.reinitialiserFormulaire();
+                  setReasonDialog("CORRECTION_DEMANDEE");
+                  formReason.resetForm();
                 }}
               >
                 <MessageSquareWarning size={15} /> Demander une correction
               </Button>
             </div>
           ) : (
-            <div className="note-fiscale-sre">
+            <div className="tax-note-sre">
               <span>
                 <BadgeCheck size={14} />
               </span>
@@ -322,39 +322,39 @@ export function AdminPaymentDetailPage() {
             </div>
           )}
         </section>
-        <section className="carte-sre">
-          <div className="carte-sre__entete">
+        <section className="card-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Historique de traitement</h2>
               <p>Étapes renvoyées par le serveur</p>
             </div>
             <Clock3 size={18} />
           </div>
-          <ol className="historique-vertical-sre">
-            {paiement.historique
+          <ol className="vertical-history-sre">
+            {payment.history
               .slice()
               .sort((a, b) => a.date.localeCompare(b.date))
-              .map((etape, index) => (
-                <li key={`${etape.date}-${index}`}>
+              .map((step, index) => (
+                <li key={`${step.date}-${index}`}>
                   <i
                     className={
-                      index === paiement.historique.length - 1
-                        ? "historique-vertical-sre__actif"
+                      index === payment.history.length - 1
+                        ? "vertical-history-sre__active"
                         : ""
                     }
                   />
                   <div>
-                    <strong>{etape.libelle}</strong>
+                    <strong>{step.label}</strong>
                     <p>
-                      {etape.acteur}
-                      {etape.motif ? ` · ${etape.motif}` : ""}
+                      {step.actor}
+                      {step.reason ? ` · ${step.reason}` : ""}
                     </p>
-                    <small>{formatDate(etape.date, true)}</small>
+                    <small>{formatDate(step.date, true)}</small>
                   </div>
                 </li>
               ))}
           </ol>
-          <div className="note-securite-sre">
+          <div className="security-note-sre">
             <ShieldCheck size={16} />
             <p>
               <strong>Vérification manuelle</strong>
@@ -364,43 +364,43 @@ export function AdminPaymentDetailPage() {
         </section>
       </div>
       <ConfirmDialog
-        ouvert={!!confirmation.cible}
-        titre="Confirmer cette déclaration ?"
-        description={`Vous allez enregistrer une décision « Confirmé par l’administration » pour ${paiement.referenceInterne}, montant déclaré ${formatMoney(paiement.montant)}. Aucun règlement bancaire n’est exécuté.`}
-        fermer={confirmation.fermer}
-        confirmer={() => void confirmation.executer(() => enregistrerDecision("CONFIRME"))}
-        libelleConfirmer="Confirmer la décision"
-        chargement={confirmation.enCours}
-        erreur={confirmation.erreur}
+        open={!!confirmation.target}
+        title="Confirmer cette déclaration ?"
+        description={`Vous allez enregistrer une décision « Confirmé par l’administration » pour ${payment.internalReference}, montant déclaré ${formatMoney(payment.amount)}. Aucun règlement bancaire n’est exécuté.`}
+        close={confirmation.close}
+        confirm={() => void confirmation.execute(() => saveDecision("CONFIRME"))}
+        confirmLabel="Confirmer la décision"
+        loading={confirmation.inProgress}
+        error={confirmation.error}
       />
       <Modal
-        ouvert={!!dialogueMotif}
-        titre={dialogueMotif === "REJETE" ? "Rejeter la déclaration" : "Demander une correction"}
+        open={!!reasonDialog}
+        title={reasonDialog === "REJETE" ? "Rejeter la déclaration" : "Demander une correction"}
         description="Le motif sera enregistré avec la décision et consultable dans l’espace contribuable. Aucun email ne sera simulé."
-        fermer={() => setDialogueMotif(null)}
-        fermetureBloquee={chargementDecision}
-        pied={
+        close={() => setReasonDialog(null)}
+        disableClose={loadingDecision}
+        footer={
           <>
             <Button
-              variante="contour"
-              onClick={() => setDialogueMotif(null)}
-              disabled={chargementDecision}
+              variant="outline"
+              onClick={() => setReasonDialog(null)}
+              disabled={loadingDecision}
             >
               Annuler
             </Button>
             <SubmitButton
               form="motif-paiement-admin"
-              variante={dialogueMotif === "REJETE" ? "danger" : "primaire"}
-              enCours={chargementDecision}
-              libelleEnCours="Enregistrement…"
+              variant={reasonDialog === "REJETE" ? "danger" : "primary"}
+              inProgress={loadingDecision}
+              pendingLabel="Enregistrement…"
             >
-              {dialogueMotif === "REJETE" ? "Confirmer le rejet" : "Enregistrer la demande"}
+              {reasonDialog === "REJETE" ? "Confirmer le rejet" : "Enregistrer la demande"}
             </SubmitButton>
           </>
         }
       >
-        <form id="motif-paiement-admin" onSubmit={soumettreMotif} noValidate>
-          <PaymentDecisionFormFields formulaire={formulaireMotif} erreur={formulaireMotif.erreur} />
+        <form id="motif-paiement-admin" onSubmit={submitReason} noValidate>
+          <PaymentDecisionFormFields form={formReason} error={formReason.error} />
         </form>
       </Modal>
     </div>

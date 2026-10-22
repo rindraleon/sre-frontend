@@ -1,4 +1,4 @@
-export type StatutObligation =
+export type StatusObligation =
   | "A_PAYER"
   | "PAIEMENT_EN_COURS"
   | "EN_VERIFICATION"
@@ -9,15 +9,15 @@ export type StatutObligation =
 
 export interface TaxObligation {
   id: string;
-  contribuableId: string;
-  typeImpotId: string;
-  typeImpotNom: string;
-  referenceFiscale: string;
-  periode: string;
-  montant: number;
-  devise: "MGA";
-  echeance: string;
-  statut: StatutObligation;
-  paiementId?: string;
-  creeLe: string;
+  taxpayerId: string;
+  taxTypeId: string;
+  taxTypeName: string;
+  taxReference: string;
+  period: string;
+  amount: number;
+  currency: "MGA";
+  dueDate: string;
+  status: StatusObligation;
+  paymentId?: string;
+  createdAt: string;
 }

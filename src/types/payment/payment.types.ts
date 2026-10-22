@@ -3,56 +3,56 @@ export type PaymentMethod = "MOBILE_MONEY" | "VIREMENT_BANCAIRE";
 export type PaymentOperator = "MVOLA" | "ORANGE_MONEY" | "AIRTEL_MONEY";
 
 export interface PaymentHistoryStep {
-  statut: PaymentStatus;
-  libelle: string;
+  status: PaymentStatus;
+  label: string;
   date: string;
-  acteur: string;
-  motif?: string;
+  actor: string;
+  reason?: string;
 }
 
 export interface Payment {
   id: string;
-  referenceInterne: string;
-  contribuableId: string;
+  internalReference: string;
+  taxpayerId: string;
   obligationId: string;
-  typeImpotId: string;
-  typeImpotNom: string;
-  periode: string;
-  montant: number;
-  devise: "MGA";
+  taxTypeId: string;
+  taxTypeName: string;
+  period: string;
+  amount: number;
+  currency: "MGA";
   mode: PaymentMethod;
-  operateur?: PaymentOperator;
-  telephoneUtilise?: string;
-  banqueOuCanal?: string;
-  titulairePayeur?: string;
-  referenceTransaction: string;
-  dateTransaction: string;
-  justificatifNom?: string;
-  statut: PaymentStatus;
-  soumisLe: string;
-  valideLe?: string;
-  validePar?: string;
-  motifRejet?: string;
-  historique: PaymentHistoryStep[];
+  operator?: PaymentOperator;
+  usedPhone?: string;
+  bankOrChannel?: string;
+  payerName?: string;
+  transactionReference: string;
+  transactionDate: string;
+  supportingDocumentName?: string;
+  status: PaymentStatus;
+  submittedAt: string;
+  validatedAt?: string;
+  validatedBy?: string;
+  rejectionReason?: string;
+  history: PaymentHistoryStep[];
 }
 
 export type PaymentDocumentType = "ACCUSE_DECLARATION" | "RECU_PAIEMENT";
 export interface PaymentDocument {
   id: string;
-  numero: string;
+  number: string;
   type: PaymentDocumentType;
-  statut: "VALIDE" | "ANNULE";
-  paiementId: string;
-  contribuableId: string;
-  referencePaiement: string;
-  typeImpotNom: string;
-  periode: string;
-  referenceTransactionDeclaree: string;
-  modeDeclare: PaymentMethod;
-  montant: number;
-  devise: "MGA";
-  emetteur: string;
-  emisLe: string;
-  emisPar?: string;
+  status: "VALIDE" | "ANNULE";
+  paymentId: string;
+  taxpayerId: string;
+  paymentReference: string;
+  taxTypeName: string;
+  period: string;
+  declaredTransactionReference: string;
+  declaredMode: PaymentMethod;
+  amount: number;
+  currency: "MGA";
+  issuer: string;
+  issuedAt: string;
+  issuedBy?: string;
   mention: string;
 }

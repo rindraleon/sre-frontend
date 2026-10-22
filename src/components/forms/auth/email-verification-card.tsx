@@ -5,110 +5,110 @@ import { callApi } from "@/services/api-client";
 import { Button, StatusBadge } from "@/components/ui";
 
 /**
- * Vérification de l'adresse e-mail par code à usage unique :
- * demande d'envoi (réponse générique côté serveur) puis validation du code.
- * L'état est piloté localement ; le serveur reste la source de vérité.
+ * E-mail address verification by single-use code:
+ * send request (generic server-side response) then code validation.
+ * State is driven locally; the server remains the source of truth.
  */
 export function EmailVerificationCard({
-  courriel,
-  courrielVerifie,
-}: Readonly<{ courriel: string; courrielVerifie: boolean }>) {
-  const { notifier } = useSre();
-  const [verifie, definirVerifie] = useState(courrielVerifie);
-  const [code, definirCode] = useState("");
-  const [envoiEnCours, definirEnvoiEnCours] = useState(false);
-  const [validationEnCours, definirValidationEnCours] = useState(false);
+  email,
+  isEmailVerified,
+}: Readonly<{ email: string; isEmailVerified: boolean }>) {
+  const { notify } = useSre();
+  const [verified, setVerified] = useState(isEmailVerified);
+  const [code, setCode] = useState("");
+  const [dispatchInProgress, setDispatchInProgress] = useState(false);
+  const [validationInProgress, setValidationInProgress] = useState(false);
 
-  const demanderCode = async () => {
-    definirEnvoiEnCours(true);
+  const requestCode = async () => {
+    setDispatchInProgress(true);
     try {
-      const reponse = await callApi<{ message: string }>("auth/verification-courriel", {
+      const response = await callApi<{ message: string }>("auth/verification-courriel", {
         method: "POST",
-        body: { courriel },
+        body: { courriel: email },
       });
-      notifier(reponse.message ?? "Demande de vérification envoyée.", "info");
+      notify(response.message ?? "Demande de vérification envoyée.", "info");
     } catch (cause) {
-      notifier(
+      notify(
         cause instanceof Error ? cause.message : "Impossible d’envoyer le code de vérification.",
-        "erreur",
+        "error",
       );
     } finally {
-      definirEnvoiEnCours(false);
+      setDispatchInProgress(false);
     }
   };
 
-  const validerCode = async (evenement: FormEvent) => {
-    evenement.preventDefault();
+  const validateCode = async (event: FormEvent) => {
+    event.preventDefault();
     if (!/^[0-9]{6}$/.test(code.trim())) {
-      notifier("Saisissez le code à 6 chiffres reçu par courriel.", "avertissement");
+      notify("Saisissez le code à 6 chiffres reçu par courriel.", "warning");
       return;
     }
-    definirValidationEnCours(true);
+    setValidationInProgress(true);
     try {
       await callApi<{ message: string }>("auth/verification-courriel/confirmer", {
         method: "POST",
-        body: { courriel, code: code.trim() },
+        body: { courriel: email, code: code.trim() },
       });
-      definirVerifie(true);
-      definirCode("");
-      notifier("Adresse e-mail vérifiée.", "succes");
+      setVerified(true);
+      setCode("");
+      notify("Adresse e-mail vérifiée.", "success");
     } catch (cause) {
-      notifier(
+      notify(
         cause instanceof Error ? cause.message : "Code de vérification invalide.",
-        "erreur",
+        "error",
       );
     } finally {
-      definirValidationEnCours(false);
+      setValidationInProgress(false);
     }
   };
 
   return (
-    <section className="carte-sre parametre-ligne-sre">
-      <span>{verifie ? <MailCheck size={18} /> : <BadgeCheck size={18} />}</span>
+    <section className="card-sre setting-row-sre">
+      <span>{verified ? <MailCheck size={18} /> : <BadgeCheck size={18} />}</span>
       <div className="flex-1">
         <h2>Vérification de l’adresse e-mail</h2>
         <p>
-          {verifie
+          {verified
             ? "Votre adresse e-mail est vérifiée."
             : "Confirmez votre adresse par un code à usage unique reçu par courriel."}
         </p>
-        {!verifie && (
-          <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={validerCode}>
+        {!verified && (
+          <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={validateCode}>
             <Button
               type="button"
-              variante="contour"
-              taille="petit"
-              onClick={() => void demanderCode()}
-              chargement={envoiEnCours}
-              disabled={envoiEnCours || validationEnCours}
+              variant="outline"
+              size="small"
+              onClick={() => void requestCode()}
+              loading={dispatchInProgress}
+              disabled={dispatchInProgress || validationInProgress}
             >
-              <Send size={13} /> {envoiEnCours ? "Envoi…" : "Envoyer un code"}
+              <Send size={13} /> {dispatchInProgress ? "Envoi…" : "Envoyer un code"}
             </Button>
             <label className="flex flex-col gap-1 text-[11px] font-semibold text-muted-foreground">
               Code reçu
               <input
-                className="champ-simple-sre w-36"
+                className="field-simple-sre w-36"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
                 placeholder="123456"
                 value={code}
-                onChange={(evenement) => definirCode(evenement.target.value)}
+                onChange={(event) => setCode(event.target.value)}
                 aria-label="Code de vérification à 6 chiffres"
               />
             </label>
             <Button
               type="submit"
-              taille="petit"
-              chargement={validationEnCours}
-              disabled={validationEnCours || envoiEnCours}
+              size="small"
+              loading={validationInProgress}
+              disabled={validationInProgress || dispatchInProgress}
             >
-              {validationEnCours ? "Vérification…" : "Valider"}
+              {validationInProgress ? "Vérification…" : "Valider"}
             </Button>
           </form>
         )}
       </div>
-      <StatusBadge statut={verifie ? "VERIFIE" : "NON_VERIFIE"} />
+      <StatusBadge status={verified ? "VERIFIE" : "NON_VERIFIE"} />
     </section>
   );
 }

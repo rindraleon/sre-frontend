@@ -1,7 +1,7 @@
 import type { TaxpayerType } from "../taxpayer";
 import type { UserRole } from "../user";
 
-/** Profil transmis à l'API lors de la création d'un compte contribuable. */
+/** Profile sent to the API when creating a taxpayer account. */
 export interface RegistrationProfile {
   nom: string;
   prenom?: string;
@@ -21,16 +21,16 @@ export interface RegistrationProfile {
   fonctionContact?: string;
 }
 
-/** Session en mémoire du portail. Le jeton est persisté dans sessionStorage uniquement. */
+/** In-memory session of the portal. The token is persisted in sessionStorage only. */
 export interface ApiSession {
-  utilisateurId: string;
-  nom: string;
-  courriel: string;
+  userId: string;
+  name: string;
+  email: string;
   role: UserRole;
-  contribuableId?: string;
-  changementMotDePasseRequis: boolean;
-  profilComplete: boolean;
-  expireLe: number;
-  modeApi: true;
-  jetonApi: string;
+  taxpayerId?: string;
+  mustChangePassword: boolean;
+  isProfileComplete: boolean;
+  expiresAt: number;
+  apiMode: true;
+  apiToken: string;
 }

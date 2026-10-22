@@ -1,7 +1,7 @@
 import { forwardRef, type SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-/** Select natif accessible, stylé avec les mêmes tokens que Input. */
+/** Accessible native select, styled with the same tokens as Input. */
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
   ({ className, children, ...props }, ref) => (
     <select

@@ -18,6 +18,5 @@ export * from "./toast-region";
 export * from "./card";
 export * from "./input";
 export * from "./label";
-export * from "./table";
 export * from "./select";
 export * from "./textarea";

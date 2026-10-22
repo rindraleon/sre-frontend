@@ -13,112 +13,113 @@ import {
 import { SRE_REGION } from "@/utils/constants";
 import { PublicBrand } from "@/components/public/public-brand";
 import { PublicFooter } from "@/components/public/public-footer";
-import { useHauteurEntete, useReveal } from "@/hooks";
+import { PublicThemeToggle } from "@/components/public/public-theme-toggle";
+import { useHeaderHeight, useReveal } from "@/hooks";
 
 const SOURCE_DGI = "https://portal.impots.mg/textes/";
-const SOURCE_LOI_DONNEES =
+const DATA_LAW_SOURCE =
   "https://digital.gov.mg/en/2022/07/05/loi-n-2014-038-sur-la-protection-des-donnees-a-caractere-personnel/";
 
-type SectionLien = { id: string; libelle: string };
+type SectionLink = { id: string; label: string };
 type PublicLegalShellProps = {
-  titre: string;
-  surtitre: string;
+  title: string;
+  overline: string;
   introduction: string;
-  icone: LucideIcon;
-  libelleCarte: string;
-  sections: SectionLien[];
-  titreAlerte: string;
-  texteAlerte: string;
+  icon: LucideIcon;
+  cardLabel: string;
+  sections: SectionLink[];
+  alertTitle: string;
+  alertText: string;
   children: ReactNode;
 };
 
 function PublicLegalShell({
-  titre,
-  surtitre,
+  title,
+  overline,
   introduction,
-  icone: Icone,
-  libelleCarte,
+  icon: Icon,
+  cardLabel,
   sections,
-  titreAlerte,
-  texteAlerte,
+  alertTitle,
+  alertText,
   children,
 }: Readonly<PublicLegalShellProps>) {
   useReveal();
-  const entete = useRef<HTMLElement | null>(null);
-  useHauteurEntete(entete);
+  const header = useRef<HTMLElement | null>(null);
+  useHeaderHeight(header);
 
   useEffect(() => {
-    const ancienTitre = document.title;
-    document.title = `${titre} · SRE · ${SRE_REGION}`;
+    const previousTitle = document.title;
+    document.title = `${title} · SRE · ${SRE_REGION}`;
     return () => {
-      document.title = ancienTitre;
+      document.title = previousTitle;
     };
-  }, [titre]);
+  }, [title]);
 
   return (
-    <div className="site-public-sre site-juridique-public-sre">
-      <header className="entete-public-sre entete-juridique-public-sre" ref={entete}>
+    <div className="public-site-sre public-legal-site-sre">
+      <header className="public-header-sre public-legal-header-sre" ref={header}>
         <PublicBrand subtitle={SRE_REGION} />
-        <nav className="navigation-juridique-sre" aria-label="Navigation du portail">
-          <Link to="/aide">Aide</Link>
+        <nav className="legal-navigation-sre" aria-label="Navigation du portail">
           <a href="/accueil#contact">Contact</a>
-          <Link className="bouton-sre bouton-sre--contour bouton-sre--petit" to="/connexion">
+          <PublicThemeToggle />
+          <Link className="button-sre button-sre--outline button-sre--small" to="/connexion">
             Connexion
           </Link>
         </nav>
       </header>
 
-      <main className="contenu-juridique-sre">
-        <nav className="fil-ariane-juridique-sre" aria-label="Fil d’Ariane">
+      <main className="legal-content-sre">
+        <nav className="legal-breadcrumb-sre" aria-label="Fil d’Ariane">
           <Link to="/accueil">Accueil</Link>
           <span aria-hidden="true">/</span>
-          <span aria-current="page">{titre}</span>
+          <span aria-current="page">{title}</span>
         </nav>
 
-        <section className="hero-juridique-sre" data-revelation="gauche">
-          <div className="hero-juridique-sre__texte">
-            <span className="surtitre-juridique-sre">{surtitre}</span>
-            <h1>{titre}</h1>
+        <section className="legal-hero-sre" data-reveal="gauche">
+          <div className="legal-hero-sre__text">
+            <span className="legal-overline-sre">{overline}</span>
+            <h1>{title}</h1>
             <p>{introduction}</p>
-            <span className="hero-juridique-sre__lieu">
+            <span className="legal-hero-sre__place">
               <Building2 size={15} aria-hidden="true" /> SRE · {SRE_REGION} · Madagascar
             </span>
           </div>
-          <div className="carte-juridique-sre" aria-label={libelleCarte}>
-            <span className="carte-juridique-sre__icone">
-              <Icone size={25} aria-hidden="true" />
+          <div className="legal-card-sre" aria-label={cardLabel}>
+            <span className="legal-card-sre__icon">
+              <Icon size={25} aria-hidden="true" />
             </span>
-            <strong>{libelleCarte}</strong>
+            <strong>{cardLabel}</strong>
             <small>Informations publiques du portail SRE</small>
-            <span className="carte-juridique-sre__decor" aria-hidden="true" />
+            <span className="legal-card-sre__decor" aria-hidden="true" />
           </div>
         </section>
 
-        <div className="grille-juridique-sre">
-          <aside className="sommaire-juridique-sre">
-            <div className="sommaire-juridique-sre__interieur">
-              <span className="sommaire-juridique-sre__titre">Sur cette page</span>
+        <div className="legal-grid-sre">
+          <aside className="legal-summary-sre">
+            <div className="legal-summary-sre__inner">
+              <span className="legal-summary-sre__title">Sur cette page</span>
               {sections.map((section) => (
                 <a key={section.id} href={`#${section.id}`}>
-                  {section.libelle}
+                  {section.label}
                 </a>
               ))}
-              <a className="sommaire-juridique-sre__aide" href="/accueil#contact">
+              <a className="legal-summary-sre__help" href="/accueil#contact">
                 Poser une question <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             </div>
           </aside>
 
-          <article className="texte-juridique-sre">{children}</article>
+          <article className="legal-text-sre">{children}</article>
         </div>
 
-        <aside className="alerte-juridique-sre" role="note" data-revelation>
-          <span className="alerte-juridique-sre__icone">
+        <aside className="legal-alert-sre" role="note" data-reveal>
+          <span className="legal-alert-sre__icon">
             <ShieldCheck size={19} aria-hidden="true" />
           </span>
           <div>
-            <strong>{titreAlerte}</strong>
-            <p>{texteAlerte}</p>
+            <strong>{alertTitle}</strong>
+            <p>{alertText}</p>
           </div>
         </aside>
       </main>
@@ -130,49 +131,49 @@ function PublicLegalShell({
 
 function LegalSection({
   id,
-  numero,
-  titre,
+  number,
+  title,
   children,
-}: Readonly<{ id: string; numero: string; titre: string; children: ReactNode }>) {
+}: Readonly<{ id: string; number: string; title: string; children: ReactNode }>) {
   return (
-    <section className="section-texte-juridique-sre" id={id} data-revelation>
-      <span className="section-texte-juridique-sre__numero">{numero}</span>
+    <section className="legal-text-section-sre" id={id} data-reveal>
+      <span className="legal-text-section-sre__number">{number}</span>
       <div>
-        <h2>{titre}</h2>
-        <div className="section-texte-juridique-sre__corps">{children}</div>
+        <h2>{title}</h2>
+        <div className="legal-text-section-sre__body">{children}</div>
       </div>
     </section>
   );
 }
 
-const SECTIONS_MENTIONS = [
-  { id: "editeur", libelle: "Éditeur du portail" },
-  { id: "hebergement", libelle: "Hébergement et réalisation" },
-  { id: "objet", libelle: "Objet du portail" },
-  { id: "sources", libelle: "Sources fiscales" },
-  { id: "liens", libelle: "Liens et droits d’usage" },
+const LEGAL_NOTICE_SECTIONS = [
+  { id: "editeur", label: "Éditeur du portail" },
+  { id: "hebergement", label: "Hébergement et réalisation" },
+  { id: "objet", label: "Objet du portail" },
+  { id: "sources", label: "Sources fiscales" },
+  { id: "liens", label: "Liens et droits d’usage" },
 ];
 
-export function MentionsLegalesPage() {
+export function LegalNoticePage() {
   return (
     <PublicLegalShell
-      titre="Mentions légales"
-      surtitre="REPÈRES INSTITUTIONNELS"
+      title="Mentions légales"
+      overline="REPÈRES INSTITUTIONNELS"
       introduction="Les informations d’identification du portail SRE et les règles d’usage des contenus publics, présentées avec les éléments institutionnels à confirmer par l’administration."
-      icone={FileText}
-      libelleCarte="Informations légales"
-      sections={SECTIONS_MENTIONS}
-      titreAlerte="Validation administrative requise avant publication"
-      texteAlerte="La dénomination juridique complète de l’éditeur, l’adresse administrative, le directeur de publication, l’hébergeur et les coordonnées officielles ne sont pas définis dans les éléments du projet. Ils ne sont pas remplacés ici par des coordonnées supposées."
+      icon={FileText}
+      cardLabel="Informations légales"
+      sections={LEGAL_NOTICE_SECTIONS}
+      alertTitle="Validation administrative requise avant publication"
+      alertText="La dénomination juridique complète de l’éditeur, l’adresse administrative, le directeur de publication, l’hébergeur et les coordonnées officielles ne sont pas définis dans les éléments du projet. Ils ne sont pas remplacés ici par des coordonnées supposées."
     >
-      <LegalSection id="editeur" numero="01" titre="Éditeur du portail">
+      <LegalSection id="editeur" number="01" title="Éditeur du portail">
         <p>
           Le portail est présenté sous la marque <strong>SRE</strong> et concerne le périmètre de la
           région <strong>{SRE_REGION}</strong>, à Madagascar. La désignation administrative complète
           de l’autorité éditrice doit être confirmée par le service responsable avant la mise en
           ligne définitive.
         </p>
-        <dl className="definitions-juridiques-sre">
+        <dl className="legal-definitions-sre">
           <div>
             <dt>Service présenté</dt>
             <dd>SRE · {SRE_REGION}</dd>
@@ -190,14 +191,14 @@ export function MentionsLegalesPage() {
         </dl>
       </LegalSection>
 
-      <LegalSection id="hebergement" numero="02" titre="Hébergement et réalisation">
+      <LegalSection id="hebergement" number="02" title="Hébergement et réalisation">
         <p>
           Le prestataire d’hébergement, le lieu d’hébergement des données et les coordonnées de
           l’équipe éditoriale ne figurent pas dans les informations actuellement disponibles pour
           cette page. Ces renseignements doivent être publiés après validation par l’administration
           et l’équipe technique.
         </p>
-        <div className="note-juridique-sre">
+        <div className="legal-note-sre">
           <LockKeyhole size={17} aria-hidden="true" />
           <span>
             Aucun nom d’hébergeur, aucune adresse physique et aucune adresse électronique directe ne
@@ -206,7 +207,7 @@ export function MentionsLegalesPage() {
         </div>
       </LegalSection>
 
-      <LegalSection id="objet" numero="03" titre="Objet du portail">
+      <LegalSection id="objet" number="03" title="Objet du portail">
         <p>
           Le portail permet de présenter les services du SRE et, après authentification, de
           consulter les informations et documents associés à un compte, de suivre les obligations
@@ -218,13 +219,13 @@ export function MentionsLegalesPage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="sources" numero="04" titre="Sources fiscales">
+      <LegalSection id="sources" number="04" title="Sources fiscales">
         <p>
           Les repères fiscaux présentés sur l’accueil sont synthétiques. Les catégories, conditions,
           taux et échéances sont susceptibles d’évoluer. Pour toute vérification, consultez les
           publications de la Direction générale des impôts.
         </p>
-        <div className="liens-sources-juridiques-sre">
+        <div className="legal-source-links-sre">
           <a href={SOURCE_DGI} target="_blank" rel="noreferrer">
             Recueil des textes de la DGI <ArrowUpRight size={14} aria-hidden="true" />
           </a>
@@ -235,7 +236,7 @@ export function MentionsLegalesPage() {
         </div>
       </LegalSection>
 
-      <LegalSection id="liens" numero="05" titre="Liens et droits d’usage">
+      <LegalSection id="liens" number="05" title="Liens et droits d’usage">
         <p>
           Les liens vers des sites extérieurs sont fournis pour faciliter l’accès aux sources
           institutionnelles. Le contenu et les conditions d’utilisation de ces sites relèvent de
@@ -251,29 +252,29 @@ export function MentionsLegalesPage() {
   );
 }
 
-const SECTIONS_CONFIDENTIALITE = [
-  { id: "responsable", libelle: "Responsable du traitement" },
-  { id: "donnees", libelle: "Données concernées" },
-  { id: "finalites", libelle: "Utilisation des données" },
-  { id: "destinataires", libelle: "Accès et destinataires" },
-  { id: "conservation", libelle: "Conservation et transferts" },
-  { id: "droits", libelle: "Vos droits" },
-  { id: "stockage", libelle: "Stockage dans le navigateur" },
+const PRIVACY_SECTIONS = [
+  { id: "responsable", label: "Responsable du traitement" },
+  { id: "donnees", label: "Données concernées" },
+  { id: "finalites", label: "Utilisation des données" },
+  { id: "destinataires", label: "Accès et destinataires" },
+  { id: "conservation", label: "Conservation et transferts" },
+  { id: "droits", label: "Vos droits" },
+  { id: "stockage", label: "Stockage dans le navigateur" },
 ];
 
-export function PolitiqueConfidentialitePage() {
+export function PrivacyPolicyPage() {
   return (
     <PublicLegalShell
-      titre="Politique de confidentialité"
-      surtitre="VOS DONNÉES PERSONNELLES"
+      title="Politique de confidentialité"
+      overline="VOS DONNÉES PERSONNELLES"
       introduction="Cette notice décrit les données traitées dans le portail, les usages visibles dans l’application et les informations qui doivent être précisées par le responsable du traitement."
-      icone={UserRoundCheck}
-      libelleCarte="Données personnelles"
-      sections={SECTIONS_CONFIDENTIALITE}
-      titreAlerte="Notice de transparence à compléter"
-      texteAlerte="Les coordonnées du responsable, les durées de conservation, l’identité des sous-traitants et les éventuels transferts hors de Madagascar doivent être confirmés par l’administration avant diffusion comme politique définitive."
+      icon={UserRoundCheck}
+      cardLabel="Données personnelles"
+      sections={PRIVACY_SECTIONS}
+      alertTitle="Notice de transparence à compléter"
+      alertText="Les coordonnées du responsable, les durées de conservation, l’identité des sous-traitants et les éventuels transferts hors de Madagascar doivent être confirmés par l’administration avant diffusion comme politique définitive."
     >
-      <LegalSection id="responsable" numero="01" titre="Responsable du traitement">
+      <LegalSection id="responsable" number="01" title="Responsable du traitement">
         <p>
           Le portail est exploité sous la marque SRE pour le périmètre de la région {SRE_REGION}.
           L’identité juridique complète du responsable du traitement et le point de contact chargé
@@ -286,8 +287,8 @@ export function PolitiqueConfidentialitePage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="donnees" numero="02" titre="Données concernées">
-        <ul className="liste-juridique-sre">
+      <LegalSection id="donnees" number="02" title="Données concernées">
+        <ul className="legal-list-sre">
           <li>
             <strong>Compte et profil :</strong> nom, prénom ou raison sociale, adresse électronique,
             téléphone, adresse et ville, région, ainsi que les identifiants fiscaux ou
@@ -310,9 +311,9 @@ export function PolitiqueConfidentialitePage() {
         </ul>
       </LegalSection>
 
-      <LegalSection id="finalites" numero="03" titre="Utilisation des données">
+      <LegalSection id="finalites" number="03" title="Utilisation des données">
         <p>Les données sont utilisées, selon les fonctionnalités activées, pour :</p>
-        <ul className="liste-juridique-sre">
+        <ul className="legal-list-sre">
           <li>créer et gérer les accès aux espaces du portail ;</li>
           <li>présenter à chaque compte les informations de dossier qui lui sont rattachées ;</li>
           <li>recevoir et faire examiner les déclarations adressées à l’administration ;</li>
@@ -326,7 +327,7 @@ export function PolitiqueConfidentialitePage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="destinataires" numero="04" titre="Accès et destinataires">
+      <LegalSection id="destinataires" number="04" title="Accès et destinataires">
         <p>
           Les informations d’un dossier sont accessibles au compte concerné et aux agents habilités,
           selon les rôles et permissions contrôlés par le serveur. Les messages du formulaire public
@@ -346,7 +347,7 @@ export function PolitiqueConfidentialitePage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="conservation" numero="05" titre="Conservation et transferts">
+      <LegalSection id="conservation" number="05" title="Conservation et transferts">
         <p>
           Les durées de conservation par catégorie de données ne sont pas définies dans les
           informations mises à disposition pour cette page. Elles doivent être fixées par le
@@ -360,7 +361,7 @@ export function PolitiqueConfidentialitePage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="droits" numero="06" titre="Vos droits">
+      <LegalSection id="droits" number="06" title="Vos droits">
         <p>
           Dans les conditions prévues par la loi malgache n° 2014-038, les personnes concernées
           disposent notamment de droits d’information, d’accès, de rectification et d’opposition.
@@ -375,8 +376,8 @@ export function PolitiqueConfidentialitePage() {
           responsable devront être complétées afin de permettre une demande directe.
         </p>
         <a
-          className="lien-loi-donnees-sre"
-          href={SOURCE_LOI_DONNEES}
+          className="data-law-link-sre"
+          href={DATA_LAW_SOURCE}
           target="_blank"
           rel="noreferrer"
         >
@@ -384,7 +385,7 @@ export function PolitiqueConfidentialitePage() {
         </a>
       </LegalSection>
 
-      <LegalSection id="stockage" numero="07" titre="Stockage dans le navigateur">
+      <LegalSection id="stockage" number="07" title="Stockage dans le navigateur">
         <p>
           Le code actuel conserve le jeton de session dans le stockage de session du navigateur (
           <code>sessionStorage</code>) et la préférence de thème dans le stockage local (
@@ -396,11 +397,11 @@ export function PolitiqueConfidentialitePage() {
           public audité. Cette information devra être revue si de nouveaux outils ou intégrations
           sont ajoutés au portail.
         </p>
-        <div className="note-juridique-sre">
+        <div className="legal-note-sre">
           <ClipboardList size={17} aria-hidden="true" />
           <span>
-            Pour une question ou une demande relative à vos données, vous pouvez aussi consulter la
-            page <Link to="/aide">Aide</Link> avant d’écrire à l’administration.
+            Pour une question ou une demande relative à vos données, vous pouvez utiliser le
+            formulaire de contact pour écrire à l’administration.
           </span>
         </div>
       </LegalSection>

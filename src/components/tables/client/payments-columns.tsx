@@ -5,62 +5,62 @@ import { ROUTES_CLIENT } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
-/** Colonnes du tableau de l'historique des paiements du contribuable (espace client). */
-export function creerColonnesPaiements(): TableColumn<Payment>[] {
+/** Columns of the taxpayer's payment history table (client workspace). */
+export function createPaymentColumns(): TableColumn<Payment>[] {
   return [
     {
       id: "ref",
-      titre: "Référence",
-      afficher: (paiement) => (
-        <Link className="reference-sre" to={ROUTES_CLIENT.paiement(paiement.id)}>
-          {paiement.referenceInterne}
+      title: "Référence",
+      render: (payment) => (
+        <Link className="reference-sre" to={ROUTES_CLIENT.payment(payment.id)}>
+          {payment.internalReference}
         </Link>
       ),
-      valeurTri: (paiement) => paiement.referenceInterne,
+      sortValue: (payment) => payment.internalReference,
     },
     {
-      id: "impot",
-      titre: "Impôt / période",
-      afficher: (paiement) => (
+      id: "tax",
+      title: "Impôt / période",
+      render: (payment) => (
         <>
-          <strong>{paiement.typeImpotNom}</strong>
-          <small className="sous-ligne-sre">{paiement.periode}</small>
+          <strong>{payment.taxTypeName}</strong>
+          <small className="sub-row-sre">{payment.period}</small>
         </>
       ),
-      valeurTri: (paiement) => paiement.typeImpotNom,
+      sortValue: (payment) => payment.taxTypeName,
     },
     {
-      id: "montant",
-      titre: "Montant déclaré",
-      afficher: (paiement) => <span className="montant-sre">{formatMoney(paiement.montant)}</span>,
-      valeurTri: (paiement) => paiement.montant,
+      id: "amount",
+      title: "Montant déclaré",
+      render: (payment) => <span className="amount-sre">{formatMoney(payment.amount)}</span>,
+      sortValue: (payment) => payment.amount,
     },
     {
       id: "mode",
-      titre: "Mode déclaré",
-      afficher: (paiement) => <StatusBadge statut={paiement.mode} />,
-      valeurTri: (paiement) => paiement.mode,
+      title: "Mode déclaré",
+      render: (payment) => <StatusBadge status={payment.mode} />,
+      sortValue: (payment) => payment.mode,
     },
     {
-      id: "soumis",
-      titre: "Date de déclaration",
-      afficher: (paiement) => formatDate(paiement.soumisLe),
-      valeurTri: (paiement) => paiement.soumisLe,
+      id: "submitted",
+      title: "Date de déclaration",
+      render: (payment) => formatDate(payment.submittedAt),
+      sortValue: (payment) => payment.submittedAt,
     },
     {
-      id: "statut",
-      titre: "Statut",
-      afficher: (paiement) => <StatusBadge statut={paiement.statut} />,
-      valeurTri: (paiement) => paiement.statut,
+      id: "status",
+      title: "Statut",
+      render: (payment) => <StatusBadge status={payment.status} />,
+      sortValue: (payment) => payment.status,
     },
     {
       id: "actions",
-      titre: "Actions",
-      afficher: (paiement) => (
+      title: "Actions",
+      render: (payment) => (
         <ActionGroup>
           <ActionIcon
-            titre="Suivre la déclaration"
-            href={ROUTES_CLIENT.paiement(paiement.id)}
+            title="Suivre la déclaration"
+            href={ROUTES_CLIENT.payment(payment.id)}
           >
             <Eye size={15} />
           </ActionIcon>

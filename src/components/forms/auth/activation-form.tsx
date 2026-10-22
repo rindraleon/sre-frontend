@@ -14,21 +14,21 @@ import {
 
 
 export function ActivationForm() {
-  const [rechercheParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigation = useNavigate();
-  const { notifier } = useSre();
-  const jeton = rechercheParams.get("jeton") ?? "";
+  const { notify } = useSre();
+  const token = searchParams.get("jeton") ?? "";
   const {
     register,
     handleSubmit,
     errors,
     isSubmitting,
-    erreur,
-    traiterEchec,
+    error,
+    handleFailure,
   } = useApiForm<ActivationFormValues>({
     schema: activationSchema,
-    valeursInitiales: {
-      jeton,
+    initialValues: {
+      jeton: token,
       nouveauMotDePasse: "",
       confirmation: "",
       adresse: "",
@@ -36,28 +36,28 @@ export function ActivationForm() {
       telephone: "",
       nomCommercial: "",
     },
-    messageRepli: "Impossible de terminer l’activation. Réessayez.",
+    fallbackMessage: "Impossible de terminer l’activation. Réessayez.",
   });
 
-  const soumettre = handleSubmit(async (valeurs) => {
+  const onSubmit = handleSubmit(async (values) => {
     try {
       await callApi<{ message: string }>("auth/activation/confirmer", {
         method: "POST",
         body: {
-          jeton: valeurs.jeton,
-          nouveauMotDePasse: valeurs.nouveauMotDePasse,
+          jeton: values.jeton,
+          nouveauMotDePasse: values.nouveauMotDePasse,
           profil: {
-            adresse: valeurs.adresse,
-            ville: valeurs.ville,
-            telephone: valeurs.telephone,
-            nomCommercial: valeurs.nomCommercial ?? "",
+            adresse: values.adresse,
+            ville: values.ville,
+            telephone: values.telephone,
+            nomCommercial: values.nomCommercial ?? "",
           },
         },
       });
-      notifier("Votre espace est activé. Vous pouvez vous connecter.", "succes");
+      notify("Votre espace est activé. Vous pouvez vous connecter.", "success");
       void navigation("/connexion", { replace: true });
     } catch (cause) {
-      traiterEchec(cause);
+      handleFailure(cause);
     }
   });
 
@@ -68,30 +68,30 @@ export function ActivationForm() {
         Définissez votre mot de passe personnel et vérifiez les informations de votre profil.
         Le lien d’activation est à usage unique.
       </p>
-      <form onSubmit={soumettre} className="formulaire-sre" noValidate>
+      <form onSubmit={onSubmit} className="form-sre" noValidate>
         <PasswordField
-          libelle="Nouveau mot de passe"
-          erreur={errors.nouveauMotDePasse}
-          aide="10 caractères minimum, avec une majuscule, une minuscule et un chiffre."
-          requis
+          label="Nouveau mot de passe"
+          error={errors.nouveauMotDePasse}
+          help="10 caractères minimum, avec une majuscule, une minuscule et un chiffre."
+          required
           autoComplete="new-password"
           placeholder="Votre mot de passe personnel"
           {...register("nouveauMotDePasse")}
         />
         <PasswordField
-          libelle="Confirmer le mot de passe"
-          erreur={errors.confirmation}
-          requis
+          label="Confirmer le mot de passe"
+          error={errors.confirmation}
+          required
           autoComplete="new-password"
           placeholder="Confirmez le mot de passe"
           {...register("confirmation")}
         />
-        <FormField libelle="Adresse" erreur={errors.adresse} requis>
-          {(proprietes) => (
-            <span className="champ-sre champ-sre--icone">
+        <FormField label="Adresse" error={errors.adresse} required>
+          {(props) => (
+            <span className="field-sre field-sre--icon">
               <MapPin size={16} aria-hidden="true" />
               <input
-                {...proprietes}
+                {...props}
                 type="text"
                 autoComplete="street-address"
                 placeholder="Adresse complète"
@@ -100,12 +100,12 @@ export function ActivationForm() {
             </span>
           )}
         </FormField>
-        <FormField libelle="Ville / commune" erreur={errors.ville} requis>
-          {(proprietes) => (
-            <span className="champ-sre champ-sre--icone">
+        <FormField label="Ville / commune" error={errors.ville} required>
+          {(props) => (
+            <span className="field-sre field-sre--icon">
               <Building2 size={16} aria-hidden="true" />
               <input
-                {...proprietes}
+                {...props}
                 type="text"
                 autoComplete="address-level2"
                 placeholder="Ville ou commune"
@@ -114,12 +114,12 @@ export function ActivationForm() {
             </span>
           )}
         </FormField>
-        <FormField libelle="Téléphone" erreur={errors.telephone} requis>
-          {(proprietes) => (
-            <span className="champ-sre champ-sre--icone">
+        <FormField label="Téléphone" error={errors.telephone} required>
+          {(props) => (
+            <span className="field-sre field-sre--icon">
               <Phone size={16} aria-hidden="true" />
               <input
-                {...proprietes}
+                {...props}
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -129,12 +129,12 @@ export function ActivationForm() {
             </span>
           )}
         </FormField>
-        <FormField libelle="Nom commercial (facultatif)" erreur={errors.nomCommercial}>
-          {(proprietes) => (
-            <span className="champ-sre champ-sre--icone">
+        <FormField label="Nom commercial (facultatif)" error={errors.nomCommercial}>
+          {(props) => (
+            <span className="field-sre field-sre--icon">
               <Store size={16} aria-hidden="true" />
               <input
-                {...proprietes}
+                {...props}
                 type="text"
                 placeholder="Nom commercial"
                 {...register("nomCommercial")}
@@ -142,8 +142,8 @@ export function ActivationForm() {
             </span>
           )}
         </FormField>
-        <FormError message={erreur} />
-        <SubmitButton enCours={isSubmitting} libelleEnCours="Activation…">
+        <FormError message={error} />
+        <SubmitButton inProgress={isSubmitting} pendingLabel="Activation…">
           <>
             Activer mon espace <ArrowRight size={16} />
           </>

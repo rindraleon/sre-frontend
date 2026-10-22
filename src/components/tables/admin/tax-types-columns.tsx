@@ -3,7 +3,7 @@ import type { TaxType } from "@/types";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
-const libellesPeriodicite: Record<TaxType["periodicite"], string> = {
+const periodicityLabels: Record<TaxType["periodicity"], string> = {
   MENSUELLE: "Mensuelle",
   TRIMESTRIELLE: "Trimestrielle",
   ANNUELLE: "Annuelle",
@@ -13,82 +13,82 @@ const libellesPeriodicite: Record<TaxType["periodicite"], string> = {
 function TaxTypeNameCell({ type }: Readonly<{ type: TaxType }>) {
   return (
     <div>
-      <strong>{type.nom}</strong>
-      <small className="sous-ligne-sre">
+      <strong>{type.name}</strong>
+      <small className="sub-row-sre">
         {type.code} · {type.description}
       </small>
     </div>
   );
 }
 
-export function creerColonnesTypesImpot({
-  onModifier,
-  onBasculer,
+export function createTaxTypeColumns({
+  onUpdate,
+  onToggle,
 }: Readonly<{
-  onModifier: (type: TaxType) => void;
-  onBasculer: (type: TaxType) => void;
+  onUpdate: (type: TaxType) => void;
+  onToggle: (type: TaxType) => void;
 }>): TableColumn<TaxType>[] {
   return [
     {
-      id: "nom",
-      titre: "Type d’impôt",
-      afficher: (type) => <TaxTypeNameCell type={type} />,
-      valeurTri: (type) => type.nom,
+      id: "name",
+      title: "Type d’impôt",
+      render: (type) => <TaxTypeNameCell type={type} />,
+      sortValue: (type) => type.name,
     },
     {
-      id: "categorie",
-      titre: "Catégorie",
-      afficher: (type) => type.categorie,
-      valeurTri: (type) => type.categorie,
+      id: "category",
+      title: "Catégorie",
+      render: (type) => type.category,
+      sortValue: (type) => type.category,
     },
     {
-      id: "concernes",
-      titre: "Contribuables concernés",
-      afficher: (type) => {
-        if (type.contribuablesConcernes === "TOUS") return "Tous";
-        if (type.contribuablesConcernes === "ENTREPRISE") return "Entreprises";
+      id: "applicable",
+      title: "Contribuables concernés",
+      render: (type) => {
+        if (type.applicableTaxpayers === "TOUS") return "Tous";
+        if (type.applicableTaxpayers === "ENTREPRISE") return "Entreprises";
         return "Particuliers";
       },
-      valeurTri: (type) => type.contribuablesConcernes,
+      sortValue: (type) => type.applicableTaxpayers,
     },
     {
-      id: "periodicite",
-      titre: "Périodicité",
-      afficher: (type) => libellesPeriodicite[type.periodicite],
-      valeurTri: (type) => type.periodicite,
+      id: "periodicity",
+      title: "Périodicité",
+      render: (type) => periodicityLabels[type.periodicity],
+      sortValue: (type) => type.periodicity,
     },
     {
-      id: "montant",
-      titre: "Montant de référence",
-      afficher: (type) =>
-        type.montantReference == null ? "Non défini" : formatMoney(type.montantReference),
-      valeurTri: (type) => type.montantReference ?? 0,
+      id: "amount",
+      title: "Montant de référence",
+      render: (type) =>
+        type.referenceAmount == null ? "Non défini" : formatMoney(type.referenceAmount),
+      sortValue: (type) => type.referenceAmount ?? 0,
     },
     {
-      id: "statut",
-      titre: "Statut",
-      afficher: (type) => <StatusBadge statut={type.actif ? "ACTIF" : "INACTIF"} />,
-      valeurTri: (type) => String(type.actif),
+      id: "status",
+      title: "Statut",
+      render: (type) => <StatusBadge status={type.isActive ? "ACTIF" : "INACTIF"} />,
+      sortValue: (type) => String(type.isActive),
     },
     {
       id: "date",
-      titre: "Modifié le",
-      afficher: (type) => formatDate(type.modifieLe),
-      valeurTri: (type) => type.modifieLe,
+      title: "Modifié le",
+      render: (type) => formatDate(type.updatedAt),
+      sortValue: (type) => type.updatedAt,
     },
     {
       id: "action",
-      titre: "Actions",
-      afficher: (type) => (
+      title: "Actions",
+      render: (type) => (
         <ActionGroup>
-          <ActionIcon titre="Modifier le type d’impôt" onClick={() => onModifier(type)}>
+          <ActionIcon title="Modifier le type d’impôt" onClick={() => onUpdate(type)}>
             <Pencil size={15} />
           </ActionIcon>
           <ActionIcon
-            titre={type.actif ? "Désactiver le type d’impôt" : "Réactiver le type d’impôt"}
-            onClick={() => onBasculer(type)}
+            title={type.isActive ? "Désactiver le type d’impôt" : "Réactiver le type d’impôt"}
+            onClick={() => onToggle(type)}
           >
-            {type.actif ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+            {type.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
           </ActionIcon>
         </ActionGroup>
       ),

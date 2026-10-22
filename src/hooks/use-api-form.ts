@@ -14,50 +14,50 @@ import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
 export type UseApiFormResult<T extends FieldValues> = UseFormReturn<T> & {
   errors: FieldErrors<T>;
   isSubmitting: boolean;
-  erreur: string;
-  definirErreur: (message: string) => void;
-  reinitialiserErreur: () => void;
-  traiterEchec: (cause: unknown) => void;
-  reinitialiserFormulaire: (valeurs?: T) => void;
+  error: string;
+  setError: (message: string) => void;
+  resetError: () => void;
+  handleFailure: (cause: unknown) => void;
+  resetForm: (values?: T) => void;
 };
 
 export function useApiForm<T extends FieldValues>({
   schema,
-  valeursInitiales,
-  messageRepli,
+  initialValues,
+  fallbackMessage,
 }: {
   schema: ZodType<T>;
-  valeursInitiales: T;
-  messageRepli: string;
+  initialValues: T;
+  fallbackMessage: string;
 }): UseApiFormResult<T> {
-  const [erreur, setErreur] = useState("");
-  const formulaire: UseFormReturn<T> = useForm<T>({
+  const [error, setErrorMessage] = useState("");
+  const form: UseFormReturn<T> = useForm<T>({
     resolver: zodResolver(schema as never) as Resolver<T>,
     mode: "onTouched",
-    defaultValues: valeursInitiales as DefaultValues<T>,
+    defaultValues: initialValues as DefaultValues<T>,
   });
 
-  const definirErreur = (message: string) => setErreur(message);
-  const reinitialiserErreur = () => setErreur("");
+  const setError = (message: string) => setErrorMessage(message);
+  const resetError = () => setErrorMessage("");
 
-  const traiterEchec = (cause: unknown) => {
-    const globales = applyApiErrors(formulaire, cause);
-    setErreur(globales.length ? globales.join(" ") : apiErrorMessage(cause, messageRepli));
+  const handleFailure = (cause: unknown) => {
+    const global = applyApiErrors(form, cause);
+    setError(global.length ? global.join(" ") : apiErrorMessage(cause, fallbackMessage));
   };
 
-  const reinitialiserFormulaire = (valeurs?: T) => {
-    formulaire.reset((valeurs ?? valeursInitiales) as DefaultValues<T>);
-    setErreur("");
+  const resetForm = (values?: T) => {
+    form.reset((values ?? initialValues) as DefaultValues<T>);
+    setError("");
   };
 
   return {
-    ...formulaire,
-    errors: formulaire.formState.errors,
-    isSubmitting: formulaire.formState.isSubmitting,
-    erreur,
-    definirErreur,
-    reinitialiserErreur,
-    traiterEchec,
-    reinitialiserFormulaire,
+    ...form,
+    errors: form.formState.errors,
+    isSubmitting: form.formState.isSubmitting,
+    error,
+    setError,
+    resetError,
+    handleFailure,
+    resetForm,
   };
 }

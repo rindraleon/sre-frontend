@@ -9,10 +9,10 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 /**
- * Inscription. Deux régimes (DTO InscriptionDto + ProfilInscriptionDto) :
- * premier administrateur (nom + e-mail + mot de passe) ou contribuable (profil complet).
+ * Registration. Two regimes (RegistrationDto + Registration profile DTO):
+ * first administrator (name + e-mail + password) or taxpayer (full profile).
  */
-export function createRegistrationSchema(premierAdministrateur: boolean) {
+export function createRegistrationSchema(isFirstAdministrator: boolean) {
   return z
     .object({
       type: z.enum(["PARTICULIER", "ENTREPRISE"]),
@@ -34,68 +34,68 @@ export function createRegistrationSchema(premierAdministrateur: boolean) {
       motDePasse: passwordSchema,
       confirmation: z.string().min(1, "Confirmez le mot de passe."),
     })
-    .superRefine((valeurs, contexte) => {
-      if (premierAdministrateur) {
-        if (valeurs.nom.trim().length < 2)
-          contexte.addIssue({
+    .superRefine((values, context) => {
+      if (isFirstAdministrator) {
+        if (values.nom.trim().length < 2)
+          context.addIssue({
             code: "custom",
             path: ["nom"],
             message: "Le nom doit contenir au moins 2 caractères.",
           });
         return;
       }
-      if (valeurs.type === "PARTICULIER" && !valeurs.nom.trim())
-        contexte.addIssue({ code: "custom", path: ["nom"], message: "Renseignez votre nom." });
-      if (valeurs.type === "ENTREPRISE" && !valeurs.raisonSociale.trim())
-        contexte.addIssue({
+      if (values.type === "PARTICULIER" && !values.nom.trim())
+        context.addIssue({ code: "custom", path: ["nom"], message: "Renseignez votre nom." });
+      if (values.type === "ENTREPRISE" && !values.raisonSociale.trim())
+        context.addIssue({
           code: "custom",
           path: ["raisonSociale"],
           message: "La raison sociale est requise pour une entreprise.",
         });
-      if (valeurs.adresse.trim().length < 3)
-        contexte.addIssue({
+      if (values.adresse.trim().length < 3)
+        context.addIssue({
           code: "custom",
           path: ["adresse"],
           message: "L'adresse doit contenir au moins 3 caractères.",
         });
-      if (valeurs.ville.trim().length < 2)
-        contexte.addIssue({
+      if (values.ville.trim().length < 2)
+        context.addIssue({
           code: "custom",
           path: ["ville"],
           message: "La ville/commune doit contenir au moins 2 caractères.",
         });
-      if (valeurs.region !== SRE_REGION)
-        contexte.addIssue({
+      if (values.region !== SRE_REGION)
+        context.addIssue({
           code: "custom",
           path: ["region"],
           message: `La région doit être « ${SRE_REGION} ».`,
         });
-      const telephone = phoneSchema.safeParse(valeurs.telephone);
-      if (!telephone.success)
-        contexte.addIssue({
+      const phone = phoneSchema.safeParse(values.telephone);
+      if (!phone.success)
+        context.addIssue({
           code: "custom",
           path: ["telephone"],
-          message: telephone.error.issues[0]?.message ?? "Numéro de téléphone invalide.",
+          message: phone.error.issues[0]?.message ?? "Numéro de téléphone invalide.",
         });
     })
-    .refine((valeurs) => valeurs.motDePasse === valeurs.confirmation, {
+    .refine((values) => values.motDePasse === values.confirmation, {
       message: "Les mots de passe ne correspondent pas.",
       path: ["confirmation"],
     });
 }
 export type RegistrationFormValues = z.infer<ReturnType<typeof createRegistrationSchema>>;
 
-/** Bloc « nouveau mot de passe + confirmation » partagé par les schémas d'authentification. */
-const confirmationMotDePasseSchema = z.object({
+/** "New password + confirmation" block shared by the authentication schemas. */
+const confirmationPasswordSchema = z.object({
   nouveauMotDePasse: passwordSchema,
   confirmation: z.string().min(1, "Confirmez le nouveau mot de passe."),
 });
 
-function revaliderConfirmation<T extends { nouveauMotDePasse: string; confirmation: string }>(
+function revalidateConfirmation<T extends { nouveauMotDePasse: string; confirmation: string }>(
   schema: z.ZodType<T>,
 ) {
   return schema.refine(
-    (valeurs) => valeurs.nouveauMotDePasse === valeurs.confirmation,
+    (values) => values.nouveauMotDePasse === values.confirmation,
     {
       message: "Les deux nouveaux mots de passe ne correspondent pas.",
       path: ["confirmation"],
@@ -103,19 +103,19 @@ function revaliderConfirmation<T extends { nouveauMotDePasse: string; confirmati
   );
 }
 
-export const passwordChangeSchema = revaliderConfirmation(
-  confirmationMotDePasseSchema.extend({
+export const passwordChangeSchema = revalidateConfirmation(
+  confirmationPasswordSchema.extend({
     motDePasseActuel: z.string().min(1, "Saisissez votre mot de passe actuel."),
   }),
 )
-  .refine((valeurs) => valeurs.nouveauMotDePasse !== valeurs.motDePasseActuel, {
+  .refine((values) => values.nouveauMotDePasse !== values.motDePasseActuel, {
     message: "Le nouveau mot de passe doit être différent du mot de passe actuel.",
     path: ["nouveauMotDePasse"],
   });
 export type PasswordChangeFormValues = z.infer<typeof passwordChangeSchema>;
 
-/** Bloc profil de la configuration initiale / de l'activation (validations DTO). */
-const profilConfigurationSchema = z.object({
+/** Profile block of the initial setup / activation (DTO validations). */
+const setupProfileSchema = z.object({
   adresse: z
     .string()
     .trim()
@@ -138,45 +138,45 @@ const profilConfigurationSchema = z.object({
     .or(z.literal("")),
 });
 
-/** Configuration initiale (première connexion avec le mot de passe provisoire). */
-export const configurationInitialeSchema = revaliderConfirmation(
-  confirmationMotDePasseSchema
+/** Initial setup (first sign-in with the provisional password). */
+export const initialSetupSchema = revalidateConfirmation(
+  confirmationPasswordSchema
     .extend({
       motDePasseActuel: z.string().min(1, "Saisissez le mot de passe provisoire."),
     })
-    .merge(profilConfigurationSchema),
+    .merge(setupProfileSchema),
 )
-  .refine((valeurs) => valeurs.nouveauMotDePasse !== valeurs.motDePasseActuel, {
+  .refine((values) => values.nouveauMotDePasse !== values.motDePasseActuel, {
     message: "Le nouveau mot de passe doit être différent du mot de passe provisoire.",
     path: ["nouveauMotDePasse"],
   });
-export type ConfigurationInitialeFormValues = z.infer<typeof configurationInitialeSchema>;
+export type InitialSetupFormValues = z.infer<typeof initialSetupSchema>;
 
-/** Activation par lien sécurisé à usage unique (première connexion sans STAT). */
-export const activationSchema = revaliderConfirmation(
-  confirmationMotDePasseSchema
+/** Activation through a secure single-use link (first sign-in without STAT). */
+export const activationSchema = revalidateConfirmation(
+  confirmationPasswordSchema
     .extend({
       jeton: z.string().min(1, "Jeton d'activation absent."),
     })
-    .merge(profilConfigurationSchema),
+    .merge(setupProfileSchema),
 );
 export type ActivationFormValues = z.infer<typeof activationSchema>;
 
-/** Mot de passe oublié : demande de lien sécurisé (réponse générique). */
-export const motDePasseOublieSchema = z.object({
+/** Forgot password: secure-link request (generic response). */
+export const forgotPasswordSchema = z.object({
   courriel: emailSchema,
 });
-export type MotDePasseOublieFormValues = z.infer<typeof motDePasseOublieSchema>;
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-/** Réinitialisation via le jeton à usage unique reçu par courriel. */
-export const reinitialisationSchema = revaliderConfirmation(
-  confirmationMotDePasseSchema.extend({
+/** Reset through the single-use token received by e-mail. */
+export const resetSchema = revalidateConfirmation(
+  confirmationPasswordSchema.extend({
     jeton: z.string().min(1, "Jeton de réinitialisation absent."),
   }),
 );
-export type ReinitialisationFormValues = z.infer<typeof reinitialisationSchema>;
+export type PasswordResetFormValues = z.infer<typeof resetSchema>;
 
-/** Formulaire public de contact (limites alignées sur PublicContactDto). */
+/** Public contact form (limits aligned with PublicContactDto). */
 export const publicContactSchema = z.object({
   nom: z
     .string()

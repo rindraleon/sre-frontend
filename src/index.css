@@ -1,4 +1,4 @@
-/* Point d'entrée des styles — ordre de cascade préservé (voir src/styles/). */
+/* Styles entry point — cascade order preserved (see src/styles/). */
 @import "./styles/base.css";
 @import "./styles/layout.css";
 @import "./styles/components.css";
@@ -10,5 +10,5 @@
 @import "./styles/documents.css";
 @import "./styles/ui-extras.css";
 @import "./styles/dark-theme.css";
-@import "./styles/refonte.css";
+@import "./styles/redesign.css";
 @import "./styles/public-enhancements.css";

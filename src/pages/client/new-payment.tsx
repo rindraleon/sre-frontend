@@ -16,139 +16,139 @@ import {
   type PaymentDeclarationFormValues,
 } from "@/validation/payment.schema";
 import {
-  MSG_SESSION_MANQUANTE,
-  MODE_PAIEMENT_MOBILE_MONEY,
-  MODE_PAIEMENT_VIREMENT,
+  MSG_SESSION_MISSING,
+  PAYMENT_METHOD_MOBILE_MONEY,
+  PAYMENT_METHOD_BANK_TRANSFER,
   ROUTES_CLIENT,
-  STATUTS_OBLIGATION_DECLARABLE,
+  DECLARABLE_OBLIGATION_STATUSES,
 } from "@/constants";
 import { useApiForm } from "@/hooks";
 import { SubmitButton } from "@/components/forms/form-field";
 import {
   PaymentDeclarationFormFields,
-  DECLARATION_PAIEMENT_VIDE,
+  DECLARATION_PAYMENT_EMPTY,
 } from "@/components/forms/client/payment-declaration-form";
 
 export function ClientNewPaymentPage() {
   const [params] = useSearchParams();
   const navigation = useNavigate();
   const { session } = useAuth();
-  const { etat, mettreAJourEtat, notifier } = useSre();
-  const obligationsDisponibles = useMemo(
+  const { state, updateState, notify } = useSre();
+  const availableObligations = useMemo(
     () =>
-      etat.obligations.filter(
+      state.obligations.filter(
         (obligation) =>
-          obligation.contribuableId === session?.contribuableId &&
-          (STATUTS_OBLIGATION_DECLARABLE as readonly string[]).includes(obligation.statut),
+          obligation.taxpayerId === session?.taxpayerId &&
+          (DECLARABLE_OBLIGATION_STATUSES as readonly string[]).includes(obligation.status),
       ),
-    [etat.obligations, session?.contribuableId],
+    [state.obligations, session?.taxpayerId],
   );
-  const formulaire = useApiForm<PaymentDeclarationFormValues>({
+  const form = useApiForm<PaymentDeclarationFormValues>({
     schema: paymentDeclarationSchema,
-    valeursInitiales: {
-      ...DECLARATION_PAIEMENT_VIDE,
+    initialValues: {
+      ...DECLARATION_PAYMENT_EMPTY,
       obligationId: params.get("obligationId") ?? "",
     },
-    messageRepli: "Le serveur n’a pas accepté la déclaration.",
+    fallbackMessage: "Le serveur n’a pas accepté la déclaration.",
   });
-  const obligationId = formulaire.watch("obligationId");
-  const mode = formulaire.watch("mode");
-  const operateur = formulaire.watch("operateur");
-  const obligation = obligationsDisponibles.find((entree) => entree.id === obligationId);
-  let canalDeclare = "Non sélectionné";
-  if (mode === MODE_PAIEMENT_MOBILE_MONEY) {
-    canalDeclare = operateur || "Opérateur non choisi";
-  } else if (mode === MODE_PAIEMENT_VIREMENT) {
-    canalDeclare = "Virement / canal bancaire";
+  const obligationId = form.watch("obligationId");
+  const mode = form.watch("mode");
+  const operator = form.watch("operateur");
+  const obligation = availableObligations.find((entry) => entry.id === obligationId);
+  let declaredChannel = "Non sélectionné";
+  if (mode === PAYMENT_METHOD_MOBILE_MONEY) {
+    declaredChannel = operator || "Opérateur non choisi";
+  } else if (mode === PAYMENT_METHOD_BANK_TRANSFER) {
+    declaredChannel = "Virement / canal bancaire";
   }
 
-  const soumettre = formulaire.handleSubmit(async (valeurs) => {
-    formulaire.reinitialiserErreur();
-    if (!session?.jetonApi) {
-      formulaire.definirErreur(MSG_SESSION_MANQUANTE);
+  const handleSubmit = form.handleSubmit(async (values) => {
+    form.resetError();
+    if (!session?.apiToken) {
+      form.setError(MSG_SESSION_MISSING);
       return;
     }
-    const obligationChoisie = obligationsDisponibles.find(
-      (entree) => entree.id === valeurs.obligationId,
+    const selectedObligation = availableObligations.find(
+      (entry) => entry.id === values.obligationId,
     );
-    if (!obligationChoisie) {
-      formulaire.setError("obligationId", {
+    if (!selectedObligation) {
+      form.setError("obligationId", {
         type: "server",
         message: "Sélectionnez une obligation disponible pour votre compte.",
       });
       return;
     }
     try {
-      const donneesApi = {
-        obligationId: obligationChoisie.id,
-        mode: valeurs.mode,
-        ...(valeurs.mode === MODE_PAIEMENT_MOBILE_MONEY
+      const apiPayload = {
+        obligationId: selectedObligation.id,
+        mode: values.mode,
+        ...(values.mode === PAYMENT_METHOD_MOBILE_MONEY
           ? {
-              operateur: valeurs.operateur,
-              telephoneUtilise: valeurs.telephoneUtilise.trim(),
+              operateur: values.operateur,
+              telephoneUtilise: values.telephoneUtilise.trim(),
             }
           : {
-              banqueOuCanal: valeurs.banqueOuCanal.trim(),
-              ...(valeurs.titulairePayeur.trim()
-                ? { titulairePayeur: valeurs.titulairePayeur.trim() }
+              banqueOuCanal: values.banqueOuCanal.trim(),
+              ...(values.titulairePayeur.trim()
+                ? { titulairePayeur: values.titulairePayeur.trim() }
                 : {}),
             }),
-        referenceTransaction: valeurs.referenceTransaction.trim(),
-        dateTransaction: valeurs.dateTransaction,
+        referenceTransaction: values.referenceTransaction.trim(),
+        dateTransaction: values.dateTransaction,
       };
-      const paiementApi = await callApi<ApiPayment>("paiements", {
+      const paymentApi = await callApi<ApiPayment>("paiements", {
         method: "POST",
-        token: session.jetonApi,
-        body: donneesApi,
+        token: session.apiToken,
+        body: apiPayload,
       });
-      const paiementMappe = mapApiPayment(paiementApi);
-      const documentsMappes = mapApiPaymentDocuments(paiementApi);
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        paiements: [
-          paiementMappe,
-          ...courant.paiements.filter((entree) => entree.id !== paiementMappe.id),
+      const mappedPayment = mapApiPayment(paymentApi);
+      const mappedDocuments = mapApiPaymentDocuments(paymentApi);
+      updateState((current) => ({
+        ...current,
+        payments: [
+          mappedPayment,
+          ...current.payments.filter((entry) => entry.id !== mappedPayment.id),
         ],
-        documentsPaiement: [
-          ...documentsMappes,
-          ...courant.documentsPaiement.filter(
-            (document) => document.paiementId !== paiementMappe.id,
+        paymentDocuments: [
+          ...mappedDocuments,
+          ...current.paymentDocuments.filter(
+            (document) => document.paymentId !== mappedPayment.id,
           ),
         ],
-        obligations: courant.obligations.map((entree) =>
-          entree.id === paiementMappe.obligationId
-            ? { ...entree, statut: "EN_VERIFICATION", paiementId: paiementMappe.id }
-            : entree,
+        obligations: current.obligations.map((entry) =>
+          entry.id === mappedPayment.obligationId
+            ? { ...entry, status: "EN_VERIFICATION", paymentId: mappedPayment.id }
+            : entry,
         ),
       }));
-      notifier(
+      notify(
         "Déclaration enregistrée par le serveur. L’accusé prouve la soumission, pas le règlement.",
-        "succes",
+        "success",
       );
-      void navigation(ROUTES_CLIENT.paiement(paiementMappe.id), { replace: true });
+      void navigation(ROUTES_CLIENT.payment(mappedPayment.id), { replace: true });
     } catch (cause) {
-      formulaire.traiterEchec(cause);
+      form.handleFailure(cause);
     }
   });
 
-  if (!obligationsDisponibles.length)
+  if (!availableObligations.length)
     return (
-      <div className="page-contenu-sre">
+      <div className="page-content-sre">
         <PageHeader
-          titre="Déclarer un paiement"
+          title="Déclarer un paiement"
           description="Déclarez une opération effectuée en dehors du portail."
-          filAriane={["Accueil", "Déclarer un paiement"]}
+          breadcrumb={["Accueil", "Déclarer un paiement"]}
         />
         <EmptyState
-          titre="Aucune obligation disponible"
+          title="Aucune obligation disponible"
           description="Aucune obligation réglable ou régularisable n’est associée à votre compte."
           action={
-            <Link className="bouton-sre bouton-sre--contour" to={ROUTES_CLIENT.obligations}>
+            <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.obligations}>
               Consulter mes obligations
             </Link>
           }
         />
-        <div className="note-fiscale-sre">
+        <div className="tax-note-sre">
           <span>i</span>
           <p>
             Si une déclaration est en vérification, attendez la décision avant d’en soumettre une
@@ -159,18 +159,18 @@ export function ClientNewPaymentPage() {
     );
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Déclarer un paiement"
+        title="Déclarer un paiement"
         description="Renseignez les éléments d’une opération que l’administration devra examiner."
-        filAriane={["Accueil", "Déclarer un paiement"]}
+        breadcrumb={["Accueil", "Déclarer un paiement"]}
         actions={
-          <Link className="bouton-sre bouton-sre--contour" to={ROUTES_CLIENT.obligations}>
+          <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.obligations}>
             <ArrowLeft size={14} /> Mes obligations
           </Link>
         }
       />
-      <div className="bandeau-alerte-securite-sre">
+      <div className="security-alert-banner-sre">
         <ShieldCheck size={18} />
         <div>
           <strong>Le portail ne réalise aucun paiement.</strong>
@@ -180,25 +180,25 @@ export function ClientNewPaymentPage() {
           </p>
         </div>
       </div>
-      <div className="grille-formulaire-paiement-sre">
-        <form className="carte-sre formulaire-paiement-sre" onSubmit={soumettre} noValidate>
+      <div className="payment-form-grid-sre">
+        <form className="card-sre payment-form-sre" onSubmit={handleSubmit} noValidate>
           <PaymentDeclarationFormFields
-            formulaire={formulaire}
-            erreur={formulaire.erreur}
-            obligationsDisponibles={obligationsDisponibles}
+            form={form}
+            error={form.error}
+            availableObligations={availableObligations}
             obligation={obligation}
           />
-          <div className="actions-formulaire-sre">
-            <Link to={ROUTES_CLIENT.obligations} className="bouton-sre bouton-sre--contour">
+          <div className="form-actions-sre">
+            <Link to={ROUTES_CLIENT.obligations} className="button-sre button-sre--outline">
               Annuler
             </Link>
-            <SubmitButton enCours={formulaire.isSubmitting} libelleEnCours="Enregistrement…">
+            <SubmitButton inProgress={form.isSubmitting} pendingLabel="Enregistrement…">
               Soumettre pour vérification <ArrowRight size={15} />
             </SubmitButton>
           </div>
         </form>
-        <aside className="carte-sre recapitulatif-paiement-sre">
-          <div className="carte-sre__entete">
+        <aside className="card-sre payment-summary-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Récapitulatif</h2>
               <p>Avant l’envoi de la déclaration</p>
@@ -207,35 +207,35 @@ export function ClientNewPaymentPage() {
           </div>
           {obligation ? (
             <>
-              <dl className="liste-details-sre">
+              <dl className="details-list-sre">
                 <div>
                   <dt>Impôt</dt>
-                  <dd>{obligation.typeImpotNom}</dd>
+                  <dd>{obligation.taxTypeName}</dd>
                 </div>
                 <div>
                   <dt>Période</dt>
-                  <dd>{obligation.periode}</dd>
+                  <dd>{obligation.period}</dd>
                 </div>
                 <div>
                   <dt>Montant</dt>
-                  <dd>{formatMoney(obligation.montant)}</dd>
+                  <dd>{formatMoney(obligation.amount)}</dd>
                 </div>
                 <div>
                   <dt>Canal déclaré</dt>
-                  <dd>{canalDeclare}</dd>
+                  <dd>{declaredChannel}</dd>
                 </div>
               </dl>
-              <div className="total-paiement-sre">
+              <div className="payment-total-sre">
                 <span>Montant transmis pour examen</span>
-                <strong>{formatMoney(obligation.montant)}</strong>
+                <strong>{formatMoney(obligation.amount)}</strong>
               </div>
             </>
           ) : (
-            <p className="texte-aide-sre">
+            <p className="text-help-sre">
               Sélectionnez une obligation pour afficher le récapitulatif.
             </p>
           )}
-          <div className="note-securite-sre">
+          <div className="security-note-sre">
             <ShieldCheck size={16} />
             <p>
               <strong>Rappel sécurité</strong>
@@ -244,7 +244,7 @@ export function ClientNewPaymentPage() {
               </span>
             </p>
           </div>
-          <div className="note-fiscale-sre">
+          <div className="tax-note-sre">
             <span>i</span>
             <p>
               La déclaration débute au statut « En vérification »; elle n’est pas marquée réglée

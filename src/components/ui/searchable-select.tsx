@@ -3,155 +3,155 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { CoreSpinLoader } from "./core-spin-loader";
 
 export interface SelectOption {
-  valeur: string;
-  libelle: string;
+  value: string;
+  label: string;
   description?: string;
 }
 
-function normaliser(texte: string) {
-  return texte.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function normalize(text: string) {
+  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-/** Filtrage local insensible aux accents et à la casse. */
-export function filterSelectOptions(options: SelectOption[], recherche: string): SelectOption[] {
-  const requete = normaliser(recherche.trim());
-  if (!requete) return options;
+/** Local filtering insensitive to accents and case. */
+export function filterSelectOptions(options: SelectOption[], search: string): SelectOption[] {
+  const request = normalize(search.trim());
+  if (!request) return options;
   return options.filter((option) =>
-    normaliser(`${option.libelle} ${option.description ?? ""}`).includes(requete),
+    normalize(`${option.label} ${option.description ?? ""}`).includes(request),
   );
 }
 
-interface ProprietesSelectRecherchable {
+interface SearchableSelectProps {
   id?: string;
-  valeur: string;
+  value: string;
   options: SelectOption[];
-  onChoisir: (valeur: string) => void;
+  onChoose: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
-  chargement?: boolean;
-  erreurChargement?: string;
+  loading?: boolean;
+  loadingError?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }
 
 /**
- * Select avec recherche locale, pour les listes longues (ex. contribuables).
- * Navigation clavier : flèches, Entrée, Échap ; fermeture au clic extérieur ;
- * effacement de la sélection ; états chargement / vide / erreur explicites.
- * La recherche distante n'est pas proposée par l'API actuelle : le filtrage
- * est donc local, sur des options déjà chargées par l'écran appelant.
+ * Select with local search, for long lists (e.g. taxpayers).
+ * Keyboard navigation: arrows, Enter, Escape; close on outside click;
+ * selection clearing; explicit loading / empty / error states.
+ * Remote search is not offered by the current API: filtering is
+ * therefore local, over options already loaded by the calling screen.
  */
 export function SearchableSelect({
   id,
-  valeur,
+  value,
   options,
-  onChoisir,
+  onChoose,
   placeholder = "Rechercher…",
   disabled = false,
-  chargement = false,
-  erreurChargement,
+  loading = false,
+  loadingError,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
-}: Readonly<ProprietesSelectRecherchable>) {
-  const genereId = useId().replaceAll(":", "");
-  const idEffectif = id ?? `select-${genereId}`;
-  const idListe = `${idEffectif}-liste`;
-  const [ouvert, definirOuvert] = useState(false);
-  const [recherche, definirRecherche] = useState("");
-  const [indexActif, definirIndexActif] = useState(-1);
-  const refRacine = useRef<HTMLDivElement | null>(null);
-  const refChamp = useRef<HTMLInputElement | null>(null);
+}: Readonly<SearchableSelectProps>) {
+  const generateId = useId().replaceAll(":", "");
+  const effectiveId = id ?? `select-${generateId}`;
+  const listId = `${effectiveId}-liste`;
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const refRoot = useRef<HTMLDivElement | null>(null);
+  const refField = useRef<HTMLInputElement | null>(null);
 
-  const selection = options.find((option) => option.valeur === valeur);
-  const optionsFiltrees = useMemo(
-    () => filterSelectOptions(options, recherche),
-    [options, recherche],
+  const selection = options.find((option) => option.value === value);
+  const filteredOptions = useMemo(
+    () => filterSelectOptions(options, search),
+    [options, search],
   );
 
   useEffect(() => {
-    if (!ouvert) return;
-    const gererExterieur = (event: MouseEvent) => {
-      if (refRacine.current && !refRacine.current.contains(event.target as Node))
-        definirOuvert(false);
+    if (!open) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (refRoot.current && !refRoot.current.contains(event.target as Node))
+        setOpen(false);
     };
-    document.addEventListener("mousedown", gererExterieur);
-    return () => document.removeEventListener("mousedown", gererExterieur);
-  }, [ouvert]);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
 
-  const choisir = (option: SelectOption) => {
-    onChoisir(option.valeur);
-    definirOuvert(false);
-    definirRecherche("");
-    definirIndexActif(-1);
-    refChamp.current?.focus();
+  const choose = (option: SelectOption) => {
+    onChoose(option.value);
+    setOpen(false);
+    setSearch("");
+    setActiveIndex(-1);
+    refField.current?.focus();
   };
 
-  const gererClavier = (event: React.KeyboardEvent) => {
+  const handleKeyboard = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
-      definirOuvert(false);
+      setOpen(false);
       return;
     }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      if (!ouvert) {
-        definirOuvert(true);
+      if (!open) {
+        setOpen(true);
         return;
       }
       const delta = event.key === "ArrowDown" ? 1 : -1;
-      definirIndexActif((courant) => {
-        const suivant = courant + delta;
-        if (suivant < 0) return optionsFiltrees.length - 1;
-        if (suivant >= optionsFiltrees.length) return 0;
-        return suivant;
+      setActiveIndex((current) => {
+        const next = current + delta;
+        if (next < 0) return filteredOptions.length - 1;
+        if (next >= filteredOptions.length) return 0;
+        return next;
       });
       return;
     }
-    if (event.key === "Enter" && ouvert && indexActif >= 0 && optionsFiltrees[indexActif]) {
+    if (event.key === "Enter" && open && activeIndex >= 0 && filteredOptions[activeIndex]) {
       event.preventDefault();
-      choisir(optionsFiltrees[indexActif]);
+      choose(filteredOptions[activeIndex]);
     }
   };
 
   return (
-    <div className="select-recherchable-sre" ref={refRacine}>
-      <div className="select-recherchable-sre__champ">
+    <div className="searchable-select-sre" ref={refRoot}>
+      <div className="searchable-select-sre__field">
         <Search size={15} aria-hidden="true" />
         <input
-          ref={refChamp}
-          id={idEffectif}
+          ref={refField}
+          id={effectiveId}
           type="text"
           role="combobox"
-          aria-expanded={ouvert}
-          aria-controls={idListe}
+          aria-expanded={open}
+          aria-controls={listId}
           aria-activedescendant={
-            ouvert && indexActif >= 0 ? `${idEffectif}-option-${indexActif}` : undefined
+            open && activeIndex >= 0 ? `${effectiveId}-option-${activeIndex}` : undefined
           }
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedby}
-          disabled={disabled || chargement}
-          placeholder={selection ? selection.libelle : placeholder}
-          value={ouvert ? recherche : (selection?.libelle ?? "")}
+          disabled={disabled || loading}
+          placeholder={selection ? selection.label : placeholder}
+          value={open ? search : (selection?.label ?? "")}
           onFocus={() => {
-            definirOuvert(true);
-            definirRecherche("");
+            setOpen(true);
+            setSearch("");
           }}
           onChange={(event) => {
-            definirRecherche(event.target.value);
-            definirOuvert(true);
-            definirIndexActif(-1);
+            setSearch(event.target.value);
+            setOpen(true);
+            setActiveIndex(-1);
           }}
-          onKeyDown={gererClavier}
+          onKeyDown={handleKeyboard}
         />
-        {chargement ? (
-          <CoreSpinLoader libelle="Chargement des options…" taille={15} />
+        {loading ? (
+          <CoreSpinLoader label="Chargement des options…" size={15} />
         ) : selection && !disabled ? (
           <button
             type="button"
             aria-label="Effacer la sélection"
             onClick={() => {
-              onChoisir("");
-              definirRecherche("");
-              refChamp.current?.focus();
+              onChoose("");
+              setSearch("");
+              refField.current?.focus();
             }}
           >
             <X size={14} />
@@ -163,42 +163,42 @@ export function SearchableSelect({
           aria-hidden="true"
           disabled={disabled}
           onClick={() => {
-            definirOuvert((courant) => !courant);
-            refChamp.current?.focus();
+            setOpen((current) => !current);
+            refField.current?.focus();
           }}
         >
           <ChevronDown size={15} />
         </button>
       </div>
-      {ouvert && (
-        <ul className="select-recherchable-sre__liste" role="listbox" id={idListe}>
-          {erreurChargement ? (
-            <li className="select-recherchable-sre__vide" role="alert">
-              {erreurChargement}
+      {open && (
+        <ul className="searchable-select-sre__list" role="listbox" id={listId}>
+          {loadingError ? (
+            <li className="searchable-select-sre__empty" role="alert">
+              {loadingError}
             </li>
-          ) : optionsFiltrees.length === 0 ? (
-            <li className="select-recherchable-sre__vide">Aucun résultat pour cette recherche.</li>
+          ) : filteredOptions.length === 0 ? (
+            <li className="searchable-select-sre__empty">Aucun résultat pour cette recherche.</li>
           ) : (
-            optionsFiltrees.map((option, index) => (
+            filteredOptions.map((option, index) => (
               <li
-                key={option.valeur}
-                id={`${idEffectif}-option-${index}`}
+                key={option.value}
+                id={`${effectiveId}-option-${index}`}
                 role="option"
-                aria-selected={option.valeur === valeur}
+                aria-selected={option.value === value}
                 className={
-                  index === indexActif ? "select-recherchable-sre__option--active" : undefined
+                  index === activeIndex ? "searchable-select-sre__option--active" : undefined
                 }
-                onMouseEnter={() => definirIndexActif(index)}
+                onMouseEnter={() => setActiveIndex(index)}
                 onMouseDown={(event) => {
                   event.preventDefault();
-                  choisir(option);
+                  choose(option);
                 }}
               >
                 <span>
-                  <strong>{option.libelle}</strong>
+                  <strong>{option.label}</strong>
                   {option.description && <small>{option.description}</small>}
                 </span>
-                {option.valeur === valeur && <Check size={14} aria-hidden="true" />}
+                {option.value === value && <Check size={14} aria-hidden="true" />}
               </li>
             ))
           )}

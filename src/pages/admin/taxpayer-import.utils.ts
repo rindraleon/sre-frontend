@@ -32,94 +32,94 @@ export interface ImportProfile {
   telephone: string;
   representantLegal?: string;
 }
-export interface AnalyseLigne {
-  numero: number;
-  valeurs: string[];
-  profil?: ImportProfile;
-  erreurs: ImportErrorRow[];
-  doublon: boolean;
+export interface AnalysisRow {
+  number: number;
+  values: string[];
+  profile?: ImportProfile;
+  errors: ImportErrorRow[];
+  duplicate: boolean;
 }
 export const MAPPING_FIELDS: {
-  champ: MappingField;
-  libelle: string;
-  obligatoire: boolean;
+  field: MappingField;
+  label: string;
+  required: boolean;
   aliases: string[];
 }[] = [
   {
-    champ: "type",
-    libelle: "Type de contribuable",
-    obligatoire: true,
+    field: "type",
+    label: "Type de contribuable",
+    required: true,
     aliases: ["type", "type contribuable", "type de contribuable", "profil"],
   },
   {
-    champ: "nom",
-    libelle: "Nom",
-    obligatoire: false,
+    field: "nom",
+    label: "Nom",
+    required: false,
     aliases: ["nom", "nom de famille", "nom du contribuable", "nom patronymique"],
   },
   {
-    champ: "prenom",
-    libelle: "Prénom",
-    obligatoire: false,
+    field: "prenom",
+    label: "Prénom",
+    required: false,
     aliases: ["prenom", "prénom", "firstname"],
   },
   {
-    champ: "raisonSociale",
-    libelle: "Raison sociale",
-    obligatoire: false,
+    field: "raisonSociale",
+    label: "Raison sociale",
+    required: false,
     aliases: ["raison sociale", "entreprise", "societe", "société", "company"],
   },
   {
-    champ: "nomCommercial",
-    libelle: "Nom commercial",
-    obligatoire: false,
+    field: "nomCommercial",
+    label: "Nom commercial",
+    required: false,
     aliases: ["nom commercial", "enseigne"],
   },
   {
-    champ: "nif",
-    libelle: "NIF",
-    obligatoire: false,
+    field: "nif",
+    label: "NIF",
+    required: false,
     aliases: ["nif", "numero nif", "numéro nif", "identifiant fiscal"],
   },
   {
-    champ: "stat",
-    libelle: "STAT",
-    obligatoire: false,
+    field: "stat",
+    label: "STAT",
+    required: false,
     aliases: ["stat", "numero stat", "numéro stat"],
   },
   {
-    champ: "courriel",
-    libelle: "Adresse e-mail",
-    obligatoire: true,
+    field: "courriel",
+    label: "Adresse e-mail",
+    required: true,
     aliases: ["email", "e-mail", "courriel", "adresse email", "adresse e-mail"],
   },
   {
-    champ: "telephone",
-    libelle: "Téléphone",
-    obligatoire: true,
+    field: "telephone",
+    label: "Téléphone",
+    required: true,
     aliases: ["telephone", "téléphone", "tel", "mobile", "telephone mobile"],
   },
   {
-    champ: "adresse",
-    libelle: "Adresse",
-    obligatoire: true,
+    field: "adresse",
+    label: "Adresse",
+    required: true,
     aliases: ["adresse", "adresse postale", "adresse fiscale"],
   },
-  { champ: "region", libelle: "Région", obligatoire: true, aliases: ["region", "région"] },
+  { field: "region", label: "Région", required: true, aliases: ["region", "région"] },
   {
-    champ: "ville",
-    libelle: "Ville / Commune",
-    obligatoire: true,
+    field: "ville",
+    label: "Ville / Commune",
+    required: true,
     aliases: ["ville", "commune", "ville commune"],
   },
   {
-    champ: "representantLegal",
-    libelle: "Représentant légal",
-    obligatoire: false,
+    field: "representantLegal",
+    label: "Représentant légal",
+    required: false,
     aliases: ["representant legal", "représentant légal", "gerant", "gérant"],
   },
 ];
-export const mappingVide: Mappings = {
+export const mappingEmpty: Mappings = {
   type: "",
   nom: "",
   prenom: "",
@@ -134,16 +134,16 @@ export const mappingVide: Mappings = {
   ville: "",
   representantLegal: "",
 };
-export const cleNormalisee = (valeur: string) =>
-  valeur
+export const normalizedKey = (value: string) =>
+  value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
-export const texteCellule = (cellule: CellValue | null | undefined) =>
-  cellule == null
+export const cellText = (cell: CellValue | null | undefined) =>
+  cell == null
     ? ""
-    : cellule instanceof Date
-      ? cellule.toISOString().slice(0, 10)
-      : String(cellule).trim();
+    : cell instanceof Date
+      ? cell.toISOString().slice(0, 10)
+      : String(cell).trim();

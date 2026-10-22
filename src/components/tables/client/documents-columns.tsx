@@ -5,66 +5,66 @@ import { ROUTES_CLIENT } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
-/** Libellé du type de document de paiement. */
-export function titreDocument(document: PaymentDocument) {
+/** Label of the payment document type. */
+export function documentTitle(document: PaymentDocument) {
   return document.type === "ACCUSE_DECLARATION"
     ? "Accusé de soumission de déclaration"
     : "Reçu interne de décision";
 }
 
-/** Colonnes du tableau des reçus et documents du contribuable (espace client). */
-export function creerColonnesDocuments(): TableColumn<PaymentDocument>[] {
+/** Columns of the taxpayer's receipts and documents table (client workspace). */
+export function createDocumentColumns(): TableColumn<PaymentDocument>[] {
   return [
     {
-      id: "numero",
-      titre: "Document",
-      afficher: (document) => (
+      id: "number",
+      title: "Document",
+      render: (document) => (
         <>
           <Link className="reference-sre" to={ROUTES_CLIENT.document(document.id)}>
-            {document.numero}
+            {document.number}
           </Link>
-          <small className="sous-ligne-sre">{titreDocument(document)}</small>
+          <small className="sub-row-sre">{documentTitle(document)}</small>
         </>
       ),
-      valeurTri: (document) => document.numero,
+      sortValue: (document) => document.number,
     },
     {
-      id: "paiement",
-      titre: "Déclaration associée",
-      afficher: (document) => (
-        <Link className="lien-action-sre" to={ROUTES_CLIENT.paiement(document.paiementId)}>
-          {document.referencePaiement} <ArrowRight size={13} />
+      id: "payment",
+      title: "Déclaration associée",
+      render: (document) => (
+        <Link className="action-link-sre" to={ROUTES_CLIENT.payment(document.paymentId)}>
+          {document.paymentReference} <ArrowRight size={13} />
         </Link>
       ),
-      valeurTri: (document) => document.referencePaiement,
+      sortValue: (document) => document.paymentReference,
     },
     {
-      id: "montant",
-      titre: "Montant déclaré",
-      afficher: (document) => (
-        <span className="montant-sre">{formatMoney(document.montant, document.devise)}</span>
+      id: "amount",
+      title: "Montant déclaré",
+      render: (document) => (
+        <span className="amount-sre">{formatMoney(document.amount, document.currency)}</span>
       ),
-      valeurTri: (document) => document.montant,
+      sortValue: (document) => document.amount,
     },
     {
-      id: "emis",
-      titre: "Date d’émission",
-      afficher: (document) => formatDate(document.emisLe, true),
-      valeurTri: (document) => document.emisLe,
+      id: "issued",
+      title: "Date d’émission",
+      render: (document) => formatDate(document.issuedAt, true),
+      sortValue: (document) => document.issuedAt,
     },
     {
       id: "type",
-      titre: "Nature",
-      afficher: (document) => <StatusBadge statut={document.type} />,
-      valeurTri: (document) => document.type,
+      title: "Nature",
+      render: (document) => <StatusBadge status={document.type} />,
+      sortValue: (document) => document.type,
     },
     {
       id: "action",
-      titre: "Actions",
-      afficher: (document) => (
+      title: "Actions",
+      render: (document) => (
         <ActionGroup>
           <ActionIcon
-            titre="Consulter le document"
+            title="Consulter le document"
             href={ROUTES_CLIENT.document(document.id)}
           >
             <Eye size={15} />

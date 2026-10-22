@@ -20,28 +20,28 @@ import { SRE_REGION } from "@/utils/constants";
 import { StatusBadge, Button, CoreSpinLoader, PageHeader } from "@/components/ui";
 import { formatDate } from "@/utils/format";
 import {
-  type AnalyseLigne,
+  type AnalysisRow,
   type MappingField,
   type Mappings,
   type ImportProfile,
   MAPPING_FIELDS,
-  cleNormalisee,
-  mappingVide,
-  texteCellule,
+  normalizedKey,
+  mappingEmpty,
+  cellText,
 } from "./taxpayer-import.utils";
 export function AdminTaxpayerImportPage() {
-  const { mettreAJourEtat, notifier } = useSre();
+  const { updateState, notify } = useSre();
   const { session } = useAuth();
-  const [feuilles, setFeuilles] = useState<Sheet[]>([]);
-  const [nomFeuille, setNomFeuille] = useState("");
-  const [fichierNom, setFichierNom] = useState("");
-  const [enTetes, setEnTetes] = useState<string[]>([]);
-  const [lignesExcel, setLignesExcel] = useState<(CellValue | null)[][]>([]);
-  const [mapping, setMapping] = useState<Mappings>(mappingVide);
-  const [analyse, setAnalyse] = useState<AnalyseLigne[] | null>(null);
-  const [erreur, setErreur] = useState("");
-  const [chargement, setChargement] = useState(false);
-  const [rapport, setRapport] = useState<ImportHistoryEntry | null>(null);
+  const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [sheetName, setSheetName] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [excelRows, setExcelRows] = useState<(CellValue | null)[][]>([]);
+  const [mapping, setMapping] = useState<Mappings>(mappingEmpty);
+  const [analysis, setAnalysis] = useState<AnalysisRow[] | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState<ImportHistoryEntry | null>(null);
   const [emailsImport, setEmailsImport] = useState<
     {
       compteId: string;
@@ -50,265 +50,265 @@ export function AdminTaxpayerImportPage() {
       demandeId: string | null;
     }[]
   >([]);
-  const [renvoiEnCours, setRenvoiEnCours] = useState<string | null>(null);
-  const [filtreLignes, setFiltreLignes] = useState("TOUS");
-  const feuilleActive = feuilles.find((feuille) => feuille.sheet === nomFeuille);
-  const colonnesValides = useMemo(
+  const [resendInProgress, setResendInProgress] = useState<string | null>(null);
+  const [filterRows, setFilterRows] = useState("TOUS");
+  const activeSheet = sheets.find((sheet) => sheet.sheet === sheetName);
+  const validColumns = useMemo(
     () =>
-      MAPPING_FIELDS.filter((champ) => champ.obligatoire).every(
-        (champ) => mapping[champ.champ] !== "",
+      MAPPING_FIELDS.filter((field) => field.required).every(
+        (field) => mapping[field.field] !== "",
       ),
     [mapping],
   );
-  const lignesAnalysees = useMemo(
+  const analyzedRows = useMemo(
     () =>
-      (analyse ?? []).filter(
-        (ligne) => {
-          if (filtreLignes === "TOUS") return true;
-          if (filtreLignes === "VALIDES") return Boolean(ligne.profil);
-          if (filtreLignes === "DOUBLONS") return ligne.doublon;
-          return ligne.erreurs.length > 0;
+      (analysis ?? []).filter(
+        (row) => {
+          if (filterRows === "TOUS") return true;
+          if (filterRows === "VALIDES") return Boolean(row.profile);
+          if (filterRows === "DOUBLONS") return row.duplicate;
+          return row.errors.length > 0;
         },
       ),
-    [analyse, filtreLignes],
+    [analysis, filterRows],
   );
 
-  const initialiserFeuille = (feuille: Sheet) => {
-    const lignes = feuille.data ?? [];
-    const enTetesFeuille = (lignes[0] ?? []).map(
-      (cellule, index) => texteCellule(cellule) || `Colonne ${index + 1}`,
+  const initializeSheet = (sheet: Sheet) => {
+    const rows = sheet.data ?? [];
+    const headersSheet = (rows[0] ?? []).map(
+      (cell, index) => cellText(cell) || `Colonne ${index + 1}`,
     );
-    const correspondances = { ...mappingVide };
-    for (const entree of MAPPING_FIELDS) {
-      const index = enTetesFeuille.findIndex((entete) =>
-        entree.aliases.map(cleNormalisee).includes(cleNormalisee(entete)),
+    const detectedMapping = { ...mappingEmpty };
+    for (const entry of MAPPING_FIELDS) {
+      const index = headersSheet.findIndex((header) =>
+        entry.aliases.map(normalizedKey).includes(normalizedKey(header)),
       );
-      if (index >= 0) correspondances[entree.champ] = String(index);
+      if (index >= 0) detectedMapping[entry.field] = String(index);
     }
-    setNomFeuille(feuille.sheet);
-    setEnTetes(enTetesFeuille);
-    setLignesExcel(lignes.slice(1));
-    setMapping(correspondances);
-    setAnalyse(null);
-    setRapport(null);
-    setFiltreLignes("TOUS");
+    setSheetName(sheet.sheet);
+    setHeaders(headersSheet);
+    setExcelRows(rows.slice(1));
+    setMapping(detectedMapping);
+    setAnalysis(null);
+    setReport(null);
+    setFilterRows("TOUS");
   };
 
-  const lireFichier = async (event: ChangeEvent<HTMLInputElement>) => {
-    const fichier = event.target.files?.[0];
-    if (!fichier) return;
-    setErreur("");
-    setRapport(null);
-    setFichierNom(fichier.name);
-    if (!fichier.name.toLowerCase().endsWith(".xlsx")) {
-      setErreur("Choisissez un fichier Excel .xlsx.");
+  const readFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setReport(null);
+    setFileName(file.name);
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      setError("Choisissez un fichier Excel .xlsx.");
       event.target.value = "";
       return;
     }
-    if (fichier.size > 10 * 1024 * 1024) {
-      setErreur("Le fichier dépasse la limite de 10 Mo.");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Le fichier dépasse la limite de 10 Mo.");
       event.target.value = "";
       return;
     }
-    setChargement(true);
+    setLoading(true);
     try {
-      const resultat = await readXlsxFile(fichier);
-      const feuillesNonVides = resultat.filter((feuille) => feuille.data?.length);
-      if (!feuillesNonVides.length) {
-        setErreur("Aucune feuille ou ligne lisible n’a été trouvée.");
-        setFeuilles([]);
+      const result = await readXlsxFile(file);
+      const nonEmptySheets = result.filter((sheet) => sheet.data?.length);
+      if (!nonEmptySheets.length) {
+        setError("Aucune feuille ou ligne lisible n’a été trouvée.");
+        setSheets([]);
         return;
       }
-      if (feuillesNonVides.some((feuille) => feuille.data.length > 2001)) {
-        setErreur("La limite est de 2 000 lignes de données par feuille.");
-        setFeuilles([]);
+      if (nonEmptySheets.some((sheet) => sheet.data.length > 2001)) {
+        setError("La limite est de 2 000 lignes de données par feuille.");
+        setSheets([]);
         return;
       }
-      setFeuilles(feuillesNonVides);
-      initialiserFeuille(feuillesNonVides[0]);
+      setSheets(nonEmptySheets);
+      initializeSheet(nonEmptySheets[0]);
     } catch {
-      setErreur(
+      setError(
         "Impossible de lire ce classeur. Vérifiez qu’il s’agit d’un fichier .xlsx valide, puis réessayez.",
       );
-      setFeuilles([]);
+      setSheets([]);
     } finally {
-      setChargement(false);
+      setLoading(false);
     }
   };
 
-  const choisirFeuille = (nom: string) => {
-    const feuille = feuilles.find((entree) => entree.sheet === nom);
-    if (feuille) initialiserFeuille(feuille);
+  const chooseSheet = (name: string) => {
+    const sheet = sheets.find((entry) => entry.sheet === name);
+    if (sheet) initializeSheet(sheet);
   };
-  const changerMapping = (champ: MappingField, valeur: string) => {
-    setMapping((courant) => ({ ...courant, [champ]: valeur }));
-    setAnalyse(null);
-    setRapport(null);
+  const changeMapping = (field: MappingField, value: string) => {
+    setMapping((current) => ({ ...current, [field]: value }));
+    setAnalysis(null);
+    setReport(null);
   };
-  const valeurMappee = (ligne: (CellValue | null)[], champ: MappingField) => {
-    const index = mapping[champ] === "" ? -1 : Number(mapping[champ]);
-    return index < 0 ? "" : texteCellule(ligne[index]);
+  const mappedValue = (row: (CellValue | null)[], field: MappingField) => {
+    const index = mapping[field] === "" ? -1 : Number(mapping[field]);
+    return index < 0 ? "" : cellText(row[index]);
   };
 
-  const analyserType = (ligne: number, typeBrut: string, erreurs: ImportErrorRow[]): TaxpayerType => {
-    const typeNormalise = cleNormalisee(typeBrut);
+  const analyzeType = (row: number, rawType: string, errors: ImportErrorRow[]): TaxpayerType => {
+    const normalizedType = normalizedKey(rawType);
     if (
-      typeNormalise.includes("entreprise") ||
-      typeNormalise.includes("societe") ||
-      typeNormalise.includes("professionnel")
+      normalizedType.includes("entreprise") ||
+      normalizedType.includes("societe") ||
+      normalizedType.includes("professionnel")
     ) return "ENTREPRISE";
-    if (typeNormalise.includes("particulier") || typeNormalise.includes("personne"))
+    if (normalizedType.includes("particulier") || normalizedType.includes("personne"))
       return "PARTICULIER";
-    erreurs.push({
-      ligne,
-      champ: "Type",
+    errors.push({
+      row,
+      field: "Type",
       message: "Indiquez explicitement Particulier ou Entreprise.",
     });
     return "PARTICULIER";
   };
 
-  const verifierDoublons = (
-    numero: number,
-    courriel: string,
+  const checkDuplicates = (
+    number: number,
+    email: string,
     nif: string,
     stat: string,
-    ensembles: { emails: Set<string>; nifs: Set<string>; stats: Set<string> },
-    erreurs: ImportErrorRow[],
+    sets: { emails: Set<string>; nifs: Set<string>; stats: Set<string> },
+    errors: ImportErrorRow[],
   ) => {
-    let doublon = false;
-    if (courriel && ensembles.emails.has(courriel)) {
-      doublon = true;
-      erreurs.push({ ligne: numero, champ: "E-mail", message: "Cette adresse apparaît plusieurs fois dans le classeur." });
+    let duplicate = false;
+    if (email && sets.emails.has(email)) {
+      duplicate = true;
+      errors.push({ row: number, field: "E-mail", message: "Cette adresse apparaît plusieurs fois dans le classeur." });
     }
-    if (nif && ensembles.nifs.has(nif)) {
-      doublon = true;
-      erreurs.push({ ligne: numero, champ: "NIF", message: "Ce NIF apparaît plusieurs fois dans le classeur." });
+    if (nif && sets.nifs.has(nif)) {
+      duplicate = true;
+      errors.push({ row: number, field: "NIF", message: "Ce NIF apparaît plusieurs fois dans le classeur." });
     }
-    if (stat && ensembles.stats.has(stat)) {
-      doublon = true;
-      erreurs.push({ ligne: numero, champ: "STAT", message: "Ce STAT apparaît plusieurs fois dans le classeur." });
+    if (stat && sets.stats.has(stat)) {
+      duplicate = true;
+      errors.push({ row: number, field: "STAT", message: "Ce STAT apparaît plusieurs fois dans le classeur." });
     }
-    if (courriel) ensembles.emails.add(courriel);
-    if (nif) ensembles.nifs.add(nif);
-    if (stat) ensembles.stats.add(stat);
-    return doublon;
+    if (email) sets.emails.add(email);
+    if (nif) sets.nifs.add(nif);
+    if (stat) sets.stats.add(stat);
+    return duplicate;
   };
 
-  const verifierChampsObligatoires = ({
-    numero,
+  const checkRequiredFields = ({
+    number,
     type,
-    raisonSociale,
-    nom,
-    courriel,
-    telephone,
-    adresse,
+    legalName,
+    name,
+    email,
+    phone,
+    address,
     region,
-    ville,
-    erreurs,
+    city,
+    errors,
   }: {
-    numero: number;
+    number: number;
     type: TaxpayerType;
-    raisonSociale: string;
-    nom: string;
-    courriel: string;
-    telephone: string;
-    adresse: string;
+    legalName: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
     region: string;
-    ville: string;
-    erreurs: ImportErrorRow[];
+    city: string;
+    errors: ImportErrorRow[];
   }) => {
-    if (type === "ENTREPRISE" && !(raisonSociale || nom))
-      erreurs.push({ ligne: numero, champ: "Raison sociale", message: "La raison sociale est requise." });
-    if (type === "PARTICULIER" && !nom)
-      erreurs.push({ ligne: numero, champ: "Nom", message: "Le nom du contribuable est requis." });
-    const indexArobase = courriel.indexOf("@");
-    const domaine = courriel.slice(indexArobase + 1);
-    const indexPoint = domaine.indexOf(".");
+    if (type === "ENTREPRISE" && !(legalName || name))
+      errors.push({ row: number, field: "Raison sociale", message: "La raison sociale est requise." });
+    if (type === "PARTICULIER" && !name)
+      errors.push({ row: number, field: "Nom", message: "Le nom du contribuable est requis." });
+    const atSignIndex = email.indexOf("@");
+    const domain = email.slice(atSignIndex + 1);
+    const indexPoint = domain.indexOf(".");
     if (
-      !courriel ||
-      indexArobase <= 0 ||
-      indexArobase !== courriel.lastIndexOf("@") ||
-      /\s/.test(courriel) ||
+      !email ||
+      atSignIndex <= 0 ||
+      atSignIndex !== email.lastIndexOf("@") ||
+      /\s/.test(email) ||
       indexPoint <= 0 ||
-      indexPoint === domaine.length - 1
+      indexPoint === domain.length - 1
     )
-      erreurs.push({ ligne: numero, champ: "E-mail", message: "Une adresse e-mail valide est requise." });
-    if (telephone.length < 7)
-      erreurs.push({ ligne: numero, champ: "Téléphone", message: "Un numéro de téléphone valide est requis." });
-    if (adresse.length < 3)
-      erreurs.push({ ligne: numero, champ: "Adresse", message: "Une adresse est requise." });
-    if (cleNormalisee(region) !== cleNormalisee(SRE_REGION))
-      erreurs.push({ ligne: numero, champ: "Région", message: `Le service est limité à ${SRE_REGION}.` });
-    if (!ville)
-      erreurs.push({ ligne: numero, champ: "Ville / Commune", message: "La ville ou commune est requise." });
+      errors.push({ row: number, field: "E-mail", message: "Une adresse e-mail valide est requise." });
+    if (phone.length < 7)
+      errors.push({ row: number, field: "Téléphone", message: "Un numéro de téléphone valide est requis." });
+    if (address.length < 3)
+      errors.push({ row: number, field: "Adresse", message: "Une adresse est requise." });
+    if (normalizedKey(region) !== normalizedKey(SRE_REGION))
+      errors.push({ row: number, field: "Région", message: `Le service est limité à ${SRE_REGION}.` });
+    if (!city)
+      errors.push({ row: number, field: "Ville / Commune", message: "La ville ou commune est requise." });
   };
 
-  const analyserLigne = (
-    ligne: (CellValue | null)[],
+  const analyzeRow = (
+    row: (CellValue | null)[],
     index: number,
     emails: Set<string>,
     nifs: Set<string>,
     stats: Set<string>,
-  ): AnalyseLigne => {
-    const numero = index + 2;
-    const valeurs = ligne.map(texteCellule);
-    const erreurs: ImportErrorRow[] = [];
-    if (valeurs.every((valeur) => !valeur)) return { numero, valeurs, erreurs, doublon: false };
-    const type = analyserType(numero, valeurMappee(ligne, "type"), erreurs);
-    const raisonSociale = valeurMappee(ligne, "raisonSociale");
-    const nom = valeurMappee(ligne, "nom");
-    const prenom = valeurMappee(ligne, "prenom");
-    const nif = valeurMappee(ligne, "nif").trim().toUpperCase();
-    const stat = valeurMappee(ligne, "stat").trim().toUpperCase();
-    const courriel = valeurMappee(ligne, "courriel").trim().toLowerCase();
-    const telephone = valeurMappee(ligne, "telephone").trim();
-    const adresse = valeurMappee(ligne, "adresse").trim();
-    const region = valeurMappee(ligne, "region").trim();
-    const ville = valeurMappee(ligne, "ville").trim();
-    verifierChampsObligatoires({
-      numero,
+  ): AnalysisRow => {
+    const number = index + 2;
+    const values = row.map(cellText);
+    const errors: ImportErrorRow[] = [];
+    if (values.every((value) => !value)) return { number, values, errors, duplicate: false };
+    const type = analyzeType(number, mappedValue(row, "type"), errors);
+    const legalName = mappedValue(row, "raisonSociale");
+    const name = mappedValue(row, "nom");
+    const firstName = mappedValue(row, "prenom");
+    const nif = mappedValue(row, "nif").trim().toUpperCase();
+    const stat = mappedValue(row, "stat").trim().toUpperCase();
+    const email = mappedValue(row, "courriel").trim().toLowerCase();
+    const phone = mappedValue(row, "telephone").trim();
+    const address = mappedValue(row, "adresse").trim();
+    const region = mappedValue(row, "region").trim();
+    const city = mappedValue(row, "ville").trim();
+    checkRequiredFields({
+      number,
       type,
-      raisonSociale,
-      nom,
-      courriel,
-      telephone,
-      adresse,
+      legalName,
+      name,
+      email,
+      phone,
+      address,
       region,
-      ville,
-      erreurs,
+      city,
+      errors,
     });
-    const doublon = verifierDoublons(numero, courriel, nif, stat, { emails, nifs, stats }, erreurs);
-    const nomCommercial = valeurMappee(ligne, "nomCommercial").trim();
-    const representantLegal = valeurMappee(ligne, "representantLegal").trim();
-    const profil: ImportProfile | undefined = erreurs.length
+    const duplicate = checkDuplicates(number, email, nif, stat, { emails, nifs, stats }, errors);
+    const tradeName = mappedValue(row, "nomCommercial").trim();
+    const legalRepresentative = mappedValue(row, "representantLegal").trim();
+    const profile: ImportProfile | undefined = errors.length
       ? undefined
       : {
           type,
-          nom: (nom || raisonSociale).trim(),
-          ...(prenom.trim() ? { prenom: prenom.trim() } : {}),
-          ...(raisonSociale.trim() ? { raisonSociale: raisonSociale.trim() } : {}),
-          ...(nomCommercial ? { nomCommercial } : {}),
+          nom: (name || legalName).trim(),
+          ...(firstName.trim() ? { prenom: firstName.trim() } : {}),
+          ...(legalName.trim() ? { raisonSociale: legalName.trim() } : {}),
+          ...(tradeName ? { nomCommercial: tradeName } : {}),
           ...(nif ? { nif } : {}),
           ...(stat ? { stat } : {}),
-          adresse,
+          adresse: address,
           region: SRE_REGION,
-          ville,
-          courriel,
-          telephone,
-          ...(representantLegal ? { representantLegal } : {}),
+          ville: city,
+          courriel: email,
+          telephone: phone,
+          ...(legalRepresentative ? { representantLegal: legalRepresentative } : {}),
         };
-    return { numero, valeurs, profil, erreurs, doublon };
+    return { number, values, profile, errors, duplicate };
   };
 
-  const analyser = () => {
-    setErreur("");
-    setRapport(null);
-    if (!enTetes.length || !lignesExcel.length) {
-      setErreur("Le classeur ne contient aucune ligne de données à analyser.");
+  const analyze = () => {
+    setError("");
+    setReport(null);
+    if (!headers.length || !excelRows.length) {
+      setError("Le classeur ne contient aucune ligne de données à analyser.");
       return;
     }
-    if (!colonnesValides) {
-      setErreur(
+    if (!validColumns) {
+      setError(
         "Mappez le type de contribuable, l’e-mail, le téléphone, l’adresse, la région et la ville/commune.",
       );
       return;
@@ -316,31 +316,31 @@ export function AdminTaxpayerImportPage() {
     const emails = new Set<string>();
     const nifs = new Set<string>();
     const stats = new Set<string>();
-    const resultats = lignesExcel
-      .map((ligne, index) => analyserLigne(ligne, index, emails, nifs, stats))
-      .filter((ligne) => ligne.valeurs.some(Boolean));
-    setAnalyse(resultats);
-    setFiltreLignes("TOUS");
-    if (!resultats.length) setErreur("Aucune ligne de données sous l’en-tête.");
+    const results = excelRows
+      .map((row, index) => analyzeRow(row, index, emails, nifs, stats))
+      .filter((row) => row.values.some(Boolean));
+    setAnalysis(results);
+    setFilterRows("TOUS");
+    if (!results.length) setError("Aucune ligne de données sous l’en-tête.");
   };
 
-  const lancerImport = async () => {
-    if (!analyse) return;
-    if (!session?.jetonApi) {
-      setErreur("Session serveur introuvable. Reconnectez-vous.");
+  const startImport = async () => {
+    if (!analysis) return;
+    if (!session?.apiToken) {
+      setError("Session serveur introuvable. Reconnectez-vous.");
       return;
     }
-    const profils = analyse.flatMap((ligne) =>
-      ligne.profil && !ligne.doublon && !ligne.erreurs.length ? [ligne.profil] : [],
+    const profiles = analysis.flatMap((row) =>
+      row.profile && !row.duplicate && !row.errors.length ? [row.profile] : [],
     );
-    if (!profils.length) {
-      setErreur("Aucune ligne valide à importer.");
+    if (!profiles.length) {
+      setError("Aucune ligne valide à importer.");
       return;
     }
-    setErreur("");
-    setChargement(true);
+    setError("");
+    setLoading(true);
     try {
-      const resultat = await callApi<{
+      const result = await callApi<{
         donnees: ApiTaxpayer[];
         creees: number;
         ignorees: number;
@@ -353,117 +353,117 @@ export function AdminTaxpayerImportPage() {
           statutCourriel: string;
           demandeId: string | null;
         }[];
-      }>("contribuables/import", { method: "POST", token: session.jetonApi, body: { profils } });
-      const profilsCrees = resultat.donnees.map((entree) => mapApiTaxpayer(entree));
-      mettreAJourEtat((courant) => ({
-        ...courant,
-        contribuables: [...profilsCrees, ...courant.contribuables],
+      }>("contribuables/import", { method: "POST", token: session.apiToken, body: { profils: profiles } });
+      const profilesCreated = result.donnees.map((entry) => mapApiTaxpayer(entry));
+      updateState((current) => ({
+        ...current,
+        taxpayers: [...profilesCreated, ...current.taxpayers],
       }));
-      setEmailsImport(resultat.emails ?? []);
-      const lignesLocalesIgnorees = analyse.filter(
-        (ligne) => !ligne.profil || ligne.doublon || ligne.erreurs.length,
+      setEmailsImport(result.emails ?? []);
+      const locallyIgnoredRows = analysis.filter(
+        (row) => !row.profile || row.duplicate || row.errors.length,
       ).length;
-      const erreurs = analyse.flatMap((ligne) => ligne.erreurs);
-      if (resultat.rejetees)
-        erreurs.push({
-          ligne: 0,
-          message: `${resultat.rejetees} ligne(s) rejetée(s) par le serveur (informations manquantes ou invalides).`,
+      const errors = analysis.flatMap((row) => row.errors);
+      if (result.rejetees)
+        errors.push({
+          row: 0,
+          message: `${result.rejetees} ligne(s) rejetée(s) par le serveur (informations manquantes ou invalides).`,
         });
-      if (resultat.doublons)
-        erreurs.push({
-          ligne: 0,
-          message: `${resultat.doublons} doublon(s) détecté(s) (e-mail, NIF ou STAT déjà enregistrés) — aucune création en double.`,
+      if (result.doublons)
+        errors.push({
+          row: 0,
+          message: `${result.doublons} doublon(s) détecté(s) (e-mail, NIF ou STAT déjà enregistrés) — aucune création en double.`,
         });
-      const nouveauxDoublons = analyse.filter((ligne) => ligne.doublon).length;
-      const totalIgnores = lignesLocalesIgnorees + resultat.ignorees;
-      let statutImport: ImportHistoryEntry["statut"];
-      if (totalIgnores === 0) {
-        statutImport = "TERMINE";
-      } else if (resultat.creees > 0) {
-        statutImport = "PARTIEL";
+      const newDuplicates = analysis.filter((row) => row.duplicate).length;
+      const ignoredTotal = locallyIgnoredRows + result.ignorees;
+      let importStatus: ImportHistoryEntry["status"];
+      if (ignoredTotal === 0) {
+        importStatus = "TERMINE";
+      } else if (result.creees > 0) {
+        importStatus = "PARTIEL";
       } else {
-        statutImport = "ERREUR";
+        importStatus = "ERREUR";
       }
-      const rapportImport: ImportHistoryEntry = {
+      const importReport: ImportHistoryEntry = {
         id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-        nomFichier: fichierNom,
+        fileName: fileName,
         date: new Date().toISOString(),
-        analysees: analyse.length,
-        creees: resultat.creees,
-        ignorees: totalIgnores,
-        doublons: nouveauxDoublons + resultat.ignorees,
-        erreurs,
-        statut: statutImport,
+        analyzed: analysis.length,
+        created: result.creees,
+        ignored: ignoredTotal,
+        duplicates: newDuplicates + result.ignorees,
+        errors,
+        status: importStatus,
       };
-      setRapport(rapportImport);
-      notifier(
-        `${resultat.creees} profil(s) créé(s), dont ${resultat.comptesCrees ?? 0} compte(s) entreprise(s) avec e-mail d’activation.`,
-        resultat.creees ? "succes" : "avertissement",
+      setReport(importReport);
+      notify(
+        `${result.creees} profil(s) créé(s), dont ${result.comptesCrees ?? 0} compte(s) entreprise(s) avec e-mail d’activation.`,
+        result.creees ? "success" : "warning",
       );
     } catch (cause) {
-      setErreur(
+      setError(
         cause instanceof Error ? cause.message : "Le serveur n’a pas effectué l’import.",
       );
     } finally {
-      setChargement(false);
+      setLoading(false);
     }
   };
 
-  const reinitialiser = () => {
-    setFeuilles([]);
-    setNomFeuille("");
-    setFichierNom("");
-    setEnTetes([]);
-    setLignesExcel([]);
-    setMapping(mappingVide);
-    setAnalyse(null);
-    setErreur("");
-    setRapport(null);
+  const reset = () => {
+    setSheets([]);
+    setSheetName("");
+    setFileName("");
+    setHeaders([]);
+    setExcelRows([]);
+    setMapping(mappingEmpty);
+    setAnalysis(null);
+    setError("");
+    setReport(null);
     setEmailsImport([]);
   };
 
-  /** Réessai d'envoi d'un e-mail de première connexion en échec (jeton réémis). */
-  const renvoyerEmail = async (demandeId: string, destinataire: string) => {
-    if (!session?.jetonApi) return;
-    setRenvoiEnCours(demandeId);
+  /** Retry sending a failed first-sign-in e-mail (reissued token). */
+  const resendEmail = async (requestId: string, recipient: string) => {
+    if (!session?.apiToken) return;
+    setResendInProgress(requestId);
     try {
-      const resultat = await callApi<{ statutCourriel: string }>(
-        `utilisateurs/emails-activation/${encodeURIComponent(demandeId)}/renvoyer`,
-        { method: "POST", token: session.jetonApi },
+      const result = await callApi<{ statutCourriel: string }>(
+        `utilisateurs/emails-activation/${encodeURIComponent(requestId)}/renvoyer`,
+        { method: "POST", token: session.apiToken },
       );
-      setEmailsImport((courant) =>
-        courant.map((email) =>
-          email.demandeId === demandeId
-            ? { ...email, statutCourriel: resultat.statutCourriel }
+      setEmailsImport((current) =>
+        current.map((email) =>
+          email.demandeId === requestId
+            ? { ...email, statutCourriel: result.statutCourriel }
             : email,
         ),
       );
-      notifier(
-        resultat.statutCourriel === "ENVOYEE"
-          ? `E-mail renvoyé à ${destinataire}.`
-          : `L'envoi à ${destinataire} a de nouveau échoué.`,
-        resultat.statutCourriel === "ENVOYEE" ? "succes" : "erreur",
+      notify(
+        result.statutCourriel === "ENVOYEE"
+          ? `E-mail renvoyé à ${recipient}.`
+          : `L'envoi à ${recipient} a de nouveau échoué.`,
+        result.statutCourriel === "ENVOYEE" ? "success" : "error",
       );
     } catch (cause) {
-      notifier(
+      notify(
         cause instanceof Error ? cause.message : "Le renvoi a échoué.",
-        "erreur",
+        "error",
       );
     } finally {
-      setRenvoiEnCours(null);
+      setResendInProgress(null);
     }
   };
 
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Import Excel"
+        title="Import Excel"
         description={`Importez des profils contribuables de ${SRE_REGION} après aperçu et validation des lignes.`}
-        filAriane={["Accueil", "Import Excel"]}
+        breadcrumb={["Accueil", "Import Excel"]}
       />
-      {!feuilles.length ? (
-        <section className="carte-sre zone-depot-excel-sre">
-          <span className="zone-depot-excel-sre__icone">
+      {!sheets.length ? (
+        <section className="card-sre excel-drop-zone-sre">
+          <span className="excel-drop-zone-sre__icon">
             <FileSpreadsheet size={26} />
           </span>
           <h2>Sélectionner un classeur Excel</h2>
@@ -471,34 +471,34 @@ export function AdminTaxpayerImportPage() {
             Importez un fichier .xlsx avec une ligne d’en-tête. Vous pourrez choisir la feuille,
             mapper les colonnes et valider les lignes avant l’enregistrement serveur.
           </p>
-          <label className="bouton-sre bouton-sre--primaire" aria-disabled={chargement}>
+          <label className="button-sre button-sre--primary" aria-disabled={loading}>
             <Upload size={15} aria-hidden="true" /> Choisir un fichier .xlsx
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={lireFichier}
-              disabled={chargement}
+              onChange={readFile}
+              disabled={loading}
             />
           </label>
           <a
-            className="lien-modele-import-sre"
+            className="import-template-link-sre"
             href="/modele-import-contribuables-sre.xlsx"
             download
           >
             <ArrowDownToLine size={14} /> Télécharger le modèle vierge (sans exemple)
           </a>
-          {chargement && (
-            <p className="texte-secondaire-sre flex items-center gap-2" aria-live="polite">
-              <CoreSpinLoader libelle="Lecture du classeur…" taille={16} compact />
+          {loading && (
+            <p className="secondary-text-sre flex items-center gap-2" aria-live="polite">
+              <CoreSpinLoader label="Lecture du classeur…" size={16} compact />
               Lecture du classeur…
             </p>
           )}
-          {erreur && (
-            <p className="message-erreur-sre" role="alert">
-              {erreur}
+          {error && (
+            <p className="error-message-sre" role="alert">
+              {error}
             </p>
           )}
-          <div className="aide-import-sre">
+          <div className="import-help-sre">
             <strong>Colonnes à mapper :</strong>
             <p>
               Nom ou raison sociale, e-mail, téléphone, adresse, région {SRE_REGION} et
@@ -508,66 +508,66 @@ export function AdminTaxpayerImportPage() {
         </section>
       ) : (
         <>
-          <section className="carte-sre import-fichier-sre">
+          <section className="card-sre file-import-sre">
             <div>
-              <span className="icone-fichier-sre">
+              <span className="file-icon-sre">
                 <FileSpreadsheet size={19} />
               </span>
               <div>
-                <strong>{fichierNom}</strong>
+                <strong>{fileName}</strong>
                 <small>
-                  {lignesExcel.length} ligne(s) de données · {feuilles.length} feuille(s)
+                  {excelRows.length} ligne(s) de données · {sheets.length} feuille(s)
                 </small>
               </div>
             </div>
-            <div className="actions-tableau-sre">
-              {feuilles.length > 1 && (
-                <label className="filtre-compact-sre">
+            <div className="table-actions-sre">
+              {sheets.length > 1 && (
+                <label className="compact-filter-sre">
                   Feuille
                   <Select
-                    value={nomFeuille}
-                    onChange={(event) => choisirFeuille(event.target.value)}
+                    value={sheetName}
+                    onChange={(event) => chooseSheet(event.target.value)}
                   >
-                    {feuilles.map((feuille) => (
-                      <option key={feuille.sheet} value={feuille.sheet}>
-                        {feuille.sheet}
+                    {sheets.map((sheet) => (
+                      <option key={sheet.sheet} value={sheet.sheet}>
+                        {sheet.sheet}
                       </option>
                     ))}
                   </Select>
                 </label>
               )}
-              <Button variante="contour" taille="petit" onClick={reinitialiser}>
+              <Button variant="outline" size="small" onClick={reset}>
                 <RotateCcw size={14} /> Remplacer le fichier
               </Button>
             </div>
           </section>
-          {erreur && (
-            <p className="message-erreur-sre" role="alert">
-              {erreur}
+          {error && (
+            <p className="error-message-sre" role="alert">
+              {error}
             </p>
           )}
-          <section className="carte-sre">
-            <div className="carte-sre__entete">
+          <section className="card-sre">
+            <div className="card-sre__header">
               <div>
                 <h2>1. Mapper les colonnes</h2>
                 <p>Les champs requis sont indiqués. La région doit correspondre à {SRE_REGION}.</p>
               </div>
-              <span className="etape-import-badge-sre">1 / 3</span>
+              <span className="import-step-badge-sre">1 / 3</span>
             </div>
-            <div className="grille-mapping-excel-sre">
-              {MAPPING_FIELDS.map(({ champ, libelle, obligatoire }) => (
-                <label key={champ}>
-                  {libelle}
-                  {obligatoire && <em> requis</em>}
+            <div className="excel-mapping-grid-sre">
+              {MAPPING_FIELDS.map(({ field, label, required }) => (
+                <label key={field}>
+                  {label}
+                  {required && <em> requis</em>}
                   <Select
-                    className="champ-simple-sre"
-                    value={mapping[champ]}
-                    onChange={(event) => changerMapping(champ, event.target.value)}
+                    className="field-simple-sre"
+                    value={mapping[field]}
+                    onChange={(event) => changeMapping(field, event.target.value)}
                   >
                     <option value="">Non mappé</option>
-                    {enTetes.map((entete, index) => (
-                      <option key={`${index}-${entete}`} value={String(index)}>
-                        {entete}
+                    {headers.map((header, index) => (
+                      <option key={`${index}-${header}`} value={String(index)}>
+                        {header}
                       </option>
                     ))}
                   </Select>
@@ -575,66 +575,66 @@ export function AdminTaxpayerImportPage() {
               ))}
             </div>
           </section>
-          <section className="carte-sre">
-            <div className="carte-sre__entete">
+          <section className="card-sre">
+            <div className="card-sre__header">
               <div>
                 <h2>2. Aperçu des données</h2>
-                <p>Les premières lignes de la feuille « {nomFeuille} »</p>
+                <p>Les premières lignes de la feuille « {sheetName} »</p>
               </div>
-              <span className="etape-import-badge-sre">
-                {Math.min(5, lignesExcel.length)} / {lignesExcel.length}
+              <span className="import-step-badge-sre">
+                {Math.min(5, excelRows.length)} / {excelRows.length}
               </span>
             </div>
-            <div className="tableau-defilement-sre">
-              <table className="tableau-sre tableau-apercu-excel-sre">
+            <div className="table-scroll-sre">
+              <table className="table-sre excel-preview-table-sre">
                 <thead>
                   <tr>
                     <th>Ligne</th>
-                    {enTetes.slice(0, 8).map((entete, index) => (
-                      <th key={`${index}-${entete}`}>{entete}</th>
+                    {headers.slice(0, 8).map((header, index) => (
+                      <th key={`${index}-${header}`}>{header}</th>
                     ))}
-                    {enTetes.length > 8 && <th>…</th>}
+                    {headers.length > 8 && <th>…</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {(feuilleActive?.data.slice(1, 6) ?? []).map((ligne, index) => (
-                    <tr key={`${index + 2}-${JSON.stringify(ligne)}`}>
+                  {(activeSheet?.data.slice(1, 6) ?? []).map((row, index) => (
+                    <tr key={`${index + 2}-${JSON.stringify(row)}`}>
                       <td data-label="Ligne Excel">{index + 2}</td>
-                      {enTetes.slice(0, 8).map((entete, cellule) => (
+                      {headers.slice(0, 8).map((header, cell) => (
                         <td
-                          data-label={entete || `Colonne ${cellule + 1}`}
-                          key={entete || `colonne-${cellule + 1}`}
+                          data-label={header || `Colonne ${cell + 1}`}
+                          key={header || `column-${cell + 1}`}
                         >
-                          {texteCellule(ligne[cellule]) || "—"}
+                          {cellText(row[cell]) || "—"}
                         </td>
                       ))}
-                      {enTetes.length > 8 && <td data-label="Autres colonnes">…</td>}
+                      {headers.length > 8 && <td data-label="Autres colonnes">…</td>}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="actions-bas-page-sre">
-              <Button onClick={analyser} disabled={chargement || !colonnesValides}>
+            <div className="page-bottom-actions-sre">
+              <Button onClick={analyze} disabled={loading || !validColumns}>
                 <CheckCircle2 size={15} /> 3. Analyser et valider
               </Button>
             </div>
           </section>
-          {analyse && (
-            <section className="carte-sre resultat-analyse-sre">
-              <div className="carte-sre__entete">
+          {analysis && (
+            <section className="card-sre analysis-result-sre">
+              <div className="card-sre__header">
                 <div>
                   <h2>Résultat de l’analyse</h2>
                   <p>
-                    {analyse.length} ligne(s) non vides examinées. Rien n’est enregistré avant
+                    {analysis.length} ligne(s) non vides examinées. Rien n’est enregistré avant
                     confirmation.
                   </p>
                 </div>
-                <label className="filtre-compact-sre">
+                <label className="compact-filter-sre">
                   Afficher
                   <Select
-                    value={filtreLignes}
-                    onChange={(event) => setFiltreLignes(event.target.value)}
+                    value={filterRows}
+                    onChange={(event) => setFilterRows(event.target.value)}
                   >
                     <option value="TOUS">Toutes</option>
                     <option value="VALIDES">Valides</option>
@@ -643,24 +643,24 @@ export function AdminTaxpayerImportPage() {
                   </Select>
                 </label>
               </div>
-              <div className="resume-analyse-import-sre">
-                <div className="resume-analyse-import-sre__valide">
-                  <strong>{analyse.filter((ligne) => ligne.profil).length}</strong>
+              <div className="import-analysis-summary-sre">
+                <div className="import-analysis-summary-sre__valid">
+                  <strong>{analysis.filter((row) => row.profile).length}</strong>
                   <span>Prêtes à importer</span>
                 </div>
-                <div className="resume-analyse-import-sre__doublon">
-                  <strong>{analyse.filter((ligne) => ligne.doublon).length}</strong>
+                <div className="import-analysis-summary-sre__duplicate">
+                  <strong>{analysis.filter((row) => row.duplicate).length}</strong>
                   <span>Doublons dans le fichier</span>
                 </div>
-                <div className="resume-analyse-import-sre__erreur">
+                <div className="import-analysis-summary-sre__error">
                   <strong>
-                    {analyse.filter((ligne) => ligne.erreurs.length && !ligne.doublon).length}
+                    {analysis.filter((row) => row.errors.length && !row.duplicate).length}
                   </strong>
                   <span>Lignes en erreur</span>
                 </div>
               </div>
-              <div className="tableau-defilement-sre">
-                <table className="tableau-sre">
+              <div className="table-scroll-sre">
+                <table className="table-sre">
                   <thead>
                     <tr>
                       <th>Ligne Excel</th>
@@ -673,41 +673,41 @@ export function AdminTaxpayerImportPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lignesAnalysees.slice(0, 100).map((ligne) => {
-                      let statutResultat = "ACTIF";
-                      if (ligne.erreurs.length) {
-                        statutResultat = "ERREUR";
+                    {analyzedRows.slice(0, 100).map((row) => {
+                      let resultStatus = "ACTIF";
+                      if (row.errors.length) {
+                        resultStatus = "ERREUR";
                       }
-                      if (ligne.doublon) {
-                        statutResultat = "REJETE";
+                      if (row.duplicate) {
+                        resultStatus = "REJETE";
                       }
 
                       return (
-                      <tr key={ligne.numero}>
-                        <td data-label="Ligne Excel">{ligne.numero}</td>
-                        <td data-label="Type">{ligne.profil ? <StatusBadge statut={ligne.profil.type} /> : "—"}</td>
+                      <tr key={row.number}>
+                        <td data-label="Ligne Excel">{row.number}</td>
+                        <td data-label="Type">{row.profile ? <StatusBadge status={row.profile.type} /> : "—"}</td>
                         <td data-label="Nom / raison sociale">
-                          {ligne.profil?.raisonSociale ||
-                            `${ligne.profil?.prenom ?? ""} ${ligne.profil?.nom ?? ""}`.trim() ||
+                          {row.profile?.raisonSociale ||
+                            `${row.profile?.prenom ?? ""} ${row.profile?.nom ?? ""}`.trim() ||
                             "—"}
                         </td>
-                        <td data-label="NIF">{ligne.profil?.nif ?? "—"}</td>
-                        <td data-label="E-mail">{ligne.profil?.courriel ?? "—"}</td>
+                        <td data-label="NIF">{row.profile?.nif ?? "—"}</td>
+                        <td data-label="E-mail">{row.profile?.courriel ?? "—"}</td>
                         <td data-label="Résultat">
-                          <StatusBadge statut={statutResultat} />
+                          <StatusBadge status={resultStatus} />
                         </td>
                         <td data-label="Motif">
-                          {ligne.erreurs.map((ligneErreur) => (
+                          {row.errors.map((rowError) => (
                             <small
-                              key={`${ligne.numero}-${ligneErreur.champ ?? ""}-${ligneErreur.message}`}
-                              className="erreur-import-ligne-sre"
+                              key={`${row.number}-${rowError.field ?? ""}-${rowError.message}`}
+                              className="import-row-error-sre"
                             >
-                              {ligneErreur.champ ? `${ligneErreur.champ} : ` : ""}
-                              {ligneErreur.message}
+                              {rowError.field ? `${rowError.field} : ` : ""}
+                              {rowError.message}
                             </small>
                           ))}
-                          {!ligne.erreurs.length && !ligne.doublon && (
-                            <span className="texte-succes-sre">Prête à enregistrer</span>
+                          {!row.errors.length && !row.duplicate && (
+                            <span className="success-text-sre">Prête à enregistrer</span>
                           )}
                         </td>
                       </tr>
@@ -715,34 +715,34 @@ export function AdminTaxpayerImportPage() {
                     })}
                   </tbody>
                 </table>
-                {lignesAnalysees.length > 100 && (
-                  <p className="texte-secondaire-sre">
+                {analyzedRows.length > 100 && (
+                  <p className="secondary-text-sre">
                     Les 100 premières lignes filtrées sont affichées. L’analyse porte sur toute la
                     feuille.
                   </p>
                 )}
               </div>
-              <div className="actions-bas-page-sre">
-                <Button variante="contour" onClick={analyser}>
+              <div className="page-bottom-actions-sre">
+                <Button variant="outline" onClick={analyze}>
                   Relancer la validation
                 </Button>
                 <Button
-                  onClick={() => void lancerImport()}
+                  onClick={() => void startImport()}
                   disabled={
-                    analyse.every(
-                      (ligne) => !ligne.profil || ligne.doublon || ligne.erreurs.length > 0,
+                    analysis.every(
+                      (row) => !row.profile || row.duplicate || row.errors.length > 0,
                     )
                   }
-                  chargement={chargement}
+                  loading={loading}
                 >
-                  {chargement ? (
+                  {loading ? (
                     "Enregistrement…"
                   ) : (
                     <>
                       Enregistrer les profils valides (
                       {
-                        analyse.filter(
-                          (ligne) => ligne.profil && !ligne.doublon && !ligne.erreurs.length,
+                        analysis.filter(
+                          (row) => row.profile && !row.duplicate && !row.errors.length,
                         ).length
                       }
                       ) <ArrowRight size={15} />
@@ -750,69 +750,69 @@ export function AdminTaxpayerImportPage() {
                   )}
                 </Button>
               </div>
-              {erreur && (
-                <p className="message-erreur-sre" role="alert">
-                  {erreur}
+              {error && (
+                <p className="error-message-sre" role="alert">
+                  {error}
                 </p>
               )}
             </section>
           )}
         </>
       )}
-      {rapport && (
-        <section className="carte-sre rapport-import-sre">
-          <div className="carte-sre__entete">
+      {report && (
+        <section className="card-sre import-report-sre">
+          <div className="card-sre__header">
             <div>
               <h2>Rapport de l’import</h2>
               <p>
-                {rapport.nomFichier} · {formatDate(rapport.date, true)}
+                {report.fileName} · {formatDate(report.date, true)}
               </p>
             </div>
-            <StatusBadge statut={rapport.statut} />
+            <StatusBadge status={report.status} />
           </div>
-          <div className="resume-analyse-import-sre">
-            <div className="resume-analyse-import-sre__valide">
-              <strong>{rapport.creees}</strong>
+          <div className="import-analysis-summary-sre">
+            <div className="import-analysis-summary-sre__valid">
+              <strong>{report.created}</strong>
               <span>Profils créés</span>
             </div>
             <div>
-              <strong>{rapport.analysees}</strong>
+              <strong>{report.analyzed}</strong>
               <span>Lignes analysées</span>
             </div>
-            <div className="resume-analyse-import-sre__doublon">
-              <strong>{rapport.doublons}</strong>
+            <div className="import-analysis-summary-sre__duplicate">
+              <strong>{report.duplicates}</strong>
               <span>Doublons détectés</span>
             </div>
-            <div className="resume-analyse-import-sre__erreur">
-              <strong>{rapport.ignorees}</strong>
+            <div className="import-analysis-summary-sre__error">
+              <strong>{report.ignored}</strong>
               <span>Lignes ignorées</span>
             </div>
           </div>
-          {rapport.erreurs.length > 0 && (
-            <details className="details-erreurs-import-sre">
+          {report.errors.length > 0 && (
+            <details className="import-error-details-sre">
               <summary>
-                <CircleAlert size={15} /> Afficher les erreurs et doublons ({rapport.erreurs.length}
+                <CircleAlert size={15} /> Afficher les erreurs et doublons ({report.errors.length}
                 )
               </summary>
               <ul>
-                {rapport.erreurs.slice(0, 100).map((ligne, index) => {
-                  const prefixeLigne = ligne.ligne > 0 ? `Ligne ${ligne.ligne}` : "";
-                  const champ = ligne.ligne > 0 && ligne.champ ? ` · ${ligne.champ}` : "";
-                  const separateur = ligne.ligne > 0 ? " — " : "";
+                {report.errors.slice(0, 100).map((row, index) => {
+                  const rowPrefix = row.row > 0 ? `Ligne ${row.row}` : "";
+                  const field = row.row > 0 && row.field ? ` · ${row.field}` : "";
+                  const separator = row.row > 0 ? " — " : "";
 
                   return (
-                    <li key={`${ligne.ligne}-${index}`}>
-                      {prefixeLigne}
-                      {champ}
-                      {separateur}
-                      {ligne.message}
+                    <li key={`${row.row}-${index}`}>
+                      {rowPrefix}
+                      {field}
+                      {separator}
+                      {row.message}
                     </li>
                   );
                 })}
               </ul>
             </details>
           )}
-          <div className="note-securite-sre">
+          <div className="security-note-sre">
             <ShieldCheck size={16} />
             <p>
               <strong>Import terminé par le serveur.</strong>
@@ -824,7 +824,7 @@ export function AdminTaxpayerImportPage() {
             </p>
           </div>
           {emailsImport.length > 0 && (
-            <div className="rapport-emails-activation-sre">
+            <div className="activation-emails-report-sre">
               <strong>
                 <MailCheck size={15} aria-hidden="true" /> E-mails de première connexion (
                 {emailsImport.filter((e) => e.statutCourriel === "ENVOYEE").length} envoyé(s),{" "}
@@ -832,17 +832,17 @@ export function AdminTaxpayerImportPage() {
               </strong>
               <ul>
                 {emailsImport.map((email) => {
-                  const classeBadgeCourriel =
+                  const emailBadgeClassName =
                     email.statutCourriel === "ENVOYEE"
-                      ? "badge-sre badge-sre--succes"
+                      ? "badge-sre badge-sre--success"
                       : email.statutCourriel === "ECHEC"
-                        ? "badge-sre badge-sre--erreur"
+                        ? "badge-sre badge-sre--error"
                         : "badge-sre badge-sre--attention";
 
                   return (
                     <li key={email.compteId}>
                       <span>{email.destinataire}</span>
-                      <span className={classeBadgeCourriel}>
+                      <span className={emailBadgeClassName}>
                         {email.statutCourriel === "ENVOYEE"
                           ? "Envoyé"
                           : email.statutCourriel === "ECHEC"
@@ -852,11 +852,11 @@ export function AdminTaxpayerImportPage() {
                       {email.statutCourriel === "ECHEC" && email.demandeId && (
                         <button
                           type="button"
-                          className="bouton-sre bouton-sre--contour bouton-sre--petit"
-                          disabled={renvoiEnCours === email.demandeId}
-                          onClick={() => renvoyerEmail(email.demandeId as string, email.destinataire)}
+                          className="button-sre button-sre--outline button-sre--small"
+                          disabled={resendInProgress === email.demandeId}
+                          onClick={() => resendEmail(email.demandeId as string, email.destinataire)}
                         >
-                          {renvoiEnCours === email.demandeId ? "Envoi…" : "Renvoyer"}
+                          {resendInProgress === email.demandeId ? "Envoi…" : "Renvoyer"}
                         </button>
                       )}
                     </li>

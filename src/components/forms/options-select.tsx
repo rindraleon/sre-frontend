@@ -1,12 +1,12 @@
 import type { OptionSelect } from "@/constants/options";
 
-/** Rendu réutilisable des <option> d'un Select à partir d'une liste de constantes. */
+/** Reusable rendering of a Select's <option> from a list of constants. */
 export function OptionsSelect({ options }: Readonly<{ options: readonly OptionSelect[] }>) {
   return (
     <>
       {options.map((option) => (
-        <option key={option.valeur} value={option.valeur}>
-          {option.libelle}
+        <option key={option.value} value={option.value}>
+          {option.label}
         </option>
       ))}
     </>

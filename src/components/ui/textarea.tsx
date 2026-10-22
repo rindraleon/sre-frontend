@@ -1,7 +1,7 @@
 import { forwardRef, type TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-/** Zone de texte partagée avec hauteur naturelle et focus accessible. */
+/** Shared text area with natural height and accessible focus. */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
   ({ className, ...props }, ref) => (
     <textarea

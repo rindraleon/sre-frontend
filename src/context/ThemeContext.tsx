@@ -2,21 +2,21 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 export type Theme = "clair" | "sombre";
 
-const cleTheme = "sre-theme";
+const themeKey = "sre-theme";
 
-function lireThemePersistant(): Theme | null {
+function readPersistedTheme(): Theme | null {
   try {
-    const conserve = window.localStorage.getItem(cleTheme);
-    return conserve === "clair" || conserve === "sombre" ? conserve : null;
+    const stored = window.localStorage.getItem(themeKey);
+    return stored === "clair" || stored === "sombre" ? stored : null;
   } catch {
     return null;
   }
 }
 
-/** Thème initial : préférence explicite, sinon préférence système, sinon clair. */
+/** Initial theme: explicit preference, else system preference, else light. */
 export function getInitialTheme(): Theme {
-  const conserve = lireThemePersistant();
-  if (conserve) return conserve;
+  const stored = readPersistedTheme();
+  if (stored) return stored;
   try {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "sombre" : "clair";
   } catch {
@@ -24,64 +24,64 @@ export function getInitialTheme(): Theme {
   }
 }
 
-function appliquerTheme(theme: Theme) {
+function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.classList.toggle("dark", theme === "sombre");
   document.documentElement.style.colorScheme = theme === "sombre" ? "dark" : "light";
 }
 
-interface ContexteThemeSre {
+interface ThemeContextValue {
   theme: Theme;
-  basculerTheme: () => void;
-  definirTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
 }
 
-const Contexte = createContext<ContexteThemeSre | null>(null);
+const Context = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
-  const [preferenceExplicite, setPreferenceExplicite] = useState(
-    () => lireThemePersistant() !== null,
+  const [theme, setThemeState] = useState<Theme>(() => getInitialTheme());
+  const [explicitPreference, setExplicitPreference] = useState(
+    () => readPersistedTheme() !== null,
   );
 
   useEffect(() => {
-    appliquerTheme(theme);
-    if (!preferenceExplicite) return;
+    applyTheme(theme);
+    if (!explicitPreference) return;
     try {
-      window.localStorage.setItem(cleTheme, theme);
+      window.localStorage.setItem(themeKey, theme);
     } catch {
-      /* le thème reste appliqué pour la session en cours */
+      /* the theme stays applied for the current session */
     }
-  }, [theme, preferenceExplicite]);
+  }, [theme, explicitPreference]);
 
   useEffect(() => {
-    if (preferenceExplicite) return;
-    const requeteMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    const suivrePreferenceSysteme = (event: MediaQueryListEvent) => {
-      setTheme(event.matches ? "sombre" : "clair");
+    if (explicitPreference) return;
+    const requestMedia = window.matchMedia("(prefers-color-scheme: dark)");
+    const followSystemPreference = (event: MediaQueryListEvent) => {
+      setThemeState(event.matches ? "sombre" : "clair");
     };
-    requeteMedia.addEventListener("change", suivrePreferenceSysteme);
-    return () => requeteMedia.removeEventListener("change", suivrePreferenceSysteme);
-  }, [preferenceExplicite]);
+    requestMedia.addEventListener("change", followSystemPreference);
+    return () => requestMedia.removeEventListener("change", followSystemPreference);
+  }, [explicitPreference]);
 
-  const definirTheme = useCallback((nouveau: Theme) => {
-    setPreferenceExplicite(true);
-    setTheme(nouveau);
+  const setTheme = useCallback((nextTheme: Theme) => {
+    setExplicitPreference(true);
+    setThemeState(nextTheme);
   }, []);
-  const basculerTheme = useCallback(() => {
-    setPreferenceExplicite(true);
-    setTheme((courant) => (courant === "sombre" ? "clair" : "sombre"));
+  const toggleTheme = useCallback(() => {
+    setExplicitPreference(true);
+    setThemeState((current) => (current === "sombre" ? "clair" : "sombre"));
   }, []);
 
-  const valeur = useMemo(
-    () => ({ theme, basculerTheme, definirTheme }),
-    [theme, basculerTheme, definirTheme],
+  const value = useMemo(
+    (): ThemeContextValue => ({ theme, toggleTheme, setTheme }),
+    [theme, toggleTheme, setTheme],
   );
-  return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
-export function useTheme(): ContexteThemeSre {
-  const contexte = useContext(Contexte);
-  if (!contexte) throw new Error("useTheme doit être utilisé à l’intérieur de ThemeProvider.");
-  return contexte;
+export function useTheme(): ThemeContextValue {
+  const context = useContext(Context);
+  if (!context) throw new Error("useTheme doit être utilisé à l’intérieur de ThemeProvider.");
+  return context;
 }

@@ -1,0 +1,548 @@
+/* Cross-cutting adjustments of the redesign — SRE variables and existing components. */
+:root {
+  --sre-control-height: 2.5rem;
+  --sre-control-height-compact: 2.25rem;
+  --sre-icon-size: 1rem;
+  --sre-space-section: 1.25rem;
+  --sre-focus: color-mix(in srgb, hsl(var(--ring)) 34%, transparent);
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  color: var(--sre-ink);
+  background: var(--sre-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--sre-focus);
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+
+.button-sre,
+.button-sre--small,
+.button-sre--large,
+.user-menu-sre__panel button,
+.password-field-sre > button,
+.pagination-sre button,
+.close-mobile-menu-sre,
+.menu-button-sre {
+  border-radius: var(--radius-button);
+}
+
+.button-sre {
+  min-height: var(--sre-control-height);
+  box-shadow: none;
+}
+
+.button-sre:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.card-sre,
+.table-card-sre {
+  border-color: var(--sre-border);
+  background: var(--sre-paper);
+}
+
+.page-content-sre {
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.table-scroll-sre,
+.overflow-x-auto {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 720px) {
+  .button-sre,
+  .button-sre--small,
+  .button-sre--large {
+    min-height: 44px;
+  }
+
+  .content-area-sre {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .card-sre,
+  .table-card-sre {
+    padding: 16px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive tables: rows become cards on tablet/mobile. */
+/* The `data-label` labels make each cell explicit without a header.    */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .responsive-table-cards-sre,
+  .table-scroll-sre {
+    width: 100%;
+    overflow: visible !important;
+  }
+
+  .responsive-table-cards-sre > table,
+  .table-scroll-sre > .table-sre {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .responsive-table-cards-sre > table > thead,
+  .table-scroll-sre > .table-sre > thead {
+    display: none;
+  }
+
+  .responsive-table-cards-sre > table > tbody,
+  .table-scroll-sre > .table-sre > tbody {
+    display: grid;
+    gap: 11px;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr,
+  .table-scroll-sre > .table-sre > tbody > tr {
+    display: block;
+    overflow: hidden;
+    border: 1px solid var(--sre-border, #dce7df) !important;
+    border-radius: 12px;
+    background: var(--sre-paper, #fff) !important;
+    box-shadow: 0 5px 16px rgba(20, 52, 39, 0.055);
+    transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr:hover,
+  .table-scroll-sre > .table-sre > tbody > tr:hover {
+    background: var(--sre-paper, #fff) !important;
+    border-color: color-mix(in srgb, var(--sre-teal, #147f62) 38%, var(--sre-border, #dce7df)) !important;
+    box-shadow: 0 8px 20px rgba(20, 52, 39, 0.09);
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td,
+  .table-scroll-sre > .table-sre > tbody > tr > td {
+    display: grid;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: minmax(96px, 35%) minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 10px 12px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    color: var(--sre-ink, #172e25);
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--sre-border, #dce7df) 72%, transparent);
+    vertical-align: top;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td::before,
+  .table-scroll-sre > .table-sre > tbody > tr > td::before {
+    content: attr(data-label);
+    min-width: 0;
+    color: var(--sre-muted, #71837a);
+    font-size: 10px;
+    font-weight: 760;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td:last-child,
+  .table-scroll-sre > .table-sre > tbody > tr > td:last-child {
+    border-bottom: 0;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td > *,
+  .table-scroll-sre > .table-sre > tbody > tr > td > * {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td.data-table-selection-sre {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--sre-bg, #f4f7f5) 76%, transparent);
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td.data-table-selection-sre::before {
+    content: "Sélectionner cette ligne";
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td.data-table-selection-sre input {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+  }
+
+  .table-scroll-sre > .table-sre td strong {
+    font-size: 12px;
+  }
+
+  .table-scroll-sre > .table-sre td small,
+  .table-scroll-sre > .table-sre td .sub-row-sre {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-table-cards-sre > table > tbody,
+  .table-scroll-sre > .table-sre > tbody {
+    gap: 9px;
+  }
+
+  .responsive-table-cards-sre > table > tbody > tr > td,
+  .table-scroll-sre > .table-sre > tbody > tr > td {
+    grid-template-columns: minmax(84px, 34%) minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px 10px;
+    font-size: 11.5px;
+  }
+}
+
+.table-mobile-controls-sre {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .table-mobile-controls-sre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 14px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--sre-border, #dce7df);
+    background: var(--sre-bg, #f4f7f5);
+  }
+
+  .table-mobile-selection-sre {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 8px;
+    color: var(--sre-ink, #172e25);
+    font-size: 11px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+
+  .table-mobile-selection-sre input {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+  }
+
+  .table-mobile-sort-sre {
+    display: flex;
+    min-width: min(100%, 290px);
+    flex: 1 1 280px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .table-mobile-sort-sre label {
+    display: grid;
+    min-width: 0;
+    flex: 1 1 auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    color: var(--sre-muted, #71837a);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .table-mobile-sort-sre select {
+    min-width: 0;
+    min-height: 36px;
+    font-size: 11px;
+  }
+
+  .table-mobile-sort-sre > button {
+    display: inline-flex;
+    min-height: 36px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 10px;
+    color: var(--sre-ink, #172e25);
+    border: 1px solid var(--sre-border, #dce7df);
+    border-radius: 8px;
+    background: var(--sre-paper, #fff);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .table-mobile-sort-sre > button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .table-scroll-sre .table-actions-sre {
+    flex-wrap: wrap;
+  }
+
+  .table-scroll-sre .table-actions-sre .button-sre {
+    white-space: normal;
+  }
+
+  .table-scroll-sre .table-identity-link-sre strong {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-mobile-controls-sre {
+    align-items: stretch;
+    gap: 7px;
+    padding: 9px 10px;
+  }
+
+  .table-mobile-selection-sre {
+    min-height: 32px;
+  }
+
+  .table-mobile-sort-sre {
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+
+  .table-mobile-sort-sre label {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .table-mobile-sort-sre > button span {
+    display: none;
+  }
+}
+
+.form-step-indicator-sre {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 10px;
+  background: var(--sre-bg, #f4f7f5);
+}
+
+.form-step-indicator-sre__bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sre-border, #dce7df);
+}
+
+.form-step-indicator-sre__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sre-teal, #147f62);
+  transition: width 0.2s ease;
+}
+
+.form-step-indicator-sre__text {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--sre-muted, #71837a);
+  font-size: 10px;
+}
+
+.form-step-indicator-sre__text strong {
+  color: var(--sre-ink, #172e25);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+/* Layro / shadcn table: unified bar with search, counter, filters and action. */
+.layro-data-table__toolbar {
+  display: flex;
+  min-width: 0;
+  min-height: 56px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 14px;
+  background: var(--sre-paper, #fff);
+  box-shadow: 0 3px 12px rgba(20, 52, 39, 0.035);
+}
+
+.layro-data-table__search {
+  display: flex;
+  width: min(100%, 270px);
+  min-width: 190px;
+  min-height: 36px;
+  flex: 1 1 210px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 10px;
+  background: var(--sre-bg, #f4f7f5);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.layro-data-table__search:focus-within {
+  border-color: color-mix(in srgb, var(--sre-teal, #147f62) 48%, var(--sre-border, #dce7df));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sre-teal, #147f62) 10%, transparent);
+}
+
+.layro-data-table__search input {
+  min-width: 0;
+  color: var(--sre-ink, #172e25);
+  font-size: 12px;
+}
+
+.layro-data-table__search input::placeholder {
+  color: var(--sre-muted, #71837a);
+}
+
+.layro-data-table__count {
+  display: inline-flex;
+  min-height: 29px;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0 9px;
+  color: var(--sre-muted, #71837a);
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 999px;
+  background: var(--sre-bg, #f4f7f5);
+  font-size: 10.5px;
+  font-weight: 690;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.layro-data-table__filters {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.layro-data-table__filters .compact-filter-sre {
+  min-height: 36px;
+  border-radius: 10px;
+  background: var(--sre-paper, #fff);
+}
+
+.layro-data-table__bulk,
+.layro-data-table__primary {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.layro-data-table__bulk {
+  color: var(--sre-muted, #71837a);
+  font-size: 11px;
+  font-weight: 670;
+}
+
+.layro-data-table__primary {
+  margin-left: auto;
+}
+
+.layro-data-table__empty {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 14px;
+  background: var(--sre-paper, #fff);
+}
+
+.layro-data-table__pagination {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px 14px;
+  padding: 9px 12px;
+  color: var(--sre-muted, #71837a);
+  border: 1px solid var(--sre-border, #dce7df);
+  border-radius: 12px;
+  background: var(--sre-paper, #fff);
+  font-size: 11px;
+}
+
+.layro-data-table__range {
+  font-variant-numeric: tabular-nums;
+}
+
+.layro-data-table__page-size,
+.layro-data-table__page-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.layro-data-table__page-size select {
+  width: 72px;
+  min-height: 32px;
+}
+
+.layro-data-table__page-controls > span {
+  min-width: 95px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .layro-data-table__toolbar {
+    align-items: stretch;
+    padding: 9px;
+  }
+
+  .layro-data-table__search {
+    width: 100%;
+    min-width: min(100%, 190px);
+    flex-basis: 100%;
+  }
+
+  .layro-data-table__filters {
+    flex: 1 1 100%;
+  }
+
+  .layro-data-table__primary {
+    margin-left: 0;
+  }
+
+  .layro-data-table__pagination {
+    padding: 8px 9px;
+  }
+}

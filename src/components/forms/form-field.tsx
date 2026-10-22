@@ -6,80 +6,80 @@ import { CoreSpinLoader } from "@/components/ui/core-spin-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface ProprietesChamp {
-  libelle: string;
-  erreur?: FieldError;
-  aide?: string;
-  requis?: boolean;
-  classeSupplementaire?: string;
-  children: (proprietes: {
+interface FormFieldProps {
+  label: string;
+  error?: FieldError;
+  help?: string;
+  required?: boolean;
+  className?: string;
+  children: (props: {
     id: string;
     "aria-invalid": boolean;
     "aria-describedby"?: string;
   }) => ReactNode;
 }
 
-/** Champ de formulaire avec libellé, aide et message d'erreur. */
+/** Form field with label, help and error message. */
 export function FormField({
-  libelle,
-  erreur,
-  aide,
-  requis = false,
-  classeSupplementaire = "",
+  label,
+  error,
+  help,
+  required = false,
+  className = "",
   children,
-}: Readonly<ProprietesChamp>) {
-  const genereId = useId();
-  const id = `champ-${genereId.replaceAll(":", "")}`;
-  const idAide = aide ? `${id}-aide` : undefined;
-  const idErreur = erreur ? `${id}-erreur` : undefined;
-  const decritPar = [idAide, idErreur].filter(Boolean).join(" ") || undefined;
+}: Readonly<FormFieldProps>) {
+  const generateId = useId();
+  const id = `field-${generateId.replaceAll(":", "")}`;
+  const helpId = help ? `${id}-aide` : undefined;
+  const errorId = error ? `${id}-erreur` : undefined;
+  const describedBy = [helpId, errorId].filter(Boolean).join(" ") || undefined;
   return (
-    <div className={`champ-formulaire-sre ${classeSupplementaire}`}>
+    <div className={`field-form-sre ${className}`}>
       <Label htmlFor={id}>
-        <span className="champ-libelle-sre">
-          {libelle}
-          {requis && (
-            <span aria-hidden="true" className="champ-obligatoire-sre">
+        <span className="field-label-sre">
+          {label}
+          {required && (
+            <span aria-hidden="true" className="field-mandatory-sre">
               *
             </span>
           )}
         </span>
       </Label>
-      {children({ id, "aria-invalid": Boolean(erreur), "aria-describedby": decritPar })}
-      {aide && (
-        <small id={idAide} className="champ-aide-sre">
-          {aide}
+      {children({ id, "aria-invalid": Boolean(error), "aria-describedby": describedBy })}
+      {help && (
+        <small id={helpId} className="field-help-sre">
+          {help}
         </small>
       )}
-      {erreur && (
-        <p id={idErreur} className="champ-erreur-sre" role="alert">
-          {erreur.message}
+      {error && (
+        <p id={errorId} className="field-error-sre" role="alert">
+          {error.message}
         </p>
       )}
     </div>
   );
 }
 
-type ProprietesMotDePasse = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
-  libelle: string;
-  erreur?: FieldError;
-  aide?: string;
-  requis?: boolean;
+type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  label: string;
+  error?: FieldError;
+  help?: string;
+  required?: boolean;
 };
 
-export const PasswordField = forwardRef<HTMLInputElement, Readonly<ProprietesMotDePasse>>(
-  function PasswordField({ libelle, erreur, aide, requis, ...input }, ref) {
+export const PasswordField = forwardRef<HTMLInputElement, Readonly<PasswordFieldProps>>(
+  function PasswordField({ label, error, help, required, ...input }, ref) {
     const [visible, setVisible] = useState(false);
     return (
-      <FormField libelle={libelle} erreur={erreur} aide={aide} requis={requis}>
-        {(proprietes) => (
-          <span className="champ-mot-de-passe-sre">
-            <Input {...input} {...proprietes} ref={ref} type={visible ? "text" : "password"} />
+      <FormField label={label} error={error} help={help} required={required}>
+        {(props) => (
+          <span className="password-field-sre">
+            <Input {...input} {...props} ref={ref} type={visible ? "text" : "password"} />
             <button
               type="button"
               aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               aria-pressed={visible}
-              onClick={() => setVisible((courant) => !courant)}
+              onClick={() => setVisible((current) => !current)}
             >
               {visible ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -91,18 +91,18 @@ export const PasswordField = forwardRef<HTMLInputElement, Readonly<ProprietesMot
 );
 
 export function SubmitButton({
-  enCours,
-  libelleEnCours,
+  inProgress,
+  pendingLabel,
   children,
-  variante,
+  variant,
   className,
   form,
   disabled = false,
 }: Readonly<{
-  enCours: boolean;
-  libelleEnCours: string;
+  inProgress: boolean;
+  pendingLabel: string;
   children: ReactNode;
-  variante?: "primaire" | "secondaire" | "contour" | "danger" | "fantome";
+  variant?: "primary" | "secondary" | "outline" | "danger" | "ghost";
   className?: string;
   form?: string;
   disabled?: boolean;
@@ -110,16 +110,16 @@ export function SubmitButton({
   return (
     <Button
       type="submit"
-      variante={variante}
+      variant={variant}
       className={className}
       form={form}
-      disabled={enCours || disabled}
-      aria-busy={enCours}
+      disabled={inProgress || disabled}
+      aria-busy={inProgress}
     >
-      {enCours ? (
+      {inProgress ? (
         <>
-          <CoreSpinLoader libelle={libelleEnCours} taille={14} compact />
-          {libelleEnCours}
+          <CoreSpinLoader label={pendingLabel} size={14} compact />
+          {pendingLabel}
         </>
       ) : (
         children
@@ -131,7 +131,7 @@ export function SubmitButton({
 export function FormError({ message }: Readonly<{ message?: string | null }>) {
   if (!message) return null;
   return (
-    <p className="message-erreur-sre" role="alert">
+    <p className="error-message-sre" role="alert">
       {message}
     </p>
   );

@@ -4,34 +4,34 @@ import { useSre } from "@/context/SreContext";
 import { cn } from "@/lib/utils";
 
 const STYLES: Record<string, string> = {
-  succes: "border-emerald-300 bg-emerald-50 text-emerald-900",
-  erreur: "border-red-300 bg-red-50 text-red-900",
-  avertissement: "border-amber-300 bg-amber-50 text-amber-900",
+  success: "border-emerald-300 bg-emerald-50 text-emerald-900",
+  error: "border-red-300 bg-red-50 text-red-900",
+  warning: "border-amber-300 bg-amber-50 text-amber-900",
   info: "border-sky-300 bg-sky-50 text-sky-900",
 };
 
 export function ToastRegion() {
-  const { toasts, retirerToast } = useSre();
+  const { toasts, removeToast } = useSre();
   return (
     <ToastPrimitive.Provider swipeDirection="right">
       {toasts.map((toast) => (
         <ToastPrimitive.Root
           key={toast.id}
           duration={6500}
-          onOpenChange={(ouvert) => {
-            if (!ouvert) retirerToast(toast.id);
+          onOpenChange={(open) => {
+            if (!open) removeToast(toast.id);
           }}
           className={cn(
             "pointer-events-auto flex items-start gap-2.5 rounded-lg border px-3.5 py-3 shadow-lg data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2",
             STYLES[toast.type] ?? STYLES.info,
           )}
-          role={toast.type === "erreur" ? "alert" : undefined}
+          role={toast.type === "error" ? "alert" : undefined}
         >
           {(() => {
             let icon;
-            if (toast.type === "succes") {
+            if (toast.type === "success") {
               icon = "✓";
-            } else if (toast.type === "erreur") {
+            } else if (toast.type === "error") {
               icon = "!";
             } else {
               icon = "i";

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { phoneSchema } from "./common";
 
-/** Déclaration de paiement client — aligné sur CreerPaiementDto (backend). */
+/** Client payment declaration — aligned with CreatePaymentDto (backend). */
 export const paymentDeclarationSchema = z
   .object({
     obligationId: z.string().min(1, "Sélectionnez une obligation disponible pour votre compte."),
@@ -23,36 +23,36 @@ export const paymentDeclarationSchema = z
     dateTransaction: z
       .string()
       .min(1, "Indiquez la date de l'opération.")
-      .refine((valeur) => !Number.isNaN(new Date(valeur).getTime()), {
+      .refine((value) => !Number.isNaN(new Date(value).getTime()), {
         message: "Date invalide.",
       })
-      .refine((valeur) => new Date(valeur).getTime() <= Date.now(), {
+      .refine((value) => new Date(value).getTime() <= Date.now(), {
         message: "La date de l'opération ne peut pas être dans le futur.",
       }),
   })
-  .superRefine((valeurs, contexte) => {
-    if (valeurs.mode === "MOBILE_MONEY") {
-      if (!valeurs.operateur)
-        contexte.addIssue({
+  .superRefine((values, context) => {
+    if (values.mode === "MOBILE_MONEY") {
+      if (!values.operateur)
+        context.addIssue({
           code: "custom",
           path: ["operateur"],
           message: "Choisissez l'opérateur indiqué.",
         });
-      const telephone = phoneSchema.safeParse(valeurs.telephoneUtilise);
-      if (!telephone.success)
-        contexte.addIssue({
+      const phone = phoneSchema.safeParse(values.telephoneUtilise);
+      if (!phone.success)
+        context.addIssue({
           code: "custom",
           path: ["telephoneUtilise"],
           message:
-            telephone.error.issues[0]?.message ??
+            phone.error.issues[0]?.message ??
             "Saisissez un numéro de téléphone valide utilisé pour l'opération.",
         });
     }
     if (
-      valeurs.mode === "VIREMENT_BANCAIRE" &&
-      (valeurs.banqueOuCanal.trim().length < 2 || valeurs.banqueOuCanal.trim().length > 140)
+      values.mode === "VIREMENT_BANCAIRE" &&
+      (values.banqueOuCanal.trim().length < 2 || values.banqueOuCanal.trim().length > 140)
     )
-      contexte.addIssue({
+      context.addIssue({
         code: "custom",
         path: ["banqueOuCanal"],
         message: "Précisez l'établissement ou le canal indiqué (2 à 140 caractères).",
@@ -60,7 +60,7 @@ export const paymentDeclarationSchema = z
   });
 export type PaymentDeclarationFormValues = z.infer<typeof paymentDeclarationSchema>;
 
-/** Motif d'une décision administrative (rejet / correction) — DecisionPaiementDto. */
+/** Reason of an administrative decision (rejection / correction) — PaymentDecisionDto. */
 export const decisionReasonSchema = z.object({
   motif: z
     .string()

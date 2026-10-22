@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 /**
- * Règles partagées, alignées sur les DTO backend (source de vérité).
- * Voir sre-backend : profil-inscription.dto.ts, creer-contribuable.dto.ts, etc.
- * Ne jamais durcir/relâcher ici sans modifier le DTO correspondant.
+ * Shared rules, aligned with the backend DTOs (source of truth).
+ * See sre-backend: registration.dto.ts, create-taxpayer.dto.ts, etc.
+ * Never tighten/relax here without changing the corresponding DTO.
  */
 export const emailSchema = z
   .string()
@@ -18,7 +18,7 @@ export const phoneSchema = z
     "Numéro de téléphone invalide (7 à 40 caractères, chiffres et + ( ) - espaces).",
   );
 
-/** Règle durcie validée : 10 caractères min., majuscule, minuscule et chiffre (= regex DTO backend). */
+/** Validated hardened rule: min. 10 characters, uppercase, lowercase and digit (= backend DTO regex). */
 export const passwordSchema = z
   .string()
   .min(10, "Le mot de passe doit contenir au moins 10 caractères.")
@@ -27,18 +27,18 @@ export const passwordSchema = z
   .regex(/[a-z]/, "Ajoutez au moins une minuscule.")
   .regex(/[0-9]/, "Ajoutez au moins un chiffre.");
 
-/** Champ texte facultatif : vide accepté, sinon longueur bornée (DTO @IsOptional + @Length). */
-export function optionalTextSchema(minSiRenseigne: number, max: number, libelle: string) {
+/** Optional text field: empty accepted, otherwise bounded length (DTO @IsOptional + @Length). */
+export function optionalTextSchema(minIfProvided: number, max: number, label: string) {
   return z.string().refine(
-    (valeur) => {
-      const texte = valeur.trim();
-      return texte.length === 0 || (texte.length >= minSiRenseigne && texte.length <= max);
+    (value) => {
+      const text = value.trim();
+      return text.length === 0 || (text.length >= minIfProvided && text.length <= max);
     },
     {
       message:
-        minSiRenseigne > 0
-          ? `${libelle} doit contenir entre ${minSiRenseigne} et ${max} caractères (ou rester vide).`
-          : `${libelle} doit contenir au plus ${max} caractères.`,
+        minIfProvided > 0
+          ? `${label} doit contenir entre ${minIfProvided} et ${max} caractères (ou rester vide).`
+          : `${label} doit contenir au plus ${max} caractères.`,
     },
   );
 }

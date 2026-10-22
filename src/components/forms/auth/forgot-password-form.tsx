@@ -5,57 +5,57 @@ import { ROUTES } from "@/constants";
 import { callApi } from "@/services/api-client";
 import { useApiForm } from "@/hooks";
 import {
-  motDePasseOublieSchema,
-  type MotDePasseOublieFormValues,
+  forgotPasswordSchema,
+  type ForgotPasswordFormValues,
 } from "@/validation/auth.schema";
 import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
 
 /**
- * Demande de lien sécurisé de réinitialisation : le serveur répond toujours de
- * la même façon (aucune énumération de comptes) et envoie un jeton à usage
- * unique valable 24 heures si un compte actif correspond.
+ * Secure reset-link request: the server always answers in
+ * the same way (no account enumeration) and sends a single-use
+ * token valid for 24 hours if an active account matches.
  */
 export function ForgotPasswordForm() {
-  const [envoye, definirEnvoye] = useState(false);
+  const [sent, setSent] = useState(false);
   const {
     register,
     handleSubmit,
     errors,
     isSubmitting,
-    erreur,
-    traiterEchec,
-  } = useApiForm<MotDePasseOublieFormValues>({
-    schema: motDePasseOublieSchema,
-    valeursInitiales: { courriel: "" },
-    messageRepli: "Impossible de traiter la demande. Réessayez.",
+    error,
+    handleFailure,
+  } = useApiForm<ForgotPasswordFormValues>({
+    schema: forgotPasswordSchema,
+    initialValues: { courriel: "" },
+    fallbackMessage: "Impossible de traiter la demande. Réessayez.",
   });
 
-  const soumettre = handleSubmit(async (valeurs) => {
+  const onSubmit = handleSubmit(async (values) => {
     try {
       await callApi<{ message: string }>("auth/mot-de-passe-oublie", {
         method: "POST",
-        body: { courriel: valeurs.courriel.trim().toLowerCase() },
+        body: { courriel: values.courriel.trim().toLowerCase() },
       });
-      definirEnvoye(true);
+      setSent(true);
     } catch (cause) {
-      traiterEchec(cause);
+      handleFailure(cause);
     }
   });
 
   return (
-    <section className="auth-carte-sre">
-      <div className="auth-icone-sre">
+    <section className="auth-card-sre">
+      <div className="auth-icon-sre">
         <KeyRound size={20} />
       </div>
-      <span className="sur-titre-sre">RÉCUPÉRATION DU COMPTE</span>
+      <span className="overline-sre">RÉCUPÉRATION DU COMPTE</span>
       <h1>Mot de passe oublié</h1>
-      {envoye ? (
+      {sent ? (
         <>
           <p role="status">
             Si un compte actif correspond à cette adresse, un lien de réinitialisation vient
             d’être envoyé. Le lien est à usage unique et expire dans 24 heures.
           </p>
-          <Link className="lien-retour-auth-sre" to={ROUTES.connexion}>
+          <Link className="auth-back-link-sre" to={ROUTES.login}>
             <ArrowLeft size={14} /> Retour à la connexion
           </Link>
         </>
@@ -65,13 +65,13 @@ export function ForgotPasswordForm() {
             Saisissez l’adresse e-mail de votre compte : un lien sécurisé de réinitialisation
             vous sera envoyé.
           </p>
-          <form onSubmit={soumettre} className="formulaire-sre" noValidate>
-            <FormField libelle="Adresse e-mail" erreur={errors.courriel} requis>
-              {(proprietes) => (
-                <span className="champ-sre champ-sre--icone">
+          <form onSubmit={onSubmit} className="form-sre" noValidate>
+            <FormField label="Adresse e-mail" error={errors.courriel} required>
+              {(props) => (
+                <span className="field-sre field-sre--icon">
                   <Mail size={16} aria-hidden="true" />
                   <input
-                    {...proprietes}
+                    {...props}
                     type="email"
                     inputMode="email"
                     autoComplete="username"
@@ -81,14 +81,14 @@ export function ForgotPasswordForm() {
                 </span>
               )}
             </FormField>
-            <FormError message={erreur} />
-            <SubmitButton enCours={isSubmitting} libelleEnCours="Envoi…">
+            <FormError message={error} />
+            <SubmitButton inProgress={isSubmitting} pendingLabel="Envoi…">
               <>
                 Envoyer le lien de réinitialisation <ArrowRight size={16} />
               </>
             </SubmitButton>
           </form>
-          <Link className="lien-retour-auth-sre" to={ROUTES.connexion}>
+          <Link className="auth-back-link-sre" to={ROUTES.login}>
             <ArrowLeft size={14} /> Retour à la connexion
           </Link>
         </>

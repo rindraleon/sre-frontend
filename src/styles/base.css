@@ -49,10 +49,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 ::selection {
-  color: #143c4d;
-  background: #d8ece7;
+  color: var(--pub-heading);
+  background: var(--pub-accent-bg);
 }
-@keyframes apparition {
+@keyframes appear {
   from {
     opacity: 0;
     transform: translateY(5px);
@@ -64,10 +64,10 @@ textarea:focus-visible {
 }
 
 /* -------------------------------------------------------------------------- */
-/* SRE · portail régional                                    */
+/* SRE · regional portal                                    */
 /* -------------------------------------------------------------------------- */
 :root {
-  /* Variables shadcn/ui alignées sur la palette SRE (ne pas les désynchroniser). */
+  /* shadcn/ui variables aligned with the SRE palette (keep them in sync). */
   --background: 150 18% 97%;
   --foreground: 156 28% 14%;
   --card: 0 0% 100%;
@@ -114,5 +114,75 @@ textarea:focus-visible {
   --sre-warning: #80530f;
   --sre-info: #1b5874;
   --sre-shadow: 0 12px 32px rgba(23, 46, 37, 0.06);
+
+  /* Public site tokens (landing, taxation, legal pages, contact form).
+     Every public surface reads these instead of hard-coded colours, so the
+     dark theme only has to override this block. */
+  --pub-page: #fbfcfb;
+  --pub-surface: #fff;
+  --pub-surface-alt: #f4f8f7;
+  --pub-surface-soft: #f6faf8;
+  --pub-surface-raised: #fafcfc;
+  --pub-glass: rgba(255, 255, 255, 0.94);
+  --pub-glass-soft: rgba(255, 255, 255, 0.74);
+  --pub-header: rgba(251, 252, 251, 0.92);
+  --pub-border: #e1eae8;
+  --pub-border-soft: #edf1f1;
+  --pub-border-strong: #d3e0dc;
+  --pub-border-accent: #bfd9d3;
+  --pub-border-gold: #eee5d6;
+  --pub-heading: #18374a;
+  --pub-heading-2: #244958;
+  --pub-body: #3d5962;
+  --pub-body-strong: #264b56;
+  --pub-muted: #7b8d92;
+  --pub-muted-2: #9aa7aa;
+  --pub-faint: #b0bbbd;
+  --pub-accent: #176d75;
+  --pub-accent-soft: #2b8f92;
+  --pub-accent-strong: #087c78;
+  --pub-accent-bg: #edf6f4;
+  --pub-gold: #9a6a24;
+  --pub-gold-soft: #b68a46;
+  --pub-gold-bg: #faf3e8;
+  --pub-blue: #256c86;
+  --pub-blue-bg: #edf4f6;
+  --pub-green: #3d8475;
+  --pub-green-bg: #edf6f2;
+  --pub-warn: #8c6e3c;
+  --pub-warn-bg: #faf3e7;
+  --pub-hero-from: #f8fbfa;
+  --pub-hero-to: #f5f8f7;
+  --pub-hero-glow: rgba(203, 225, 224, 0.36);
+  --pub-grid-line: rgba(117, 152, 156, 0.045);
+  --pub-shadow-sm: 0 4px 14px rgba(21, 55, 66, 0.025);
+  --pub-shadow: 0 14px 30px rgba(21, 55, 66, 0.09);
+  --pub-shadow-card: 0 25px 70px rgba(36, 76, 81, 0.12);
+
+  /* Button tokens — every variant reads these, so the dark theme only has to
+     override this block instead of re-targeting each variant. */
+  --btn-primary-fg: #fff;
+  --btn-primary-bg: var(--sre-blue);
+  --btn-primary-bg-hover: var(--sre-blue-dark);
+  --btn-outline-fg: var(--sre-blue);
+  --btn-outline-fg-hover: var(--sre-blue-dark);
+  --btn-outline-bg: #fff;
+  --btn-outline-bg-hover: #f8fbfb;
+  --btn-outline-border: #d9e4e8;
+  --btn-outline-border-hover: #b9cdd4;
+  --btn-light-fg: var(--sre-blue-dark);
+  --btn-light-bg: #fff;
+  --btn-light-bg-hover: #edf5f5;
+  --btn-light-border: rgba(255, 255, 255, 0.45);
+  --btn-secondary-fg: var(--sre-blue);
+  --btn-secondary-bg: #edf4f5;
+  --btn-secondary-bg-hover: #e2eef0;
+  --btn-secondary-border: #dce8eb;
+  --btn-ghost-fg: #617681;
+  --btn-ghost-fg-hover: var(--sre-blue);
+  --btn-ghost-bg-hover: #edf4f5;
+  --btn-danger-fg: #fff;
+  --btn-danger-bg: #b94c4b;
+  --btn-danger-bg-hover: #9d3c3c;
 }
 

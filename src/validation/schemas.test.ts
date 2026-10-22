@@ -9,71 +9,71 @@ import { paymentDeclarationSchema } from "./payment.schema";
 import { taxpayerFormSchema } from "./profile.schema";
 
 describe("loginSchema", () => {
-  it("rejette un e-mail invalide avec un message en français", () => {
-    const resultat = loginSchema.safeParse({ courriel: "pas-un-email", motDePasse: "x" });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues[0].message).toBe("Adresse e-mail invalide.");
+  it("rejects an invalid e-mail with a French message", () => {
+    const result = loginSchema.safeParse({ courriel: "pas-un-email", motDePasse: "x" });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues[0].message).toBe("Adresse e-mail invalide.");
   });
 
-  it("n'exige plus le numéro STAT : e-mail + mot de passe suffisent", () => {
+  it("no longer requires the STAT number: e-mail + password are enough", () => {
     expect(loginSchema.safeParse({ courriel: "a@example.mg", motDePasse: "x" }).success).toBe(true);
   });
 
-  it("ignore le champ stat s'il est encore transmis (compatibilité)", () => {
-    const resultat = loginSchema.safeParse({
+  it("ignores the stat field when still sent (compatibility)", () => {
+    const result = loginSchema.safeParse({
       courriel: "a@example.mg",
       motDePasse: "x",
       stat: "stat invalide!!",
     });
-    // Champ retiré du schéma : toléré sans validation, jamais requis.
-    expect(resultat.success).toBe(true);
+    // Field removed from the schema: tolerated without validation, never required.
+    expect(result.success).toBe(true);
   });
 
-  it("exige toujours un mot de passe", () => {
-    const resultat = loginSchema.safeParse({ courriel: "a@example.mg", motDePasse: "" });
-    expect(resultat.success).toBe(false);
+  it("always requires a password", () => {
+    const result = loginSchema.safeParse({ courriel: "a@example.mg", motDePasse: "" });
+    expect(result.success).toBe(false);
   });
 });
 
 describe("publicContactSchema", () => {
-  const contactValide = {
+  const validContact = {
     nom: "Rakoto Andry",
     courriel: "rakoto@example.mg",
     sujet: "Question sur le portail",
     message: "Bonjour, je souhaite obtenir une information sur le fonctionnement du portail.",
   };
 
-  it("accepte un message de contact complet", () => {
-    expect(publicContactSchema.safeParse(contactValide).success).toBe(true);
+  it("accepts a complete contact message", () => {
+    expect(publicContactSchema.safeParse(validContact).success).toBe(true);
   });
 
-  it("rejette les coordonnées ou messages trop courts", () => {
-    const resultat = publicContactSchema.safeParse({
-      ...contactValide,
+  it("rejects too-short contact details or messages", () => {
+    const result = publicContactSchema.safeParse({
+      ...validContact,
       nom: "A",
       message: "Bonjour",
     });
-    expect(resultat.success).toBe(false);
+    expect(result.success).toBe(false);
   });
 
-  it("accepte le champ honeypot vide des visiteurs légitimes", () => {
-    expect(publicContactSchema.safeParse({ ...contactValide, siteWeb: "" }).success).toBe(true);
+  it("accepts the empty honeypot field of legitimate visitors", () => {
+    expect(publicContactSchema.safeParse({ ...validContact, siteWeb: "" }).success).toBe(true);
   });
 });
 
-describe("règle mot de passe (alignée sur le DTO backend durci)", () => {
-  it("rejette un mot de passe sans majuscule", () => {
-    const resultat = passwordChangeSchema.safeParse({
+describe("password rule (aligned with the hardened backend DTO)", () => {
+  it("rejects a password without uppercase", () => {
+    const result = passwordChangeSchema.safeParse({
       motDePasseActuel: "Ancien1234",
       nouveauMotDePasse: "nouveau1234",
       confirmation: "nouveau1234",
     });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues.some((i) => i.message.includes("majuscule"))).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.some((i) => i.message.includes("majuscule"))).toBe(true);
   });
-  it("accepte 10 caractères avec majuscule, minuscule et chiffre", () => {
+  it("accepts 10 characters with uppercase, lowercase and digit", () => {
     expect(
       passwordChangeSchema.safeParse({
         motDePasseActuel: "Ancien1234",
@@ -82,19 +82,19 @@ describe("règle mot de passe (alignée sur le DTO backend durci)", () => {
       }).success,
     ).toBe(true);
   });
-  it("rejette une confirmation différente", () => {
-    const resultat = passwordChangeSchema.safeParse({
+  it("rejects a different confirmation", () => {
+    const result = passwordChangeSchema.safeParse({
       motDePasseActuel: "Ancien1234",
       nouveauMotDePasse: "Nouveau123",
       confirmation: "Autre12345",
     });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues.some((i) => i.path.includes("confirmation"))).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.some((i) => i.path.includes("confirmation"))).toBe(true);
   });
 });
 
-describe("inscriptionSchema", () => {
+describe("createRegistrationSchema", () => {
   const base = {
     type: "PARTICULIER" as const,
     nom: "Rakoto",
@@ -115,16 +115,16 @@ describe("inscriptionSchema", () => {
     motDePasse: "Nouveau123",
     confirmation: "Nouveau123",
   };
-  it("accepte un particulier complet", () => {
+  it("accepts a complete individual", () => {
     expect(createRegistrationSchema(false).safeParse(base).success).toBe(true);
   });
-  it("exige la raison sociale pour une entreprise", () => {
-    const resultat = createRegistrationSchema(false).safeParse({ ...base, type: "ENTREPRISE" });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues.some((i) => i.path.includes("raisonSociale"))).toBe(true);
+  it("requires the legal name for a business", () => {
+    const result = createRegistrationSchema(false).safeParse({ ...base, type: "ENTREPRISE" });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.some((i) => i.path.includes("raisonSociale"))).toBe(true);
   });
-  it("n'exige pas le profil pour le premier administrateur", () => {
+  it("does not require the profile for the first administrator", () => {
     expect(
       createRegistrationSchema(true).safeParse({ ...base, adresse: "", ville: "", telephone: "" })
         .success,
@@ -141,35 +141,35 @@ describe("paymentDeclarationSchema", () => {
     referenceTransaction: "REF-123",
     dateTransaction: "2026-01-10",
   };
-  it("exige l'opérateur et le téléphone en mobile money", () => {
-    const resultat = paymentDeclarationSchema.safeParse({ ...base, mode: "MOBILE_MONEY" });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success) {
-      const champs = resultat.error.issues.map((i) => i.path[0]);
-      expect(champs).toContain("operateur");
-      expect(champs).toContain("telephoneUtilise");
+  it("requires the operator and phone number for mobile money", () => {
+    const result = paymentDeclarationSchema.safeParse({ ...base, mode: "MOBILE_MONEY" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fields = result.error.issues.map((i) => i.path[0]);
+      expect(fields).toContain("operateur");
+      expect(fields).toContain("telephoneUtilise");
     }
   });
-  it("exige le canal en virement bancaire", () => {
-    const resultat = paymentDeclarationSchema.safeParse({ ...base, mode: "VIREMENT_BANCAIRE" });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues.some((i) => i.path.includes("banqueOuCanal"))).toBe(true);
+  it("requires the channel for bank transfer", () => {
+    const result = paymentDeclarationSchema.safeParse({ ...base, mode: "VIREMENT_BANCAIRE" });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.some((i) => i.path.includes("banqueOuCanal"))).toBe(true);
   });
-  it("rejette une date future", () => {
-    const resultat = paymentDeclarationSchema.safeParse({
+  it("rejects a future date", () => {
+    const result = paymentDeclarationSchema.safeParse({
       ...base,
       mode: "VIREMENT_BANCAIRE",
       banqueOuCanal: "BOA",
       dateTransaction: "2999-01-01",
     });
-    expect(resultat.success).toBe(false);
+    expect(result.success).toBe(false);
   });
 });
 
 describe("taxpayerFormSchema", () => {
-  it("exige le nom pour un particulier", () => {
-    const resultat = taxpayerFormSchema.safeParse({
+  it("requires the name for an individual", () => {
+    const result = taxpayerFormSchema.safeParse({
       type: "PARTICULIER",
       nom: "",
       prenom: "",
@@ -187,8 +187,8 @@ describe("taxpayerFormSchema", () => {
       courriel: "a@b.mg",
       telephone: "0340000000",
     });
-    expect(resultat.success).toBe(false);
-    if (!resultat.success)
-      expect(resultat.error.issues.some((i) => i.path.includes("nom"))).toBe(true);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.some((i) => i.path.includes("nom"))).toBe(true);
   });
 });

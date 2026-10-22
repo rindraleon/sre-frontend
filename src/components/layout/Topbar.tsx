@@ -19,77 +19,77 @@ import { getInitials } from "@/utils/format";
 
 
 export function Topbar({
-  titrePage,
-  notificationsNonLues,
-  ouvrirMenuMobile,
+  //pageTitle,
+  unreadNotifications,
+  openMobileMenu,
 }: Readonly<{
-  titrePage: string;
-  notificationsNonLues: number;
-  ouvrirMenuMobile: () => void;
+  pageTitle: string;
+  unreadNotifications: number;
+  openMobileMenu: () => void;
 }>) {
-  const { session, deconnecter } = useAuth();
-  const { notifier } = useSre();
-  const { theme, basculerTheme } = useTheme();
+  const { session, logOut } = useAuth();
+  const { notify } = useSre();
+  const { theme, toggleTheme } = useTheme();
   const navigation = useNavigate();
-  const [menuOuvert, setMenuOuvert] = useState(false);
-  const [confirmationDeconnexion, setConfirmationDeconnexion] = useState(false);
-  const refMenu = useRef<HTMLDivElement | null>(null);
-  const refBoutonMenu = useRef<HTMLButtonElement | null>(null);
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [confirmationLogout, setConfirmationLogout] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    if (!menuOuvert) return;
-    const gererExterieur = (event: MouseEvent) => {
-      if (refMenu.current && !refMenu.current.contains(event.target as Node))
-        setMenuOuvert(false);
+    if (!isMenuOpen) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node))
+        setMenuOpen(false);
     };
-    const gererClavier = (event: KeyboardEvent) => {
+    const handleKeyboard = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setMenuOuvert(false);
-        refBoutonMenu.current?.focus();
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
       }
     };
-    document.addEventListener("mousedown", gererExterieur);
-    document.addEventListener("keydown", gererClavier);
-    refMenu.current
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyboard);
+    menuRef.current
       ?.querySelector<HTMLElement>("[role='menuitem'], [role='menuitemcheckbox']")
       ?.focus();
     return () => {
-      document.removeEventListener("mousedown", gererExterieur);
-      document.removeEventListener("keydown", gererClavier);
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyboard);
     };
-  }, [menuOuvert]);
+  }, [isMenuOpen]);
 
   if (!session) return null;
-  const estAdmin = session.role === "ADMIN";
-  const racine = estAdmin ? "/admin" : "/client";
-  const initialesUtilisateur = getInitials(session.nom) || "SRE";
+  const isAdmin = session.role === "ADMIN";
+  const rootPath = isAdmin ? "/admin" : "/client";
+  const userInitials = getInitials(session.name) || "SRE";
 
-  const seDeconnecter = () => {
-    setMenuOuvert(false);
-    setConfirmationDeconnexion(true);
+  const handleLogout = () => {
+    setMenuOpen(false);
+    setConfirmationLogout(true);
   };
 
-  const confirmerDeconnexion = () => {
-    setConfirmationDeconnexion(false);
-    deconnecter();
+  const confirmLogout = () => {
+    setConfirmationLogout(false);
+    logOut();
     void navigation("/accueil", { replace: true });
-    notifier("Vous êtes déconnecté.", "info");
+    notify("Vous êtes déconnecté.", "info");
   };
 
   return (
-    <header className="entete-application-sre">
-      <div className="entete-application-sre__gauche">
-        <button className="bouton-menu-sre" aria-label="Ouvrir le menu" onClick={ouvrirMenuMobile}>
+    <header className="app-header-sre">
+      <div className="app-header-sre__left">
+        <button className="menu-button-sre" aria-label="Ouvrir le menu" onClick={openMobileMenu}>
           <Menu size={20} />
         </button>
         <div>
-          <span>{estAdmin ? "Espace Administrateur" : "Espace client"}</span>
+          <span>{isAdmin ? "Espace Administrateur" : "Espace client"}</span>
           {/* <strong>{titrePage}</strong> */}
         </div>
       </div>
-      <div className="entete-application-sre__droite">
+      <div className="app-header-sre__right">
         <Link
-          className="bouton-notification-sre"
+          className="notification-button-sre"
           to="/aide"
           aria-label="Aide et documentation"
           title="Aide"
@@ -97,51 +97,50 @@ export function Topbar({
           <CircleHelp size={17} />
         </Link>
         <Link
-          className="bouton-notification-sre"
-          to={estAdmin ? "/admin/notifications" : "/client/notifications"}
-          aria-label={`${notificationsNonLues} notifications non lues`}
+          className="notification-button-sre"
+          to={isAdmin ? "/admin/notifications" : "/client/notifications"}
+          aria-label={`${unreadNotifications} notifications non lues`}
         >
           <Bell size={17} />
-          {notificationsNonLues > 0 && <i>{notificationsNonLues}</i>}
+          {unreadNotifications > 0 && <i>{unreadNotifications}</i>}
         </Link>
-        <div className="menu-utilisateur-sre" ref={refMenu}>
+        <div className="user-menu-sre" ref={menuRef}>
           <button
-            ref={refBoutonMenu}
+            ref={menuButtonRef}
             type="button"
-            className="entete-session-sre bouton-menu-utilisateur-sre"
+            className="session-header-sre user-menu-button-sre"
             aria-haspopup="menu"
-            aria-expanded={menuOuvert}
-            aria-label={`Menu de ${session.nom}`}
-            onClick={() => setMenuOuvert((courant) => !courant)}
+            aria-expanded={isMenuOpen}
+            aria-label={`Menu de ${session.name}`}
+            onClick={() => setMenuOpen((current) => !current)}
           >
-            <span aria-hidden="true">{initialesUtilisateur}</span>
+            <span aria-hidden="true">{userInitials}</span>
             <div>
-              <strong>{session.nom}</strong>
-              <small>{estAdmin ? "Administrateur" : "Contribuable"}</small>
+              <strong>{session.name}</strong>
+              <small>{isAdmin ? "Administrateur" : "Contribuable"}</small>
             </div>
             <ChevronDown size={14} aria-hidden="true" />
           </button>
-          {menuOuvert && (
+          {isMenuOpen && (
             <div
-              className="menu-utilisateur-sre__panneau"
+              className="user-menu-sre__panel"
               role="menu"
               aria-label="Menu utilisateur"
             >
-              <div className="menu-utilisateur-sre__identite">
-                <strong>{session.nom}</strong>
-                {/* Affichés uniquement car réellement présents dans la session API. */}
-                <small>{session.courriel}</small>
-                <small>{estAdmin ? "Administrateur" : "Contribuable"}</small>
+              <div className="user-menu-sre__identity">
+                <strong>{session.name}</strong>
+                <small>{session.email}</small>
+                <small>{isAdmin ? "Administrateur" : "Contribuable"}</small>
               </div>
-              {!estAdmin && (
-                <Link role="menuitem" to="/client/profil" onClick={() => setMenuOuvert(false)}>
+              {!isAdmin && (
+                <Link role="menuitem" to="/client/profil" onClick={() => setMenuOpen(false)}>
                   <UserRound size={15} aria-hidden="true" /> Mon profil
                 </Link>
               )}
               <Link
                 role="menuitem"
-                to={`${racine}/parametres`}
-                onClick={() => setMenuOuvert(false)}
+                to={`${rootPath}/parametres`}
+                onClick={() => setMenuOpen(false)}
               >
                 <Settings size={15} aria-hidden="true" /> Paramètres
               </Link>
@@ -150,9 +149,9 @@ export function Topbar({
                 role="menuitemcheckbox"
                 aria-checked={theme === "sombre"}
                 onClick={() => {
-                  basculerTheme();
-                  setMenuOuvert(false);
-                  refBoutonMenu.current?.focus();
+                  toggleTheme();
+                  setMenuOpen(false);
+                  menuButtonRef.current?.focus();
                 }}
               >
                 {theme === "sombre" ? (
@@ -162,10 +161,10 @@ export function Topbar({
                 )}
                 {theme === "sombre" ? "Thème clair" : "Thème sombre"}
               </button>
-              <Link role="menuitem" to="/aide" onClick={() => setMenuOuvert(false)}>
+              <Link role="menuitem" to="/aide" onClick={() => setMenuOpen(false)}>
                 <CircleHelp size={15} aria-hidden="true" /> Aide
               </Link>
-              <button type="button" role="menuitem" onClick={seDeconnecter}>
+              <button type="button" role="menuitem" onClick={handleLogout}>
                 <LogOut size={15} aria-hidden="true" /> Déconnexion
               </button>
             </div>
@@ -173,12 +172,12 @@ export function Topbar({
         </div>
       </div>
       <ConfirmDialog
-        ouvert={confirmationDeconnexion}
-        titre="Se déconnecter ?"
+        open={confirmationLogout}
+        title="Se déconnecter ?"
         description="Voulez-vous vraiment vous déconnecter ?"
-        fermer={() => setConfirmationDeconnexion(false)}
-        confirmer={confirmerDeconnexion}
-        libelleConfirmer="Confirmer la déconnexion"
+        close={() => setConfirmationLogout(false)}
+        confirm={confirmLogout}
+        confirmLabel="Confirmer la déconnexion"
       />
     </header>
   );

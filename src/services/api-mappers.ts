@@ -17,45 +17,45 @@ import type {
   TaxType,
 } from "@/types";
 
-export function mapApiUser(utilisateur: ApiUser): AppUser {
+export function mapApiUser(user: ApiUser): AppUser {
   return {
-    id: utilisateur.id,
-    nom: utilisateur.nom,
-    courriel: utilisateur.courriel,
-    role: utilisateur.role,
-    contribuableId: utilisateur.contribuableId,
-    statut: utilisateur.statut,
-    changementMotDePasseRequis: utilisateur.changementMotDePasseRequis,
-    profilComplete: utilisateur.profilComplete ?? true,
-    courrielVerifie: utilisateur.courrielVerifie ?? false,
-    creeLe: utilisateur.creeLe,
-    derniereConnexion: utilisateur.derniereConnexion ?? undefined,
+    id: user.id,
+    name: user.nom,
+    email: user.courriel,
+    role: user.role,
+    taxpayerId: user.contribuableId,
+    status: user.statut,
+    mustChangePassword: user.changementMotDePasseRequis,
+    isProfileComplete: user.profilComplete ?? true,
+    isEmailVerified: user.courrielVerifie ?? false,
+    createdAt: user.creeLe,
+    lastLoginAt: user.derniereConnexion ?? undefined,
   };
 }
 
-export function mapApiTaxpayer(contribuable: ApiTaxpayer, utilisateurId?: string): Taxpayer {
+export function mapApiTaxpayer(taxpayer: ApiTaxpayer, userId?: string): Taxpayer {
   return {
-    id: contribuable.id,
-    utilisateurId,
-    type: contribuable.type,
-    nom: contribuable.nom,
-    prenom: contribuable.prenom ?? undefined,
-    raisonSociale: contribuable.raisonSociale ?? undefined,
-    nomCommercial: contribuable.nomCommercial ?? undefined,
-    nif: contribuable.nif ?? "",
-    stat: contribuable.stat ?? undefined,
-    adresse: contribuable.adresse,
-    region: contribuable.region,
-    ville: contribuable.ville,
-    courriel: contribuable.courriel,
-    telephone: contribuable.telephone,
-    representantLegal: contribuable.representantLegal ?? undefined,
-    nomContact: contribuable.nomContact ?? undefined,
-    prenomContact: contribuable.prenomContact ?? undefined,
-    fonctionContact: contribuable.fonctionContact ?? undefined,
-    dateCreationCompte: contribuable.dateCreationCompte,
-    statut: contribuable.statutCompte ?? undefined,
-    creeLe: contribuable.creeLe,
+    id: taxpayer.id,
+    userId,
+    type: taxpayer.type,
+    lastName: taxpayer.nom,
+    firstName: taxpayer.prenom ?? undefined,
+    legalName: taxpayer.raisonSociale ?? undefined,
+    tradeName: taxpayer.nomCommercial ?? undefined,
+    nif: taxpayer.nif ?? "",
+    stat: taxpayer.stat ?? undefined,
+    address: taxpayer.adresse,
+    region: taxpayer.region,
+    city: taxpayer.ville,
+    email: taxpayer.courriel,
+    phone: taxpayer.telephone,
+    legalRepresentative: taxpayer.representantLegal ?? undefined,
+    contactLastName: taxpayer.nomContact ?? undefined,
+    contactFirstName: taxpayer.prenomContact ?? undefined,
+    contactRole: taxpayer.fonctionContact ?? undefined,
+    accountCreatedAt: taxpayer.dateCreationCompte,
+    status: taxpayer.statutCompte ?? undefined,
+    createdAt: taxpayer.creeLe,
   };
 }
 
@@ -63,121 +63,147 @@ export function mapApiTaxType(type: ApiTaxType): TaxType {
   return {
     id: type.id,
     code: type.code,
-    nom: type.nom,
+    name: type.nom,
     description: type.description,
-    categorie: type.categorie,
-    contribuablesConcernes: type.contribuablesConcernes,
-    periodicite: type.periodicite,
-    regleEcheance: type.regleEcheance,
-    modeMontant: type.modeMontant,
-    montantReference: type.montantReference == null ? null : Number(type.montantReference),
-    champsComplementaires: type.champsComplementaires ?? [],
-    actif: type.actif,
-    creeLe: type.creeLe,
-    modifieLe: type.modifieLe,
+    category: type.categorie,
+    applicableTaxpayers: type.contribuablesConcernes,
+    periodicity: type.periodicite,
+    dueDateRule: type.regleEcheance,
+    amountMode: type.modeMontant,
+    referenceAmount: type.montantReference == null ? null : Number(type.montantReference),
+    additionalFields: type.champsComplementaires ?? [],
+    isActive: type.actif,
+    createdAt: type.creeLe,
+    updatedAt: type.modifieLe,
   };
 }
 
 export function mapApiObligation(obligation: ApiObligation): TaxObligation {
   return {
     id: obligation.id,
-    contribuableId: obligation.contribuableId,
-    typeImpotId: obligation.typeImpotId,
-    typeImpotNom: obligation.typeImpotNom,
-    referenceFiscale: obligation.referenceFiscale,
-    periode: obligation.periode,
-    montant: Number(obligation.montant),
-    devise: obligation.devise,
-    echeance: obligation.echeance,
-    statut: obligation.statut,
-    creeLe: obligation.creeLe,
+    taxpayerId: obligation.contribuableId,
+    taxTypeId: obligation.typeImpotId,
+    taxTypeName: obligation.typeImpotNom,
+    taxReference: obligation.referenceFiscale,
+    period: obligation.periode,
+    amount: Number(obligation.montant),
+    currency: obligation.devise,
+    dueDate: obligation.echeance,
+    status: obligation.statut,
+    createdAt: obligation.creeLe,
   };
 }
 
-export function mapApiPayment(paiement: ApiPayment): Payment {
+export function mapApiPayment(payment: ApiPayment): Payment {
   return {
-    id: paiement.id,
-    referenceInterne: paiement.referenceInterne,
-    contribuableId: paiement.contribuableId,
-    obligationId: paiement.obligationId,
-    typeImpotId: paiement.typeImpotId,
-    typeImpotNom: paiement.typeImpotNom,
-    periode: paiement.periode,
-    montant: Number(paiement.montant),
-    devise: paiement.devise,
-    mode: paiement.mode,
-    operateur: paiement.operateur ?? undefined,
-    telephoneUtilise: paiement.telephoneUtilise ?? undefined,
-    banqueOuCanal: paiement.banqueOuCanal ?? undefined,
-    titulairePayeur: paiement.titulairePayeur ?? undefined,
-    referenceTransaction: paiement.referenceTransaction,
-    dateTransaction: paiement.dateTransaction,
-    justificatifNom: paiement.justificatifNom ?? undefined,
-    statut: paiement.statut,
-    soumisLe: paiement.soumisLe,
-    valideLe: paiement.valideLe ?? undefined,
-    validePar: paiement.validePar ?? undefined,
-    motifRejet: paiement.motifRejet ?? undefined,
-    historique: paiement.historique.map((entree) => ({
-      ...entree,
-      motif: entree.motif ?? undefined,
+    id: payment.id,
+    internalReference: payment.referenceInterne,
+    taxpayerId: payment.contribuableId,
+    obligationId: payment.obligationId,
+    taxTypeId: payment.typeImpotId,
+    taxTypeName: payment.typeImpotNom,
+    period: payment.periode,
+    amount: Number(payment.montant),
+    currency: payment.devise,
+    mode: payment.mode,
+    operator: payment.operateur ?? undefined,
+    usedPhone: payment.telephoneUtilise ?? undefined,
+    bankOrChannel: payment.banqueOuCanal ?? undefined,
+    payerName: payment.titulairePayeur ?? undefined,
+    transactionReference: payment.referenceTransaction,
+    transactionDate: payment.dateTransaction,
+    supportingDocumentName: payment.justificatifNom ?? undefined,
+    status: payment.statut,
+    submittedAt: payment.soumisLe,
+    validatedAt: payment.valideLe ?? undefined,
+    validatedBy: payment.validePar ?? undefined,
+    rejectionReason: payment.motifRejet ?? undefined,
+    history: payment.historique.map((entry) => ({
+      status: entry.statut,
+      label: entry.libelle,
+      date: entry.date,
+      actor: entry.acteur,
+      reason: entry.motif ?? undefined,
     })),
   };
 }
 
 export function mapApiDocument(document: ApiDocument): PaymentDocument {
   return {
-    ...document,
-    montant: Number(document.montant),
-    statut: document.statut,
+    id: document.id,
+    number: document.numero,
+    type: document.type,
+    status: document.statut,
+    paymentId: document.paiementId,
+    taxpayerId: document.contribuableId,
+    paymentReference: document.referencePaiement,
+    taxTypeName: document.typeImpotNom,
+    period: document.periode,
+    declaredTransactionReference: document.referenceTransactionDeclaree,
+    declaredMode: document.modeDeclare,
+    amount: Number(document.montant),
+    currency: document.devise,
+    issuer: document.emetteur,
+    issuedAt: document.emisLe,
+    issuedBy: document.emisPar ?? undefined,
+    mention: document.mention,
   };
 }
 
-export function mapApiPaymentDocuments(paiement: ApiPayment): PaymentDocument[] {
-  return (paiement.documents ?? []).map((document) => ({
+export function mapApiPaymentDocuments(payment: ApiPayment): PaymentDocument[] {
+  return (payment.documents ?? []).map((document) => ({
     id: document.id,
-    numero: document.numero,
+    number: document.numero,
     type: document.type,
-    statut: document.statut,
-    paiementId: paiement.id,
-    contribuableId: paiement.contribuableId,
-    referencePaiement: paiement.referenceInterne,
-    typeImpotNom: paiement.typeImpotNom,
-    periode: paiement.periode,
-    referenceTransactionDeclaree: paiement.referenceTransaction,
-    modeDeclare: paiement.mode,
-    montant: Number(document.montant),
-    devise: document.devise,
-    emetteur: document.emetteur,
-    emisLe: document.emisLe,
-    emisPar: document.emisPar ?? undefined,
+    status: document.statut,
+    paymentId: payment.id,
+    taxpayerId: payment.contribuableId,
+    paymentReference: payment.referenceInterne,
+    taxTypeName: payment.typeImpotNom,
+    period: payment.periode,
+    declaredTransactionReference: payment.referenceTransaction,
+    declaredMode: payment.mode,
+    amount: Number(document.montant),
+    currency: document.devise,
+    issuer: document.emetteur,
+    issuedAt: document.emisLe,
+    issuedBy: document.emisPar ?? undefined,
     mention: document.mention,
   }));
 }
 
 export function mapApiNotification(
   notification: ApiNotification,
-  utilisateurId: string,
+  userId: string,
 ): AppNotification {
+  let emailStatus: AppNotification["emailStatus"];
+  switch (notification.statutCourriel) {
+    case "ENVOYE":
+      emailStatus = "ENVOYE";
+      break;
+    case "DELIVRE":
+      emailStatus = "DELIVRE";
+      break;
+    case "ECHEC":
+      emailStatus = "ERREUR";
+      break;
+    case "EN_ATTENTE":
+      emailStatus = "EN_ATTENTE";
+      break;
+    default:
+      emailStatus = "NON_ENVOYE";
+  }
+
   return {
     id: notification.id,
-    titre: notification.titre,
+    title: notification.titre,
     message: notification.message,
     type: "OBLIGATION",
     date: notification.creeLe,
-    lue: notification.lue,
-    utilisateurId,
-    referenceEntite: notification.obligation?.id,
-    // Le statut d'envoi courriel reste distinct de la notification in-app.
-    statutEmail:
-      notification.statutCourriel === "ENVOYE"
-        ? "ENVOYE"
-        : notification.statutCourriel === "DELIVRE"
-          ? "DELIVRE"
-          : notification.statutCourriel === "ECHEC"
-            ? "ERREUR"
-            : notification.statutCourriel === "EN_ATTENTE"
-              ? "EN_ATTENTE"
-              : "NON_ENVOYE",
+    isRead: notification.lue,
+    userId,
+    entityReference: notification.obligation?.id,
+    // The e-mail delivery status stays distinct from the in-app notification.
+    emailStatus,
   };
 }

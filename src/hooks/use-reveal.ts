@@ -2,29 +2,29 @@ import { useEffect } from "react";
 
 export function useReveal() {
   useEffect(() => {
-    const cibles = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-revelation]"),
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );
-    if (cibles.length === 0) return;
-    const mouvementReduit = window.matchMedia(
+    if (targets.length === 0) return;
+    const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    if (mouvementReduit || typeof IntersectionObserver === "undefined") {
-      for (const cible of cibles) cible.classList.add("revelation-visible");
+    if (reducedMotion || typeof IntersectionObserver === "undefined") {
+      for (const target of targets) target.classList.add("reveal-visible");
       return;
     }
-    const observateur = new IntersectionObserver(
-      (entrees) => {
-        for (const entree of entrees) {
-          if (entree.isIntersecting) {
-            entree.target.classList.add("revelation-visible");
-            observateur.unobserve(entree.target);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal-visible");
+            observer.unobserve(entry.target);
           }
         }
       },
       { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
     );
-    for (const cible of cibles) observateur.observe(cible);
-    return () => observateur.disconnect();
+    for (const target of targets) observer.observe(target);
+    return () => observer.disconnect();
   }, []);
 }

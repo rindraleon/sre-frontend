@@ -11,45 +11,47 @@ import {
   WalletCards,
 } from "lucide-react";
 import { SRE_REGION } from "@/utils/constants";
-import { ETAPES, FEATURES, PROMESSES, TYPES_IMPOTS_MADAGASCAR } from "@/constants/public-content";
-import { useHauteurEntete, useReveal } from "@/hooks";
+import { STEPS, FEATURES, PROMISES, TAX_TYPES_MADAGASCAR } from "@/constants/public-content";
+import { useHeaderHeight, useReveal } from "@/hooks";
+import { useTheme } from "@/context/ThemeContext";
 import { PublicBrand } from "@/components/public/public-brand";
 import { PublicFooter } from "@/components/public/public-footer";
 import { FeatureCard } from "@/components/public/feature-card";
 import { StepItem } from "@/components/public/step-item";
 import { PromiseItem } from "@/components/public/promise-item";
 import { PublicContactForm } from "@/components/public/contact-form";
+import { PublicThemeToggle } from "@/components/public/public-theme-toggle";
 
 const PathDrawingPortfolioHero = lazy(() => import("@/components/ui/path-drawing-portfolio-hero"));
 
 export function PublicHomePage() {
   useReveal();
-  const entete = useRef<HTMLElement | null>(null);
-  useHauteurEntete(entete);
+  const header = useRef<HTMLElement | null>(null);
+  useHeaderHeight(header);
+  const { theme } = useTheme();
+  const isDark = theme === "sombre";
   return (
-    <div className="site-public-sre">
-      <header className="entete-public-sre" ref={entete}>
+    <div className="public-site-sre">
+      <header className="public-header-sre" ref={header}>
         <PublicBrand subtitle={SRE_REGION} />
-        <nav className="navigation-public-sre" aria-label="Navigation publique">
+        <nav className="public-navigation-sre" aria-label="Navigation publique">
           <a href="#services">Services</a>
           <a href="#fiscalite">Fiscalité</a>
           <a href="#etapes">Parcours</a>
           <a href="#securite">Sécurité</a>
           <a href="#contact">Contact</a>
         </nav>
-        <div className="actions-entete-public-sre">
-          <Link className="lien-connexion-public-sre" to="/aide">
-            Aide
-          </Link>
-          <Link className="bouton-sre bouton-sre--contour bouton-sre--petit" to="/connexion">
+        <div className="public-header-actions-sre">
+          <PublicThemeToggle />
+          <Link className="button-sre button-sre--outline button-sre--small" to="/connexion">
             Connexion
           </Link>
         </div>
       </header>
       <main>
-        <section className="hero-public-sre">
-          <div className="hero-public-sre__texte">
-            <div className="sur-titre-sre">
+        <section className="public-hero-sre">
+          <div className="public-hero-sre__text">
+            <div className="overline-sre">
               <i /> SERVICE · {SRE_REGION.toUpperCase()}
             </div>
             <h1>
@@ -61,15 +63,15 @@ export function PublicHomePage() {
               Consultez les informations rattachées à votre compte et suivez les déclarations
               enregistrées pour le périmètre de {SRE_REGION}.
             </p>
-            <div className="hero-public-sre__actions">
-              <Link className="bouton-sre bouton-sre--primaire bouton-sre--grand" to="/inscription">
+            <div className="public-hero-sre__actions">
+              <Link className="button-sre button-sre--primary button-sre--large" to="/inscription">
                 Accéder au portail <ArrowRight size={16} />
               </Link>
-              <Link className="bouton-sre bouton-sre--clair bouton-sre--grand" to="/connexion">
+              <Link className="button-sre button-sre--light button-sre--large" to="/connexion">
                 J’ai déjà un compte
               </Link>
             </div>
-            <div className="hero-points-public-sre">
+            <div className="public-hero-points-sre">
               <span>
                 <ShieldCheck size={15} /> Accès protégé
               </span>
@@ -81,7 +83,7 @@ export function PublicHomePage() {
               </span>
             </div>
           </div>
-          <div className="hero-public-sre__illustration hero-sre-path-zone">
+          <div className="public-hero-sre__illustration hero-sre-path-zone">
             <div className="hero-sre-path-zone__halo" aria-hidden="true" />
             <Suspense
               fallback={
@@ -95,8 +97,8 @@ export function PublicHomePage() {
                 brand="SRE"
                 // eyebrow="PORTAIL FISCAL RÉGIONAL"
                 // tagline={`Service Régional des Entreprises · ${SRE_REGION}`}
-                fromColor="#176f86"
-                toColor="#15947c"
+                fromColor={isDark ? "#3aa0ad" : "#176f86"}
+                toColor={isDark ? "#43bb96" : "#15947c"}
                 layout="embedded"
                 showScrollCue={false}
                 className="hero-sre-path-brand"
@@ -107,26 +109,26 @@ export function PublicHomePage() {
               <small>HAUTE MATSIATRA · MADAGASCAR</small>
             </div> */}
           </div>
-          <div className="scroll-indication-sre">
+          <div className="scroll-hint-sre">
             <a href="#services">
               DÉCOUVRIR LE PORTAIL <ArrowDown size={13} />
             </a>
           </div>
         </section>
-        <section className="bandeau-promesse-public-sre">
-          {PROMESSES.map((p, idx) => (
+        <section className="public-promise-banner-sre">
+          {PROMISES.map((p, idx) => (
             <PromiseItem
               key={idx}
-              icone={p.icone}
-              titre={p.titre}
+              icon={p.icon}
+              title={p.title}
               description={p.description}
-              delai={idx + 1}
+              delay={idx + 1}
             />
           ))}
         </section>
-        <section className="section-services-public-sre" id="services">
-          <div className="section-public-entete-sre" data-revelation>
-            <span className="sur-titre-sre">SERVICES DU PORTAIL</span>
+        <section className="public-services-section-sre" id="services">
+          <div className="public-section-header-sre" data-reveal>
+            <span className="overline-sre">SERVICES DU PORTAIL</span>
             <h2>
               Les démarches utiles,
               <br />
@@ -137,60 +139,60 @@ export function PublicHomePage() {
               votre compte.
             </p>
           </div>
-          <div className="cartes-services-public-sre">
+          <div className="public-cards-services-sre">
             {FEATURES.map((f, idx) => (
               <FeatureCard
-                key={f.titre}
+                key={f.title}
                 index={f.index}
-                Icône={f.icone}
-                titre={f.titre}
+                Icon={f.icon}
+                title={f.title}
                 description={f.description}
-                lienTexte={f.lienTexte}
-                delai={idx + 1}
+                linkText={f.linkText}
+                delay={idx + 1}
               />
             ))}
           </div>
         </section>
         <section
-          className="section-fiscalite-public-sre"
+          className="public-taxation-section-sre"
           id="fiscalite"
-          aria-labelledby="titre-fiscalite-public-sre"
+          aria-labelledby="public-taxation-title-sre"
         >
           <div
-            className="section-public-entete-sre section-fiscalite-public-sre__entete"
-            data-revelation
+            className="public-section-header-sre public-taxation-section-sre__header"
+            data-reveal
           >
-            <span className="sur-titre-sre">REPÈRES FISCAUX · MADAGASCAR</span>
-            <h2 id="titre-fiscalite-public-sre">Les principales catégories d’impôts.</h2>
+            <span className="overline-sre">REPÈRES FISCAUX · MADAGASCAR</span>
+            <h2 id="public-taxation-title-sre">Les principales catégories d’impôts.</h2>
             <p>
               Quelques repères pour mieux comprendre les impositions prévues par le Code des impôts,
               sans figer de taux ou d’échéances susceptibles d’évoluer.
             </p>
           </div>
-          <div className="cartes-fiscalite-public-sre">
-            {TYPES_IMPOTS_MADAGASCAR.map((type, index) => {
-              const Icone = type.icone;
+          <div className="public-cards-taxation-sre">
+            {TAX_TYPES_MADAGASCAR.map((type, index) => {
+              const Icon = type.icon;
               return (
                 <article
-                  key={type.sigle}
-                  className="carte-fiscalite-public-sre"
-                  data-revelation="zoom"
+                  key={type.acronym}
+                  className="public-card-taxation-sre"
+                  data-reveal="zoom"
                   data-delai={(index % 5) + 1}
                 >
-                  <div className="carte-fiscalite-public-sre__entete">
-                    <span className="carte-fiscalite-public-sre__icone">
-                      <Icone size={19} strokeWidth={1.8} aria-hidden="true" />
+                  <div className="public-card-taxation-sre__header">
+                    <span className="public-card-taxation-sre__icon">
+                      <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
                     </span>
-                    <span className="carte-fiscalite-public-sre__sigle">{type.sigle}</span>
+                    <span className="public-card-taxation-sre__acronym">{type.acronym}</span>
                   </div>
-                  <h3>{type.intitule}</h3>
+                  <h3>{type.title}</h3>
                   <p>{type.description}</p>
                 </article>
               );
             })}
           </div>
-          <div className="note-fiscalite-public-sre" data-revelation>
-            <span className="note-fiscalite-public-sre__icone">
+          <div className="public-tax-note-sre" data-reveal>
+            <span className="public-tax-note-sre__icon">
               <ShieldCheck size={18} aria-hidden="true" />
             </span>
             <p>
@@ -204,41 +206,41 @@ export function PublicHomePage() {
           </div>
         </section>
 
-        <section className="section-etapes-public-sre" id="etapes">
-          <div className="section-etapes-public-sre__gauche" data-revelation="gauche">
-            <span className="sur-titre-sre">PARCOURS CONTRIBUABLE</span>
+        <section className="public-steps-section-sre" id="etapes">
+          <div className="public-steps-section-sre__left" data-reveal="gauche">
+            <span className="overline-sre">PARCOURS CONTRIBUABLE</span>
             <h2>Un suivi à chaque étape.</h2>
             <p>
               Votre espace n’affiche aucune donnée d’exemple. Les informations sont chargées après
               authentification.
             </p>
-            <Link className="bouton-sre bouton-sre--primaire" to="/inscription">
+            <Link className="button-sre button-sre--primary" to="/inscription">
               Créer mon compte <ArrowRight size={15} />
             </Link>
           </div>
-          <div className="liste-etapes-public-sre">
-            {ETAPES.map((e, idx) => (
+          <div className="public-steps-list-sre">
+            {STEPS.map((e, idx) => (
               <StepItem
-                key={e.numero}
-                numero={e.numero}
-                titre={e.titre}
+                key={e.number}
+                number={e.number}
+                title={e.title}
                 description={e.description}
-                delai={idx + 1}
+                delay={idx + 1}
               />
             ))}
           </div>
         </section>
-        <section className="section-canaux-public-sre" id="securite">
-          <div className="section-canaux-public-sre__carte" data-revelation>
+        <section className="public-channels-section-sre" id="securite">
+          <div className="public-channels-section-sre__card" data-reveal>
             <div>
-              <span className="sur-titre-sre">DÉCLARATION · PAS DE PAIEMENT INTÉGRÉ</span>
+              <span className="overline-sre">DÉCLARATION · PAS DE PAIEMENT INTÉGRÉ</span>
               <h2>Un suivi, pas un moyen de paiement.</h2>
               <p>
                 Le portail ne se connecte à aucune banque ou opérateur et n’encaisse aucun fonds.
                 Les modes et références renseignés sont déclaratifs et font l’objet d’un examen
                 administratif.
               </p>
-              <div className="canaux-public-sre">
+              <div className="public-channels-sre">
                 <span>
                   <WalletCards size={17} /> Opération mobile
                 </span>
@@ -247,7 +249,7 @@ export function PublicHomePage() {
                 </span>
               </div>
             </div>
-            <div className="canaux-sceau-public-sre">
+            <div className="public-channels-seal-sre">
               <WalletCards size={30} />
               <strong>
                 Pas de paiement
@@ -261,21 +263,21 @@ export function PublicHomePage() {
           </div>
         </section>
         <section
-          className="section-contact-public-sre"
+          className="public-contact-section-sre"
           id="contact"
-          aria-labelledby="titre-contact-public-sre"
+          aria-labelledby="public-contact-title-sre"
         >
-          <div className="section-contact-public-sre__entete" data-revelation>
-            <span className="sur-titre-sre">CONTACT · {SRE_REGION.toUpperCase()}</span>
-            <h2 id="titre-contact-public-sre">Écrivez à l’administration.</h2>
+          <div className="public-contact-section-sre__header" data-reveal>
+            <span className="overline-sre">CONTACT · {SRE_REGION.toUpperCase()}</span>
+            <h2 id="public-contact-title-sre">Écrivez à l’administration.</h2>
             <p>
               Une question sur le portail ? Envoyez-nous un message. Il sera transmis aux
               administrateurs actifs ; l’adresse de réponse sera celle que vous indiquez.
             </p>
           </div>
-          <div className="section-contact-public-sre__grille">
-            <aside className="section-contact-public-sre__aside" data-revelation="gauche">
-              <span className="section-contact-public-sre__icone">
+          <div className="public-contact-section-sre__grid">
+            <aside className="public-contact-section-sre__aside" data-reveal="gauche">
+              <span className="public-contact-section-sre__icon">
                 <MessageCircle size={21} aria-hidden="true" />
               </span>
               <h3>Comment pouvons-nous vous aider ?</h3>
@@ -292,24 +294,21 @@ export function PublicHomePage() {
                   de coordonnées bancaires
                 </li>
               </ul>
-              <Link className="section-contact-public-sre__aide" to="/aide">
-                Consulter l’aide avant d’écrire <ArrowRight size={14} />
-              </Link>
             </aside>
-            <div className="section-contact-public-sre__formulaire" data-revelation="droite">
+            <div className="public-contact-section-sre__form" data-reveal="droite">
               <PublicContactForm />
             </div>
           </div>
         </section>
-        <section className="appel-final-public-sre" data-revelation="zoom">
-          <span className="sur-titre-sre">SERVICE · {SRE_REGION.toUpperCase()}</span>
+        <section className="public-final-call-sre" data-reveal="zoom">
+          <span className="overline-sre">SERVICE · {SRE_REGION.toUpperCase()}</span>
           <h2>Accédez à votre espace.</h2>
           <p>Créez un compte ou connectez-vous pour consulter vos données.</p>
           <div>
-            <Link className="bouton-sre bouton-sre--clair bouton-sre--grand" to="/inscription">
+            <Link className="button-sre button-sre--light button-sre--large" to="/inscription">
               Créer un compte <ArrowRight size={15} />
             </Link>
-            <Link className="lien-final-public-sre" to="/connexion">
+            <Link className="public-final-link-sre" to="/connexion">
               Se connecter
             </Link>
           </div>

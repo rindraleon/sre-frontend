@@ -1,4 +1,4 @@
-.application-sre {
+.app-sre {
   display: flex;
   min-height: 100dvh;
   color: var(--sre-ink);
@@ -12,7 +12,7 @@
     "Segoe UI",
     sans-serif;
 }
-.barre-laterale-sre {
+.sidebar-sre {
   position: sticky;
   top: 0;
   z-index: 50;
@@ -25,17 +25,17 @@
   background: #fff;
   border-right: 1px solid var(--sre-border);
 }
-.marque-sre {
+.brand-sre {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 11px;
   color: var(--sre-ink);
 }
-/* Pastille de la marque officielle (logo professionnel sur plaque claire,
-   lisible sur les thèmes clair comme sombre). */
-.marque-sre > span,
-.logo-sre-marque {
+/* Badge of the official brand (professional logo on a light plate,
+   readable on light and dark themes alike). */
+.brand-sre > span,
+.logo-sre-brand {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -45,42 +45,42 @@
   box-shadow: 0 6px 16px rgba(18, 62, 47, 0.12);
   overflow: hidden;
 }
-.marque-sre > span > img,
-.logo-sre-marque > img {
+.brand-sre > span > img,
+.logo-sre-brand > img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   padding: 5%;
 }
-.marque-sre > div {
+.brand-sre > div {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 3px;
 }
-.marque-sre strong {
+.brand-sre strong {
   color: var(--sre-ink);
   font-size: 15px;
   font-weight: 780;
   letter-spacing: -0.45px;
 }
-.marque-sre strong span {
+.brand-sre strong span {
   color: var(--sre-gold);
 }
-.marque-sre small {
-  color: #91a0a6;
+.brand-sre small {
+  color: var(--pub-muted-2);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.05px;
   white-space: nowrap;
 }
-.barre-laterale-sre > .marque-sre {
+.sidebar-sre > .brand-sre {
   height: 72px;
   flex: 0 0 72px;
   padding: 0 19px;
 }
-.organisation-sre {
+.organization-sre {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -91,7 +91,7 @@
   border-radius: 10px;
   background: #f8fafb;
 }
-.organisation-sre__monogramme {
+.organization-sre__monogram {
   display: grid;
   width: 31px;
   height: 31px;
@@ -103,14 +103,14 @@
   font-size: 11px;
   font-weight: 800;
 }
-.organisation-sre > div:nth-child(2) {
+.organization-sre > div:nth-child(2) {
   display: flex;
   min-width: 0;
   flex: 1;
   flex-direction: column;
   gap: 3px;
 }
-.organisation-sre strong {
+.organization-sre strong {
   overflow: hidden;
   color: var(--sre-ink);
   font-size: 12px;
@@ -118,14 +118,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.organisation-sre small {
+.organization-sre small {
   overflow: hidden;
   color: var(--sre-muted-2);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.organisation-sre > svg {
+.organization-sre > svg {
   flex: 0 0 auto;
   color: #a1adb3;
 }
@@ -143,7 +143,7 @@
   scrollbar-width: thin;
   scrollbar-color: #dfe7e9 transparent;
 }
-.navigation-sre__lien {
+.navigation-sre__link {
   position: relative;
   display: flex;
   min-height: 38px;
@@ -161,28 +161,28 @@
     color 0.15s ease,
     border 0.15s ease;
 }
-.navigation-sre__lien > svg {
+.navigation-sre__link > svg {
   flex: 0 0 auto;
   color: #8b9ca4;
 }
-.navigation-sre__lien:hover {
+.navigation-sre__link:hover {
   color: var(--sre-ink);
   background: #f5f8f9;
 }
-.navigation-sre__lien--actif {
+.navigation-sre__link--active {
   color: var(--sre-blue-dark);
   border-color: #dce9ed;
   background: #eef5f6;
   font-weight: 720;
 }
-.navigation-sre__lien--actif > svg {
+.navigation-sre__link--active > svg {
   color: var(--sre-teal);
 }
-.navigation-sre__lien span {
+.navigation-sre__link span {
   min-width: 0;
   flex: 1;
 }
-.navigation-sre__lien i {
+.navigation-sre__link i {
   display: inline-grid;
   min-width: 19px;
   height: 19px;
@@ -195,7 +195,7 @@
   font-style: normal;
   font-weight: 800;
 }
-.encart-perimetre-sre {
+.perimeter-callout-sre {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -205,7 +205,7 @@
   border-radius: 9px;
   background: #f1f8f6;
 }
-.encart-perimetre-sre > span {
+.perimeter-callout-sre > span {
   display: grid;
   width: 29px;
   height: 29px;
@@ -215,35 +215,35 @@
   border-radius: 8px;
   background: #e1f1ed;
 }
-.encart-perimetre-sre > div {
+.perimeter-callout-sre > div {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 3px;
 }
-.encart-perimetre-sre strong {
+.perimeter-callout-sre strong {
   color: #28605e;
   font-size: 12px;
 }
-.encart-perimetre-sre small {
+.perimeter-callout-sre small {
   color: #77928d;
   font-size: 12px;
   line-height: 1.4;
 }
-.barre-laterale-sre__pied {
+.sidebar-sre__footer {
   padding: 11px 12px 13px;
   border-top: 1px solid var(--sre-border);
   background: #fff;
 }
-.profil-sre {
+.profile-sre {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 9px;
   padding: 2px 2px 10px;
 }
-.profil-sre__avatar,
-.entete-session-sre > span {
+.profile-sre__avatar,
+.session-header-sre > span {
   display: grid;
   width: 33px;
   height: 33px;
@@ -257,35 +257,35 @@
   font-size: 11px;
   font-weight: 800;
 }
-.profil-sre > div {
+.profile-sre > div {
   display: flex;
   min-width: 0;
   flex: 1;
   flex-direction: column;
   gap: 3px;
 }
-.profil-sre strong {
+.profile-sre strong {
   overflow: hidden;
   color: var(--sre-ink);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.profil-sre small {
+.profile-sre small {
   overflow: hidden;
   color: var(--sre-muted);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.deconnexion-sre,
-.retour-public-sre {
+.logout-sre,
+.public-back-sre {
   display: flex;
   width: 100%;
   align-items: center;
   gap: 8px;
   padding: 8px 7px;
-  color: #657884;
+  color: var(--sre-muted);
   border: 0;
   border-radius: 7px;
   background: transparent;
@@ -293,22 +293,22 @@
   text-align: left;
   cursor: pointer;
 }
-.deconnexion-sre:hover,
-.retour-public-sre:hover {
+.logout-sre:hover,
+.public-back-sre:hover {
   color: var(--sre-blue);
-  background: #f3f7f8;
+  background: var(--sre-blue-soft);
 }
-.retour-public-sre {
-  color: #87949a;
+.public-back-sre {
+  color: var(--sre-muted-2);
 }
-.contenu-application-sre {
+.app-content-sre {
   display: flex;
   min-width: 0;
   min-height: 100dvh;
   flex: 1;
   flex-direction: column;
 }
-.entete-application-sre {
+.app-header-sre {
   position: sticky;
   top: 0;
   z-index: 35;
@@ -322,26 +322,26 @@
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
 }
-.entete-application-sre__gauche,
-.entete-application-sre__droite {
+.app-header-sre__left,
+.app-header-sre__right {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 17px;
 }
-.entete-application-sre__gauche > div {
+.app-header-sre__left > div {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 3px;
 }
-.entete-application-sre__gauche > div > span {
+.app-header-sre__left > div > span {
   color: #a0acb1;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.1px;
 }
-.entete-application-sre__gauche > div > strong {
+.app-header-sre__left > div > strong {
   overflow: hidden;
   color: var(--sre-ink);
   font-size: 11px;
@@ -349,10 +349,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.entete-application-sre__droite {
+.app-header-sre__right {
   gap: 14px;
 }
-.badge-environnement-sre {
+.environment-badge-sre {
   display: inline-flex;
   min-height: 24px;
   align-items: center;
@@ -367,15 +367,15 @@
   letter-spacing: 0.6px;
   white-space: nowrap;
 }
-.badge-environnement-sre i,
-.hero-public-sre .sur-titre-sre i {
+.environment-badge-sre i,
+.public-hero-sre .overline-sre i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #45a58b;
-  box-shadow: 0 0 0 3px rgba(69, 165, 139, 0.12);
+  background: var(--sre-teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sre-teal) 12%, transparent);
 }
-.bouton-notification-sre {
+.notification-button-sre {
   position: relative;
   display: grid;
   width: 34px;
@@ -385,12 +385,12 @@
   border: 1px solid transparent;
   border-radius: 8px;
 }
-.bouton-notification-sre:hover {
+.notification-button-sre:hover {
   color: var(--sre-blue);
   border-color: var(--sre-border);
   background: #f6f9fa;
 }
-.bouton-notification-sre i {
+.notification-button-sre i {
   position: absolute;
   top: 1px;
   right: 1px;
@@ -406,29 +406,29 @@
   font-size: 12px;
   font-style: normal;
 }
-.entete-session-sre {
+.session-header-sre {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.entete-session-sre > div {
+.session-header-sre > div {
   display: flex;
   max-width: 158px;
   flex-direction: column;
   gap: 3px;
 }
-.entete-session-sre strong {
+.session-header-sre strong {
   overflow: hidden;
   color: var(--sre-ink);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.entete-session-sre small {
+.session-header-sre small {
   color: var(--sre-muted-2);
   font-size: 11px;
 }
-.bouton-menu-sre {
+.menu-button-sre {
   display: none;
   width: 34px;
   height: 34px;
@@ -438,14 +438,14 @@
   border-radius: 8px;
   background: #fff;
 }
-.zone-contenu-sre {
+.content-area-sre {
   width: 100%;
   max-width: 1660px;
   flex: 1;
   margin: 0 auto;
   padding: 27px 30px 34px;
 }
-.pied-application-sre {
+.app-footer-sre {
   display: flex;
   min-height: 42px;
   align-items: center;
@@ -457,25 +457,25 @@
   background: #fff;
   font-size: 11px;
 }
-.pied-application-sre span:last-child {
+.app-footer-sre span:last-child {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   color: #718f89;
 }
-.voile-menu-sre {
+.menu-overlay-sre {
   display: none;
 }
-.page-contenu-sre {
+.page-content-sre {
   width: 100%;
   max-width: 1450px;
   margin: 0 auto;
-  animation: apparition 0.25s ease-out;
+  animation: appear 0.25s ease-out;
 }
-.entete-sre-page {
+.page-header-sre {
   margin-bottom: 21px;
 }
-.fil-ariane-sre {
+.breadcrumb-sre {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -484,18 +484,18 @@
   color: #a0acb2;
   font-size: 11px;
 }
-.fil-ariane-sre i {
+.breadcrumb-sre i {
   margin-right: 7px;
   color: #c2cbce;
   font-style: normal;
 }
-.entete-sre-page__ligne {
+.page-header-sre__row {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 18px;
 }
-.entete-sre-page h1 {
+.page-header-sre h1 {
   margin: 0;
   color: var(--sre-ink);
   font-size: clamp(22px, 2vw, 28px);

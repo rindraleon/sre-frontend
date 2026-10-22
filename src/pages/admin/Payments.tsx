@@ -2,47 +2,47 @@ import { Select } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { Clock3 } from "lucide-react";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
+import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
-import { creerColonnesPaiements } from "@/components/tables/admin/payments-columns";
+import { createPaymentColumns } from "@/components/tables/admin/payments-columns";
 import { useTableState } from "@/hooks";
-import { OPTIONS_STATUT_PAIEMENT_FILTRE } from "@/constants/admin-payments";
-import { TOUS } from "@/constants";
+import { PAYMENT_STATUS_FILTER_OPTIONS } from "@/constants/admin-payments";
+import { ALL } from "@/constants";
 
-export function AdminPaymentsPage({ verificationSeule = false }: Readonly<{ verificationSeule?: boolean }>) {
-  const { etat } = useSre();
+export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verificationOnly?: boolean }>) {
+  const { state } = useSre();
   const table = useTableState();
-  const [statut, setStatut] = useState<string>(verificationSeule ? "EN_VERIFICATION" : TOUS);
-  const paiements = useMemo(
+  const [status, setStatus] = useState<string>(verificationOnly ? "EN_VERIFICATION" : ALL);
+  const payments = useMemo(
     () =>
-      etat.paiements
+      state.payments
         .filter(
-          (paiement) =>
-            (statut === TOUS || paiement.statut === statut) &&
-            (!verificationSeule || paiement.statut === "EN_VERIFICATION"),
+          (payment) =>
+            (status === ALL || payment.status === status) &&
+            (!verificationOnly || payment.status === "EN_VERIFICATION"),
         )
-        .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe)),
-    [etat.paiements, statut, verificationSeule],
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+    [state.payments, status, verificationOnly],
   );
-  const colonnes = creerColonnesPaiements({ contribuables: etat.contribuables });
+  const columns = createPaymentColumns({ taxpayers: state.taxpayers });
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre={verificationSeule ? "Vérification des paiements" : "Historique des paiements"}
+        title={verificationOnly ? "Vérification des paiements" : "Historique des paiements"}
         description={
-          verificationSeule
+          verificationOnly
             ? "Examinez chaque déclaration avant d’enregistrer une décision."
             : "Historique partagé des déclarations et décisions."
         }
-        filAriane={[
+        breadcrumb={[
           "Accueil",
-          verificationSeule ? "Vérification des paiements" : "Historique des paiements",
+          verificationOnly ? "Vérification des paiements" : "Historique des paiements",
         ]}
         actions={
-          verificationSeule && (
-            <span className="badge-attente-gros-sre">
+          verificationOnly && (
+            <span className="big-pending-badge-sre">
               <Clock3 size={14} />{" "}
-              {etat.paiements.filter((paiement) => paiement.statut === "EN_VERIFICATION").length} à
+              {state.payments.filter((payment) => payment.status === "EN_VERIFICATION").length} à
               vérifier
             </span>
           )
@@ -50,46 +50,46 @@ export function AdminPaymentsPage({ verificationSeule = false }: Readonly<{ veri
       />
 
       <DataTable
-        data={paiements}
-        columns={convertirColonnesTanstack(colonnes)}
-        label={verificationSeule ? "Paiements à vérifier" : "Historique des paiements"}
-        getRowId={(paiement) => paiement.id}
-        getSearchText={(paiement) => {
-          const contribuable = etat.contribuables.find(
-            (entree) => entree.id === paiement.contribuableId,
+        data={payments}
+        columns={toTanstackColumns(columns)}
+        label={verificationOnly ? "Paiements à vérifier" : "Historique des paiements"}
+        getRowId={(payment) => payment.id}
+        getSearchText={(payment) => {
+          const taxpayer = state.taxpayers.find(
+            (entry) => entry.id === payment.taxpayerId,
           );
-          return `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode} ${contribuable?.raisonSociale ?? ""} ${contribuable?.prenom ?? ""} ${contribuable?.nom ?? ""} ${contribuable?.nif ?? ""} ${contribuable?.courriel ?? ""}`;
+          return `${payment.internalReference} ${payment.transactionReference} ${payment.taxTypeName} ${payment.period} ${taxpayer?.legalName ?? ""} ${taxpayer?.firstName ?? ""} ${taxpayer?.lastName ?? ""} ${taxpayer?.nif ?? ""} ${taxpayer?.email ?? ""}`;
         }}
         searchPlaceholder="Référence, contribuable ou NIF…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         toolbarActions={
-          !verificationSeule ? (
-            <label className="filtre-compact-sre">
+          !verificationOnly ? (
+            <label className="compact-filter-sre">
               Statut
               <Select
-                value={statut}
+                value={status}
                 onChange={(event) => {
-                  setStatut(event.target.value);
-                  table.reinitialiserPage();
+                  setStatus(event.target.value);
+                  table.resetPage();
                 }}
               >
-                <OptionsSelect options={OPTIONS_STATUT_PAIEMENT_FILTRE} />
+                <OptionsSelect options={PAYMENT_STATUS_FILTER_OPTIONS} />
               </Select>
             </label>
           ) : undefined
         }
         columnToggle
-        emptyTitle={verificationSeule ? "Aucune déclaration en attente" : "Aucune déclaration"}
+        emptyTitle={verificationOnly ? "Aucune déclaration en attente" : "Aucune déclaration"}
         emptyDescription={
-          verificationSeule
+          verificationOnly
             ? "La file de vérification est vide."
             : "Les déclarations enregistrées apparaîtront ici."
         }
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
     </div>
   );

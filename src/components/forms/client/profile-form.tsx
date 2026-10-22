@@ -3,65 +3,65 @@ import { SRE_REGION } from "@/constants";
 import { FormField, FormError } from "@/components/forms/form-field";
 import type { ClientProfileFormValues } from "@/validation/profile.schema";
 
-/** Valeurs par défaut du formulaire des coordonnées du profil client. */
-export const COORDONNEES_VIDES: ClientProfileFormValues = {
+/** Default values of the client profile contact-details form. */
+export const CONTACT_DETAILS_EMPTY: ClientProfileFormValues = {
   nomCommercial: "",
   adresse: "",
   ville: "",
   telephone: "",
 };
 
-/** Champs du formulaire des coordonnées client (sans le <form> ni sa soumission). */
+/** Fields of the client contact-details form (without the <form> or its submission). */
 export function ClientProfileFormFields({
-  formulaire,
-  erreur,
-  estEntreprise,
-  courriel,
+  form,
+  error,
+  isBusinessTaxpayer,
+  email,
 }: Readonly<{
-  formulaire: UseFormReturn<ClientProfileFormValues>;
-  erreur?: string;
-  estEntreprise: boolean;
-  courriel: string;
+  form: UseFormReturn<ClientProfileFormValues>;
+  error?: string;
+  isBusinessTaxpayer: boolean;
+  email: string;
 }>) {
   const {
     register,
     formState: { errors },
-  } = formulaire;
+  } = form;
   return (
     <>
-      {estEntreprise && (
-        <FormField libelle="Nom commercial" erreur={errors.nomCommercial} aide="Facultatif">
-          {(p) => <input {...p} className="champ-simple-sre" {...register("nomCommercial")} />}
+      {isBusinessTaxpayer && (
+        <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
+          {(p) => <input {...p} className="field-simple-sre" {...register("nomCommercial")} />}
         </FormField>
       )}
-      <FormField libelle="Adresse" erreur={errors.adresse} requis>
+      <FormField label="Adresse" error={errors.adresse} required>
         {(p) => (
           <input
             {...p}
-            className="champ-simple-sre"
+            className="field-simple-sre"
             autoComplete="street-address"
             {...register("adresse")}
           />
         )}
       </FormField>
-      <FormField libelle="Région">
-        {(p) => <input {...p} className="champ-simple-sre" value={SRE_REGION} readOnly />}
+      <FormField label="Région">
+        {(p) => <input {...p} className="field-simple-sre" value={SRE_REGION} readOnly />}
       </FormField>
-      <FormField libelle="Ville / Commune" erreur={errors.ville} requis>
+      <FormField label="Ville / Commune" error={errors.ville} required>
         {(p) => (
           <input
             {...p}
-            className="champ-simple-sre"
+            className="field-simple-sre"
             autoComplete="address-level2"
             {...register("ville")}
           />
         )}
       </FormField>
-      <FormField libelle="Téléphone" erreur={errors.telephone} requis>
+      <FormField label="Téléphone" error={errors.telephone} required>
         {(p) => (
           <input
             {...p}
-            className="champ-simple-sre"
+            className="field-simple-sre"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
@@ -69,10 +69,10 @@ export function ClientProfileFormFields({
           />
         )}
       </FormField>
-      <FormField libelle="Adresse e-mail de connexion">
-        {(p) => <input {...p} className="champ-simple-sre" value={courriel} readOnly />}
+      <FormField label="Adresse e-mail de connexion">
+        {(p) => <input {...p} className="field-simple-sre" value={email} readOnly />}
       </FormField>
-      <FormError message={erreur} />
+      <FormError message={error} />
     </>
   );
 }

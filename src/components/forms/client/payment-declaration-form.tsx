@@ -2,9 +2,9 @@ import type { UseFormReturn } from "react-hook-form";
 import { Check, FileCheck2, WalletCards } from "lucide-react";
 import type { TaxObligation } from "@/types";
 import {
-  MODE_PAIEMENT_MOBILE_MONEY,
-  MODE_PAIEMENT_VIREMENT,
-  OPERATEURS_MOBILE_MONEY,
+  PAYMENT_METHOD_MOBILE_MONEY,
+  PAYMENT_METHOD_BANK_TRANSFER,
+  OPERATORS_MOBILE_MONEY,
 } from "@/constants";
 import { Select } from "@/components/ui/select";
 import { OptionsSelect } from "@/components/forms/options-select";
@@ -12,8 +12,8 @@ import { FormField, FormError } from "@/components/forms/form-field";
 import { formatMoney, formatDate } from "@/utils/format";
 import type { PaymentDeclarationFormValues } from "@/validation/payment.schema";
 
-/** Valeurs par défaut du formulaire de déclaration de paiement. */
-export const DECLARATION_PAIEMENT_VIDE: PaymentDeclarationFormValues = {
+/** Default values of the payment declaration form. */
+export const DECLARATION_PAYMENT_EMPTY: PaymentDeclarationFormValues = {
   obligationId: "",
   mode: undefined as unknown as PaymentDeclarationFormValues["mode"],
   operateur: undefined,
@@ -24,16 +24,16 @@ export const DECLARATION_PAIEMENT_VIDE: PaymentDeclarationFormValues = {
   dateTransaction: "",
 };
 
-/** Champs du formulaire de déclaration d'une opération (sans le <form> ni sa soumission). */
+/** Fields of the operation declaration form (without the <form> or its submission). */
 export function PaymentDeclarationFormFields({
-  formulaire,
-  erreur,
-  obligationsDisponibles,
+  form,
+  error,
+  availableObligations,
   obligation,
 }: Readonly<{
-  formulaire: UseFormReturn<PaymentDeclarationFormValues>;
-  erreur?: string;
-  obligationsDisponibles: TaxObligation[];
+  form: UseFormReturn<PaymentDeclarationFormValues>;
+  error?: string;
+  availableObligations: TaxObligation[];
   obligation?: TaxObligation;
 }>) {
   const {
@@ -41,110 +41,110 @@ export function PaymentDeclarationFormFields({
     watch,
     setValue,
     formState: { errors },
-  } = formulaire;
+  } = form;
   const mode = watch("mode");
   return (
     <>
-      <div className="etape-formulaire-sre">
+      <div className="form-step-sre">
         <span>1</span>
         <div>
           <h2>Obligation à régulariser</h2>
           <p>Sélectionnez une obligation associée à votre compte.</p>
         </div>
       </div>
-      <FormField libelle="Impôt / obligation" erreur={errors.obligationId} requis>
+      <FormField label="Impôt / obligation" error={errors.obligationId} required>
         {(p) => (
-          <Select {...p} className="champ-simple-sre" {...register("obligationId")}>
+          <Select {...p} className="field-simple-sre" {...register("obligationId")}>
             <option value="">Choisir une obligation</option>
-            {obligationsDisponibles.map((entree) => (
-              <option key={entree.id} value={entree.id}>
-                {entree.typeImpotNom} · {entree.periode} · {formatMoney(entree.montant)}
+            {availableObligations.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.taxTypeName} · {entry.period} · {formatMoney(entry.amount)}
               </option>
             ))}
           </Select>
         )}
       </FormField>
       {obligation && (
-        <div className="resume-obligation-paiement-sre">
+        <div className="payment-obligation-summary-sre">
           <div>
             <small>Référence d’obligation</small>
-            <strong>{obligation.referenceFiscale}</strong>
+            <strong>{obligation.taxReference}</strong>
           </div>
           <div>
             <small>Échéance</small>
-            <strong>{formatDate(obligation.echeance)}</strong>
+            <strong>{formatDate(obligation.dueDate)}</strong>
           </div>
           <div>
             <small>Montant de l’obligation</small>
-            <strong>{formatMoney(obligation.montant)}</strong>
+            <strong>{formatMoney(obligation.amount)}</strong>
           </div>
         </div>
       )}
-      <div className="etape-formulaire-sre">
+      <div className="form-step-sre">
         <span>2</span>
         <div>
           <h2>Canal déclaré</h2>
           <p>Il s’agit d’une information déclarative, pas d’une intégration de paiement.</p>
         </div>
       </div>
-      <div className="choix-mode-paiement-sre">
+      <div className="payment-mode-choice-sre">
         <button
           type="button"
-          aria-pressed={mode === MODE_PAIEMENT_MOBILE_MONEY}
+          aria-pressed={mode === PAYMENT_METHOD_MOBILE_MONEY}
           className={
-            mode === MODE_PAIEMENT_MOBILE_MONEY
-              ? "mode-paiement-sre mode-paiement-sre--actif"
-              : "mode-paiement-sre"
+            mode === PAYMENT_METHOD_MOBILE_MONEY
+              ? "payment-mode-sre payment-mode-sre--active"
+              : "payment-mode-sre"
           }
-          onClick={() => setValue("mode", MODE_PAIEMENT_MOBILE_MONEY, { shouldValidate: true })}
+          onClick={() => setValue("mode", PAYMENT_METHOD_MOBILE_MONEY, { shouldValidate: true })}
         >
           <WalletCards size={18} />
           <span>
             <strong>Mobile Money</strong>
             <small>Déclaration d’une opération déjà effectuée</small>
           </span>
-          {mode === MODE_PAIEMENT_MOBILE_MONEY && <Check size={16} />}
+          {mode === PAYMENT_METHOD_MOBILE_MONEY && <Check size={16} />}
         </button>
         <button
           type="button"
-          aria-pressed={mode === MODE_PAIEMENT_VIREMENT}
+          aria-pressed={mode === PAYMENT_METHOD_BANK_TRANSFER}
           className={
-            mode === MODE_PAIEMENT_VIREMENT
-              ? "mode-paiement-sre mode-paiement-sre--actif"
-              : "mode-paiement-sre"
+            mode === PAYMENT_METHOD_BANK_TRANSFER
+              ? "payment-mode-sre payment-mode-sre--active"
+              : "payment-mode-sre"
           }
-          onClick={() => setValue("mode", MODE_PAIEMENT_VIREMENT, { shouldValidate: true })}
+          onClick={() => setValue("mode", PAYMENT_METHOD_BANK_TRANSFER, { shouldValidate: true })}
         >
           <FileCheck2 size={18} />
           <span>
             <strong>Virement / canal bancaire</strong>
             <small>Déclaration d’une opération déjà effectuée</small>
           </span>
-          {mode === MODE_PAIEMENT_VIREMENT && <Check size={16} />}
+          {mode === PAYMENT_METHOD_BANK_TRANSFER && <Check size={16} />}
         </button>
       </div>
       {errors.mode && (
-        <p className="champ-erreur-sre" role="alert">
+        <p className="field-error-sre" role="alert">
           {errors.mode.message}
         </p>
       )}
-      {mode === MODE_PAIEMENT_MOBILE_MONEY ? (
-        <div className="grille-formulaire-sre">
-          <FormField libelle="Opérateur indiqué" erreur={errors.operateur} requis>
+      {mode === PAYMENT_METHOD_MOBILE_MONEY ? (
+        <div className="form-grid-sre">
+          <FormField label="Opérateur indiqué" error={errors.operateur} required>
             {(p) => (
-              <Select {...p} className="champ-simple-sre" {...register("operateur")}>
+              <Select {...p} className="field-simple-sre" {...register("operateur")}>
                 <option value="" disabled>
                   Choisir un opérateur
                 </option>
-                <OptionsSelect options={OPERATEURS_MOBILE_MONEY} />
+                <OptionsSelect options={OPERATORS_MOBILE_MONEY} />
               </Select>
             )}
           </FormField>
-          <FormField libelle="Numéro utilisé" erreur={errors.telephoneUtilise} requis>
+          <FormField label="Numéro utilisé" error={errors.telephoneUtilise} required>
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -154,16 +154,16 @@ export function PaymentDeclarationFormFields({
             )}
           </FormField>
         </div>
-      ) : mode === MODE_PAIEMENT_VIREMENT ? (
-        <div className="grille-formulaire-sre">
-          <FormField libelle="Établissement / canal indiqué" erreur={errors.banqueOuCanal} requis>
-            {(p) => <input {...p} className="champ-simple-sre" {...register("banqueOuCanal")} />}
+      ) : mode === PAYMENT_METHOD_BANK_TRANSFER ? (
+        <div className="form-grid-sre">
+          <FormField label="Établissement / canal indiqué" error={errors.banqueOuCanal} required>
+            {(p) => <input {...p} className="field-simple-sre" {...register("banqueOuCanal")} />}
           </FormField>
-          <FormField libelle="Titulaire payeur" erreur={errors.titulairePayeur} aide="Facultatif">
+          <FormField label="Titulaire payeur" error={errors.titulairePayeur} help="Facultatif">
             {(p) => (
               <input
                 {...p}
-                className="champ-simple-sre"
+                className="field-simple-sre"
                 autoComplete="name"
                 {...register("titulairePayeur")}
               />
@@ -171,26 +171,26 @@ export function PaymentDeclarationFormFields({
           </FormField>
         </div>
       ) : (
-        <p className="texte-aide-sre">Choisissez un canal déclaré pour poursuivre.</p>
+        <p className="text-help-sre">Choisissez un canal déclaré pour poursuivre.</p>
       )}
-      <div className="etape-formulaire-sre">
+      <div className="form-step-sre">
         <span>3</span>
         <div>
           <h2>Référence de l’opération</h2>
           <p>Ces éléments sont transmis pour examen administratif.</p>
         </div>
       </div>
-      <div className="grille-formulaire-sre">
-        <FormField libelle="Référence saisie" erreur={errors.referenceTransaction} requis>
+      <div className="form-grid-sre">
+        <FormField label="Référence saisie" error={errors.referenceTransaction} required>
           {(p) => (
-            <input {...p} className="champ-simple-sre" {...register("referenceTransaction")} />
+            <input {...p} className="field-simple-sre" {...register("referenceTransaction")} />
           )}
         </FormField>
-        <FormField libelle="Date de l’opération" erreur={errors.dateTransaction} requis>
+        <FormField label="Date de l’opération" error={errors.dateTransaction} required>
           {(p) => (
             <input
               {...p}
-              className="champ-simple-sre"
+              className="field-simple-sre"
               type="date"
               max={new Date().toISOString().slice(0, 10)}
               {...register("dateTransaction")}
@@ -198,7 +198,7 @@ export function PaymentDeclarationFormFields({
           )}
         </FormField>
       </div>
-      <FormError message={erreur} />
+      <FormError message={error} />
     </>
   );
 }

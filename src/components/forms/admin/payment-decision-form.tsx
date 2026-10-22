@@ -3,22 +3,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormField, FormError } from "@/components/forms/form-field";
 import type { DecisionReasonFormValues } from "@/validation/payment.schema";
 
-export const MOTIF_VIDE: DecisionReasonFormValues = { motif: "" };
+export const REASON_EMPTY: DecisionReasonFormValues = { motif: "" };
 
 export function PaymentDecisionFormFields({
-  formulaire,
-  erreur,
-}: Readonly<{ formulaire: UseFormReturn<DecisionReasonFormValues>; erreur?: string }>) {
+  form,
+  error,
+}: Readonly<{ form: UseFormReturn<DecisionReasonFormValues>; error?: string }>) {
   const {
     register,
     formState: { errors },
-  } = formulaire;
+  } = form;
   return (
-    <div className="formulaire-sre formulaire-compact-sre">
-      <FormField libelle="Motif détaillé" erreur={errors.motif} requis>
+    <div className="form-sre compact-form-sre">
+      <FormField label="Motif détaillé" error={errors.motif} required>
         {(p) => <Textarea {...p} rows={4} {...register("motif")} />}
       </FormField>
-      <FormError message={erreur} />
+      <FormError message={error} />
     </div>
   );
 }

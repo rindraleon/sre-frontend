@@ -1,12 +1,12 @@
 import { type ReactNode } from "react";
 import { Card } from "./card";
 
-/** État vide sur Card shadcn/ui (bordure en pointillés). */
+/** Empty state on a shadcn/ui Card (dashed border). */
 export function EmptyState({
-  titre,
+  title,
   description,
   action,
-}: Readonly<{ titre: string; description: string; action?: ReactNode }>) {
+}: Readonly<{ title: string; description: string; action?: ReactNode }>) {
   return (
     <Card className="flex flex-col items-center gap-2 border-dashed px-6 py-10 text-center shadow-none">
       <div
@@ -15,7 +15,7 @@ export function EmptyState({
       >
         ⌕
       </div>
-      <strong className="text-sm font-bold text-foreground">{titre}</strong>
+      <strong className="text-sm font-bold text-foreground">{title}</strong>
       <p className="max-w-md text-[12.5px] leading-relaxed text-muted-foreground">{description}</p>
       {action}
     </Card>

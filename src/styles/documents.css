@@ -1,5 +1,5 @@
-/* Documents de paiement SRE : accusé de soumission et reçu interne. */
-.document-paiement-sre {
+/* SRE payment documents: submission acknowledgment and internal receipt. */
+.payment-document-sre {
   width: min(100%, 920px);
   margin: 20px auto;
   padding: clamp(22px, 4vw, 44px);
@@ -9,7 +9,7 @@
   box-shadow: 0 14px 36px rgba(27, 47, 73, 0.08);
   color: #18283c;
 }
-.document-paiement-sre__entete {
+.payment-document-sre__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -17,12 +17,12 @@
   padding-bottom: 20px;
   border-bottom: 1px solid #e8edf2;
 }
-.document-paiement-sre__marque {
+.payment-document-sre__brand {
   display: flex;
   align-items: center;
   gap: 11px;
 }
-.document-paiement-sre__marque > span {
+.payment-document-sre__brand > span {
   display: grid;
   width: 40px;
   height: 40px;
@@ -31,40 +31,40 @@
   color: #1b5e68;
   background: #edf7f5;
 }
-.document-paiement-sre__marque div {
+.payment-document-sre__brand div {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.document-paiement-sre__marque strong {
+.payment-document-sre__brand strong {
   font-size: 15px;
 }
-.document-paiement-sre__marque small {
+.payment-document-sre__brand small {
   color: #6b7c8e;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.8px;
 }
-.document-paiement-sre__titre {
+.payment-document-sre__title {
   padding: 26px 0 18px;
 }
-.document-paiement-sre__titre p {
+.payment-document-sre__title p {
   margin: 0 0 7px;
   color: #708092;
   font-size: 12px;
 }
-.document-paiement-sre__titre h2 {
+.payment-document-sre__title h2 {
   margin: 0 0 8px;
   color: #172a43;
   font-size: clamp(20px, 3vw, 27px);
   line-height: 1.25;
 }
-.document-paiement-sre__titre > span {
+.payment-document-sre__title > span {
   color: #54657b;
   font-size: 12px;
   font-weight: 700;
 }
-.document-paiement-sre__alerte {
+.payment-document-sre__alert {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -74,63 +74,63 @@
   background: #fff7f4;
   color: #8a3c2e;
 }
-.document-paiement-sre__alerte--accuse {
+.payment-document-sre__alert--acknowledgment {
   border-color: #f0dfb8;
   background: #fffbf1;
   color: #805c19;
 }
-.document-paiement-sre__alerte > svg {
+.payment-document-sre__alert > svg {
   flex: 0 0 auto;
   margin-top: 1px;
 }
-.document-paiement-sre__alerte strong {
+.payment-document-sre__alert strong {
   font-size: 12px;
 }
-.document-paiement-sre__alerte p {
+.payment-document-sre__alert p {
   margin: 5px 0 0;
   font-size: 11px;
   line-height: 1.6;
 }
-.document-paiement-sre__grille {
+.payment-document-sre__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px;
   margin-top: 23px;
 }
-.document-paiement-sre__grille section {
+.payment-document-sre__grid section {
   min-width: 0;
 }
-.document-paiement-sre__grille h3 {
+.payment-document-sre__grid h3 {
   margin: 0 0 12px;
   color: #263a53;
   font-size: 11px;
 }
-.document-paiement-sre__grille dl {
+.payment-document-sre__grid dl {
   display: grid;
   gap: 10px;
   margin: 0;
 }
-.document-paiement-sre__grille dl > div {
+.payment-document-sre__grid dl > div {
   display: grid;
   gap: 3px;
 }
-.document-paiement-sre__grille dt {
+.payment-document-sre__grid dt {
   color: #728094;
   font-size: 12px;
 }
-.document-paiement-sre__grille dd {
+.payment-document-sre__grid dd {
   overflow-wrap: anywhere;
   margin: 0;
   color: #26364b;
   font-size: 11px;
   font-weight: 650;
 }
-.document-paiement-sre__grille dd a {
+.payment-document-sre__grid dd a {
   color: #1f6671;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.document-paiement-sre__montant {
+.payment-document-sre__amount {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -141,15 +141,15 @@
   border-radius: 8px;
   background: #f8fafc;
 }
-.document-paiement-sre__montant span {
+.payment-document-sre__amount span {
   color: #66778b;
   font-size: 12px;
 }
-.document-paiement-sre__montant strong {
+.payment-document-sre__amount strong {
   color: #1c344f;
   font-size: clamp(19px, 3vw, 26px);
 }
-.document-paiement-sre__pied {
+.payment-document-sre__footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -160,7 +160,7 @@
   color: #728094;
   font-size: 12px;
 }
-.document-paiement-sre__note {
+.payment-document-sre__note {
   display: flex;
   align-items: flex-start;
   gap: 9px;
@@ -168,20 +168,20 @@
   margin: 0 auto;
   color: #62758c;
 }
-.document-paiement-sre__note > svg {
+.payment-document-sre__note > svg {
   flex: 0 0 auto;
   color: #668677;
 }
-.document-paiement-sre__note p {
+.payment-document-sre__note p {
   margin: 0;
   font-size: 11px;
   line-height: 1.55;
 }
-.bouton-document-imprime-sre {
+.print-document-button-sre {
   display: none !important;
 }
 @media (max-width: 680px) {
-  .voile-modal-sre {
+  .modal-overlay-sre {
     align-items: flex-end;
     padding: 8px;
   }
@@ -192,19 +192,19 @@
   .modal-sre > header {
     padding: 13px 15px 10px;
   }
-  .modal-sre__contenu {
+  .modal-sre__content {
     padding: 12px 15px;
   }
   .modal-sre > footer {
     padding: 10px 15px 13px;
   }
-  .document-paiement-sre__grille {
+  .payment-document-sre__grid {
     grid-template-columns: 1fr;
   }
-  .document-paiement-sre__entete {
+  .payment-document-sre__header {
     align-items: flex-start;
   }
-  .document-paiement-sre__montant {
+  .payment-document-sre__amount {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -218,17 +218,17 @@
   html {
     background: #fff !important;
   }
-  .barre-laterale-sre,
-  .entete-application-sre,
-  .pied-application-sre,
-  .entete-page-sre,
-  .document-paiement-sre__note,
-  .bouton-document-ecran-sre {
+  .sidebar-sre,
+  .app-header-sre,
+  .app-footer-sre,
+  .page-top-sre,
+  .payment-document-sre__note,
+  .screen-document-button-sre {
     display: none !important;
   }
-  .application-sre,
-  .contenu-application-sre,
-  .zone-contenu-sre {
+  .app-sre,
+  .app-content-sre,
+  .content-area-sre {
     display: block !important;
     width: auto !important;
     height: auto !important;
@@ -242,7 +242,7 @@
     margin: 0 !important;
     padding: 0 !important;
   }
-  .document-paiement-sre {
+  .payment-document-sre {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
@@ -252,31 +252,31 @@
     box-shadow: none !important;
     break-inside: avoid;
   }
-  .document-paiement-sre__alerte,
-  .document-paiement-sre__montant {
+  .payment-document-sre__alert,
+  .payment-document-sre__amount {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 }
-.documents-paiement-liste-sre {
+.payment-documents-list-sre {
   margin-top: 18px;
   padding-top: 15px;
   border-top: 1px solid #e8edf2;
 }
-.documents-paiement-liste-sre .carte-sre__entete {
+.payment-documents-list-sre .card-sre__header {
   margin-bottom: 9px;
 }
-.documents-paiement-liste-sre .carte-sre__entete h3 {
+.payment-documents-list-sre .card-sre__header h3 {
   margin: 0;
   color: #253a54;
   font-size: 11px;
 }
-.documents-paiement-liste-sre .carte-sre__entete p {
+.payment-documents-list-sre .card-sre__header p {
   margin: 4px 0 0;
   color: #7b899a;
   font-size: 12px;
 }
-.documents-paiement-ligne-sre {
+.payment-documents-row-sre {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -286,38 +286,38 @@
   color: #254b60;
   text-decoration: none;
 }
-.documents-paiement-ligne-sre > span {
+.payment-documents-row-sre > span {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
-.documents-paiement-ligne-sre strong {
+.payment-documents-row-sre strong {
   overflow-wrap: anywhere;
   color: #31566a;
   font-size: 11px;
 }
-.documents-paiement-ligne-sre small {
+.payment-documents-row-sre small {
   color: #718096;
   font-size: 12px;
   line-height: 1.4;
 }
-.documents-paiement-ligne-sre > svg {
+.payment-documents-row-sre > svg {
   flex: 0 0 auto;
 }
-.documents-paiement-ligne-sre:hover strong {
+.payment-documents-row-sre:hover strong {
   color: #16756f;
   text-decoration: underline;
 }
-.lien-reset-indisponible-sre {
+.reset-unavailable-link-sre {
   color: #8793a1;
   font-size: 12px;
 }
 
-/* Hiérarchie typographique partagée — Manrope, lisible et cohérente. */
+/* Shared typographic hierarchy — Manrope, readable and consistent. */
 body,
-.application-sre,
-.site-public-sre,
+.app-sre,
+.public-site-sre,
 .page-auth-sre {
   font-size: 15px;
   font-family:
@@ -329,98 +329,98 @@ body,
     "Segoe UI",
     sans-serif;
 }
-.entete-sre-page h1 {
+.page-header-sre h1 {
   font-size: clamp(24px, 2.15vw, 30px);
   line-height: 1.2;
 }
-.entete-sre-page p,
-.hero-public-sre__texte > p,
-.section-public-entete-sre p {
+.page-header-sre p,
+.public-hero-sre__text > p,
+.public-section-header-sre p {
   font-size: 13px;
   line-height: 1.65;
 }
-.navigation-sre__lien,
-.deconnexion-sre,
-.retour-public-sre {
+.navigation-sre__link,
+.logout-sre,
+.public-back-sre {
   font-size: 12px;
 }
-.carte-sre__entete h2,
-.carte-sre > h2 {
+.card-sre__header h2,
+.card-sre > h2 {
   font-size: 15px;
 }
-.carte-sre__entete p,
-.carte-stat-sre > div > span {
+.card-sre__header p,
+.stat-card-sre > div > span {
   font-size: 11px;
 }
-.carte-stat-sre > div > small {
+.stat-card-sre > div > small {
   font-size: 10px;
 }
-.bandeau-info-sre strong,
-.bandeau-conseil-sre strong {
+.info-banner-sre strong,
+.tip-banner-sre strong {
   font-size: 12px;
 }
-.bandeau-info-sre p,
-.bandeau-conseil-sre p,
-.bandeau-alerte-securite-sre p {
+.info-banner-sre p,
+.tip-banner-sre p,
+.security-alert-banner-sre p {
   font-size: 11px;
   line-height: 1.55;
 }
-.bouton-sre {
+.button-sre {
   font-size: 12px;
 }
-.formulaire-sre label,
-.grille-formulaire-sre label {
+.form-sre label,
+.form-grid-sre label {
   font-size: 12px;
 }
-.formulaire-sre label > small,
-.grille-formulaire-sre label > small {
+.form-sre label > small,
+.form-grid-sre label > small {
   font-size: 10px;
 }
-.champ-simple-sre,
-.champ-sre input,
-.champ-sre select,
-.champ-sre textarea {
+.field-simple-sre,
+.field-sre input,
+.field-sre select,
+.field-sre textarea {
   font-size: 13px;
 }
-.tableau-sre {
+.table-sre {
   font-size: 11px;
 }
-.tableau-sre th {
+.table-sre th {
   font-size: 10px;
 }
-.tableau-sre td {
+.table-sre td {
   font-size: 11px;
 }
-.tableau-sre td strong {
+.table-sre td strong {
   font-size: 11px;
 }
-.tableau-sre td small,
-.sous-ligne-sre {
+.table-sre td small,
+.sub-row-sre {
   font-size: 10px;
 }
-.etat-vide-sre > strong {
+.empty-state-sre > strong {
   font-size: 13px;
 }
-.etat-vide-sre p,
-.note-fiscale-sre p,
-.note-securite-sre p {
+.empty-state-sre p,
+.tax-note-sre p,
+.security-note-sre p {
   font-size: 11px;
 }
 .modal-sre > header h2 {
   font-size: 16px;
 }
 .modal-sre > header p,
-.confirmation-sre__texte {
+.confirmation-sre__text {
   font-size: 12px;
 }
-.document-paiement-sre {
+.payment-document-sre {
   font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 @media (max-width: 460px) {
-  .badge-environnement-sre {
+  .environment-badge-sre {
     font-size: 0;
   }
-  .tableau-sre {
+  .table-sre {
     min-width: 700px;
   }
 }

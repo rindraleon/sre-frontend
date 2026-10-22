@@ -4,61 +4,61 @@ import { CircleDollarSign } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, convertirColonnesTanstack } from "@/components/ui";
+import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
-import { creerColonnesPaiements } from "@/components/tables/client/payments-columns";
+import { createPaymentColumns } from "@/components/tables/client/payments-columns";
 import { useTableState } from "@/hooks";
-import { TOUS, ROUTES_CLIENT } from "@/constants";
-import { OPTIONS_STATUT_PAIEMENT } from "@/constants/client-paiements";
+import { ALL, ROUTES_CLIENT } from "@/constants";
+import { PAYMENT_STATUS_OPTIONS } from "@/constants/client-payments";
 
 export function ClientPaymentsPage() {
   const { session } = useAuth();
-  const { etat } = useSre();
+  const { state } = useSre();
   const table = useTableState();
-  const [statut, setStatut] = useState<string>(TOUS);
-  const paiements = useMemo(
+  const [status, setStatus] = useState<string>(ALL);
+  const payments = useMemo(
     () =>
-      etat.paiements
-        .filter((paiement) => paiement.contribuableId === session?.contribuableId)
-        .filter((paiement) => statut === TOUS || paiement.statut === statut)
-        .sort((a, b) => b.soumisLe.localeCompare(a.soumisLe)),
-    [etat.paiements, session?.contribuableId, statut],
+      state.payments
+        .filter((payment) => payment.taxpayerId === session?.taxpayerId)
+        .filter((payment) => status === ALL || payment.status === status)
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+    [state.payments, session?.taxpayerId, status],
   );
-  const colonnes = creerColonnesPaiements();
+  const columns = createPaymentColumns();
   return (
-    <div className="page-contenu-sre">
+    <div className="page-content-sre">
       <PageHeader
-        titre="Historique des paiements"
+        title="Historique des paiements"
         description="Déclarations associées à votre compte."
-        filAriane={["Accueil", "Historique des paiements"]}
+        breadcrumb={["Accueil", "Historique des paiements"]}
       />
       <DataTable
-        data={paiements}
-        columns={convertirColonnesTanstack(colonnes)}
+        data={payments}
+        columns={toTanstackColumns(columns)}
         label="Historique des paiements"
-        getRowId={(paiement) => paiement.id}
-        getSearchText={(paiement) =>
-          `${paiement.referenceInterne} ${paiement.referenceTransaction} ${paiement.typeImpotNom} ${paiement.periode}`
+        getRowId={(payment) => payment.id}
+        getSearchText={(payment) =>
+          `${payment.internalReference} ${payment.transactionReference} ${payment.taxTypeName} ${payment.period}`
         }
         searchPlaceholder="Référence, impôt, période…"
-        searchValue={table.recherche}
-        onSearchChange={table.rechercher}
+        searchValue={table.search}
+        onSearchChange={table.changeSearch}
         toolbarActions={
-          <label className="filtre-compact-sre">
+          <label className="compact-filter-sre">
             Statut
             <Select
-              value={statut}
+              value={status}
               onChange={(event) => {
-                setStatut(event.target.value);
-                table.reinitialiserPage();
+                setStatus(event.target.value);
+                table.resetPage();
               }}
             >
-              <OptionsSelect options={OPTIONS_STATUT_PAIEMENT} />
+              <OptionsSelect options={PAYMENT_STATUS_OPTIONS} />
             </Select>
           </label>
         }
         actionPrimary={
-          <Link className="bouton-sre bouton-sre--primaire" to={ROUTES_CLIENT.nouveauPaiement}>
+          <Link className="button-sre button-sre--primary" to={ROUTES_CLIENT.newPayment}>
             <CircleDollarSign size={16} /> Déclarer un paiement
           </Link>
         }
@@ -66,9 +66,9 @@ export function ClientPaymentsPage() {
         emptyTitle="Aucune déclaration"
         emptyDescription="Les déclarations enregistrées apparaîtront ici."
         page={table.page}
-        rowsPerPage={table.parPage}
-        onPageChange={table.changerPage}
-        onRowsPerPageChange={table.changerParPage}
+        rowsPerPage={table.perPage}
+        onPageChange={table.changePage}
+        onRowsPerPageChange={table.changePerPage}
       />
     </div>
   );
