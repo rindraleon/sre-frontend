@@ -5,11 +5,7 @@ import { cn } from "@/lib/utils";
 const classesAction =
   "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 
-/**
- * Table action icon with tooltip (title + aria-label): view,
- * edit, delete or any allowed operation. Size and style harmonized
- * across all "Actions" columns.
- */
+/** Table action icon with tooltip (title + aria-label): view, edit, delete or any allowed operation. */
 export function ActionIcon({
   title,
   onClick,

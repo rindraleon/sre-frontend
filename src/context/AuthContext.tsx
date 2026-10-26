@@ -19,10 +19,7 @@ interface SreRegistrationResult {
   role: UserRole;
   user: AppUser;
 }
-/**
- * Profile body sent as-is to the API (initial-setup DTO):
- * the field names are the JSON contract and must not be renamed.
- */
+/** Profile body sent as-is to the API (initial-setup DTO): the field names are the JSON contract and must not be re. */
 export interface InitialSetupProfilePayload {
   adresse?: string;
   ville?: string;

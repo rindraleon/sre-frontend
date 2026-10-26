@@ -3,12 +3,9 @@ import { ArrowRight, CheckCircle2, Mail, Send, UserRound } from "lucide-react";
 import { FormError, FormField, SubmitButton } from "@/components/forms/form-field";
 import { useApiForm } from "@/hooks";
 import { callApi, isApiConfigured } from "@/services/api-client";
+import type { PublicContactSubmissionResponse } from "@/types";
+import { formatDate } from "@/utils/format";
 import { publicContactSchema, type PublicContactFormValues } from "@/validation/auth.schema";
-
-interface ConfirmationContact {
-  statut: "ENVOYE" | "CAPTURE";
-  message: string;
-}
 
 const EMPTY_VALUES: PublicContactFormValues = {
   nom: "",
@@ -20,7 +17,8 @@ const EMPTY_VALUES: PublicContactFormValues = {
 
 /** Public contact form: single column, no internal scrolling. */
 export function PublicContactForm() {
-  const [confirmation, setConfirmation] = useState<ConfirmationContact | null>(null);
+  const [confirmation, setConfirmation] =
+    useState<PublicContactSubmissionResponse | null>(null);
   const {
     register,
     handleSubmit,
@@ -38,7 +36,7 @@ export function PublicContactForm() {
   const onSubmit = handleSubmit(async (values) => {
     setConfirmation(null);
     try {
-      const result = await callApi<ConfirmationContact>("contact", {
+      const result = await callApi<PublicContactSubmissionResponse>("contact", {
         method: "POST",
         body: {
           nom: values.nom.trim(),
@@ -55,9 +53,15 @@ export function PublicContactForm() {
   });
 
   if (confirmation) {
+    const ackSent =
+      confirmation.accuseReception?.statut === "ENVOYE" ||
+      confirmation.statut === "CAPTURE";
+
     return (
       <div
-        className={`contact-confirmation-sre ${confirmation.statut === "CAPTURE" ? "contact-confirmation-sre--test" : ""}`}
+        className={`contact-confirmation-sre ${
+          confirmation.statut === "CAPTURE" ? "contact-confirmation-sre--test" : ""
+        }`}
         role="status"
         aria-live="polite"
       >
@@ -70,6 +74,32 @@ export function PublicContactForm() {
             : "Message transmis à l’administration"}
         </strong>
         <p>{confirmation.message}</p>
+        {confirmation.reference && (
+          <div className="mt-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 space-y-1">
+            <div>
+              <strong>Référence de suivi :</strong>{" "}
+              <span className="font-mono font-semibold">
+                {confirmation.reference}
+              </span>
+            </div>
+            {confirmation.dateSoumission && (
+              <div>
+                <strong>Date d’enregistrement :</strong>{" "}
+                {formatDate(confirmation.dateSoumission, true)}
+              </div>
+            )}
+            {confirmation.accuseReception?.destinataire && (
+              <div>
+                <strong>Accusé de réception :</strong>{" "}
+                {ackSent
+                  ? `Envoyé par e-mail à ${confirmation.accuseReception.destinataire}`
+                  : confirmation.accuseReception.statut === "NON_CONFIGURE"
+                    ? "Demande enregistrée dans le portail (envoi e-mail externe non configuré)"
+                    : "Demande enregistrée en base ; l'envoi de l'accusé par e-mail sera relancé par l'administration"}
+              </div>
+            )}
+          </div>
+        )}
         <button
           type="button"
           className="contact-link-sre"
@@ -186,8 +216,9 @@ export function PublicContactForm() {
         Transmettre le message <ArrowRight size={16} />
       </SubmitButton>
       <p className="contact-privacy-sre">
-        Votre adresse e-mail sera utilisée pour vous répondre. Le message est transmis aux
-        administrateurs actifs ; aucune adresse administrative n’est exposée sur la page publique.
+        Votre adresse e-mail sera utilisée pour vous répondre et vous adresser un accusé de
+        réception automatique. Le message est transmis aux administrateurs actifs ; aucune adresse
+        administrative n’est exposée sur la page publique.
       </p>
     </form>
   );

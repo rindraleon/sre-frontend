@@ -11,7 +11,6 @@ import {
   FileSpreadsheet,
   FileText,
   Gauge,
-  Mail,
   Settings,
   Users,
   UserRound,
@@ -46,7 +45,6 @@ export const ADMIN_MENU: MenuEntry[] = [
   { title: "Import Excel", path: "/admin/import-excel", icon: FileSpreadsheet },
   { title: "Rapports & statistiques", path: "/admin/rapports", icon: ChartNoAxesCombined },
   { title: "Journal d’activité", path: "/admin/journal", icon: Activity },
-  { title: "Messages du site public", path: "/admin/messages-contact", icon: Mail },
 ];
 
 export const CLIENT_MENU: MenuEntry[] = [

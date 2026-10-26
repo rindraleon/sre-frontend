@@ -10,11 +10,7 @@ import {
 } from "@/validation/auth.schema";
 import { FormField, SubmitButton, FormError } from "@/components/forms/form-field";
 
-/**
- * Secure reset-link request: the server always answers in
- * the same way (no account enumeration) and sends a single-use
- * token valid for 24 hours if an active account matches.
- */
+/** Secure reset-link request: the server always answers in the same way (no account enumeration) and sends a single. */
 export function ForgotPasswordForm() {
   const [sent, setSent] = useState(false);
   const {

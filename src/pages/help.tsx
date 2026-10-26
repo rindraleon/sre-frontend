@@ -191,10 +191,7 @@ function BlockSection({ section }: Readonly<{ section: SectionHelp }>) {
   );
 }
 
-/** Help page: concise documentation, organized and adapted to the signed-in profile.
- *  `withinAppLayout`: rendered inside the application chrome (sidebar + topbar) of the
- *  admin/client workspaces; otherwise (public route `/aide`) it carries its own header,
- *  and an already signed-in user is redirected to their workspace's help. */
+/** Help page: concise documentation, organized and adapted to the signed-in profile. */
 export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout?: boolean }>) {
   const { session } = useAuth();
   const [searchParams] = useSearchParams();

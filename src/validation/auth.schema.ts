@@ -8,10 +8,7 @@ export const loginSchema = z.object({
 });
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
-/**
- * Registration. Two regimes (RegistrationDto + Registration profile DTO):
- * first administrator (name + e-mail + password) or taxpayer (full profile).
- */
+/** Registration. */
 export function createRegistrationSchema(isFirstAdministrator: boolean) {
   return z
     .object({

@@ -1,13 +1,7 @@
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { ApiError } from "@/services/api-client";
 
-/**
- * Projects the per-field errors returned by the API ({ errors: { "profil.telephone": [...] } })
- * onto form fields via setError(). Nested fields are reduced to their
- * last segment (`profil.telephone` -> `telephone`), matching the portal's
- * form names. Returns the messages that cannot be attached to a known field,
- * to display as a global form error.
- */
+/** Projects the per-field errors returned by the API ({ errors: { "profil.telephone": [...] } }) onto form fields v. */
 export function applyApiErrors<T extends FieldValues>(
   form: UseFormReturn<T, any, any>,
   cause: unknown,

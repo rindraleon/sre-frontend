@@ -27,12 +27,7 @@ const EMPTY_VALUES: InitialSetupFormValues = {
   nomCommercial: "",
 };
 
-/**
- * Mandatory initial setup (first sign-in of an account created by
- * the administration): replacement of the provisional password (STAT number) and
- * profile validation. Until it is completed, business features
- * stay blocked server-side.
- */
+/** Mandatory initial setup (first sign-in of an account created by the administration): replacement of the provisio. */
 export function InitialSetupForm() {
   const navigation = useNavigate();
   const { session, completeInitialSetup } = useAuth();

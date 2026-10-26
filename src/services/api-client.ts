@@ -1,6 +1,13 @@
 import type {
   ActivityLogEntry,
+  ContactEmailRetryType,
+  ContactEmailStatus,
+  ContactMessageEntry,
+  ContactMessageSource,
+  ContactMessageStatus,
   ContactMessagesResponse,
+  ContactMessagesUnreadResponse,
+  ContactReplyResponse,
   PlatformState,
   UserRole,
 } from "@/types";
@@ -161,31 +168,132 @@ export async function loadActivityLogApi(
   });
 }
 
-/** Messages received through the public contact form. */
-export async function loadContactMessagesApi(
-  token: string,
-  options: { nonLus?: boolean; recherche?: string; limite?: number } = {},
-): Promise<ContactMessagesResponse> {
-  const params = new URLSearchParams();
-  if (options.nonLus) params.set("nonLus", "true");
-  if (options.recherche?.trim()) params.set("recherche", options.recherche.trim());
-  if (options.limite) params.set("limite", String(options.limite));
-  const query = params.toString();
-  return callApi<ContactMessagesResponse>(
-    `admin/messages-contact${query ? `?${query}` : ""}`,
-    { token: token },
+export const CONTACT_MESSAGES_UPDATED_EVENT = "sre:contact-messages-updated";
+
+export function notifyContactMessagesUpdated(unread?: number) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(CONTACT_MESSAGES_UPDATED_EVENT, {
+      detail: { unread },
+    }),
   );
 }
 
-/** Marks a public contact message as read. */
-export async function markContactMessageAsReadApi(
+/** Lightweight counter for unread contact messages in the administrator topbar. */
+export async function loadContactMessagesUnreadCountApi(
+  token: string,
+): Promise<ContactMessagesUnreadResponse> {
+  return callApi<ContactMessagesUnreadResponse>(
+    "admin/messages-contact/non-lus",
+    { token },
+  );
+}
+
+/** Messages received through the public contact form or client workspace. */
+export async function loadContactMessagesApi(
+  token: string,
+  options: {
+    nonLus?: boolean;
+    statut?: ContactMessageStatus | "TOUS";
+    statutCourriel?: ContactEmailStatus | "TOUS";
+    source?: ContactMessageSource | "TOUS";
+    recherche?: string;
+    tri?: "non_lus" | "date_desc" | "date_asc" | "statut" | "expediteur";
+    limite?: number;
+  } = {},
+): Promise<ContactMessagesResponse> {
+  const params = new URLSearchParams();
+  if (options.nonLus) params.set("nonLus", "true");
+  if (options.statut && options.statut !== "TOUS") {
+    params.set("statut", options.statut);
+  }
+  if (options.statutCourriel && options.statutCourriel !== "TOUS") {
+    params.set("statutCourriel", options.statutCourriel);
+  }
+  if (options.source && options.source !== "TOUS") {
+    params.set("source", options.source);
+  }
+  if (options.recherche?.trim()) {
+    params.set("recherche", options.recherche.trim());
+  }
+  if (options.tri) {
+    params.set("tri", options.tri);
+  }
+  if (options.limite) params.set("limite", String(options.limite));
+  const query = params.toString();
+  const response = await callApi<ContactMessagesResponse>(
+    `admin/messages-contact${query ? `?${query}` : ""}`,
+    { token: token },
+  );
+  notifyContactMessagesUpdated(response.unread);
+  return response;
+}
+
+/** Ouvre un message de contact et le marque comme lu côté serveur. */
+export async function getContactMessageDetailApi(
   token: string,
   id: string,
-): Promise<{ id: string; lue: boolean }> {
-  return callApi<{ id: string; lue: boolean }>(
-    `admin/messages-contact/${encodeURIComponent(id)}/lire`,
-    { token: token, method: "PATCH" },
+  doNotMarkRead = false,
+): Promise<ContactMessageEntry> {
+  const query = doNotMarkRead ? "?nePasMarquerLu=true" : "";
+  const entry = await callApi<ContactMessageEntry>(
+    `admin/messages-contact/${encodeURIComponent(id)}${query}`,
+    { token },
   );
+  notifyContactMessagesUpdated();
+  return entry;
+}
+
+/** Met à jour le statut d'un message de contact (NON_LU, LU, EN_ATTENTE_REPONSE, REPONDU). */
+export async function updateContactMessageStatusApi(
+  token: string,
+  id: string,
+  statut: ContactMessageStatus,
+): Promise<ContactMessageEntry> {
+  const res = await callApi<ContactMessageEntry>(
+    `admin/messages-contact/${encodeURIComponent(id)}/statut`,
+    {
+      token,
+      method: "PATCH",
+      body: { statut },
+    },
+  );
+  notifyContactMessagesUpdated();
+  return res;
+}
+
+/** Envoie une réponse directe par e-mail depuis l'administration à l'expéditeur. */
+export async function replyContactMessageApi(
+  token: string,
+  id: string,
+  payload: { sujet?: string; message: string },
+): Promise<ContactReplyResponse> {
+  const res = await callApi<ContactReplyResponse>(
+    `admin/messages-contact/${encodeURIComponent(id)}/repondre`,
+    {
+      token,
+      method: "POST",
+      body: payload,
+    },
+  );
+  notifyContactMessagesUpdated();
+  return res;
+}
+
+/** Relance les e-mails en échec associés à un message de contact. */
+export async function retryContactMessageEmailsApi(
+  token: string,
+  id: string,
+  type: ContactEmailRetryType = "TOUS",
+): Promise<{
+  message: ContactMessageEntry;
+  relances: Record<string, string | null | undefined>;
+}> {
+  return callApi(`admin/messages-contact/${encodeURIComponent(id)}/renvoyer-courriel`, {
+    token,
+    method: "POST",
+    body: { type },
+  });
 }
 
 async function loadAllApiPages<T>(path: string, token: string): Promise<T[]> {

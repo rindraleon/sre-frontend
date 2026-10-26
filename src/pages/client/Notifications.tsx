@@ -114,6 +114,9 @@ export function ClientNotificationsPage() {
                     </Button>
                   )}
                   <small>
+                    {notification.isRead ? "Notification lue" : "Notification non lue"}
+                  </small>
+                  <small>
                     {notification.emailStatus === "DELIVRE"
                       ? "Courriel : délivré"
                       : notification.emailStatus === "ENVOYE"

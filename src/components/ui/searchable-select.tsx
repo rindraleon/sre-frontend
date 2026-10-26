@@ -34,13 +34,7 @@ interface SearchableSelectProps {
   "aria-describedby"?: string;
 }
 
-/**
- * Select with local search, for long lists (e.g. taxpayers).
- * Keyboard navigation: arrows, Enter, Escape; close on outside click;
- * selection clearing; explicit loading / empty / error states.
- * Remote search is not offered by the current API: filtering is
- * therefore local, over options already loaded by the calling screen.
- */
+/** Select with local search, for long lists (e.g. */
 export function SearchableSelect({
   id,
   value,

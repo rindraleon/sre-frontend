@@ -115,9 +115,7 @@ textarea:focus-visible {
   --sre-info: #1b5874;
   --sre-shadow: 0 12px 32px rgba(23, 46, 37, 0.06);
 
-  /* Public site tokens (landing, taxation, legal pages, contact form).
-     Every public surface reads these instead of hard-coded colours, so the
-     dark theme only has to override this block. */
+  /* Public site tokens (landing, taxation, legal pages, contact form). */
   --pub-page: #fbfcfb;
   --pub-surface: #fff;
   --pub-surface-alt: #f4f8f7;

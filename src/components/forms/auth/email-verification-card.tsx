@@ -4,11 +4,7 @@ import { useSre } from "@/context/SreContext";
 import { callApi } from "@/services/api-client";
 import { Button, StatusBadge } from "@/components/ui";
 
-/**
- * E-mail address verification by single-use code:
- * send request (generic server-side response) then code validation.
- * State is driven locally; the server remains the source of truth.
- */
+/** E-mail address verification by single-use code: send request (generic server-side response) then code validation. */
 export function EmailVerificationCard({
   email,
   isEmailVerified,

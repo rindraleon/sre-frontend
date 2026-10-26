@@ -10,11 +10,7 @@ import {
 } from "@/validation/auth.schema";
 import { PasswordField, SubmitButton, FormError } from "@/components/forms/form-field";
 
-/**
- * Reset through the single-use token received by e-mail
- * (`/reinitialisation-mot-de-passe?jeton=…`). The token is validated by the
- * server (expiry, single use) before any change.
- */
+/** Reset through the single-use token received by e-mail (`/reinitialisation-mot-de-passe?jeton=…`). */
 export function ResetPasswordForm() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("jeton") ?? "";

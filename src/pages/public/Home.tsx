@@ -95,8 +95,6 @@ export function PublicHomePage() {
             >
               <PathDrawingPortfolioHero
                 brand="SRE"
-                // eyebrow="PORTAIL FISCAL RÉGIONAL"
-                // tagline={`Service Régional des Entreprises · ${SRE_REGION}`}
                 fromColor={isDark ? "#3aa0ad" : "#176f86"}
                 toColor={isDark ? "#43bb96" : "#15947c"}
                 layout="embedded"
@@ -104,10 +102,6 @@ export function PublicHomePage() {
                 className="hero-sre-path-brand"
               />
             </Suspense>
-            {/* <div className="hero-sre-path-zone__signature" aria-hidden="true">
-              <span />
-              <small>HAUTE MATSIATRA · MADAGASCAR</small>
-            </div> */}
           </div>
           <div className="scroll-hint-sre">
             <a href="#services">

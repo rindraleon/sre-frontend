@@ -3,11 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * shadcn/ui modal (Radix Dialog): trapped focus, Escape, outside click,
- * focus return — handled by Radix. Kit API preserved
- * (`open`, `title`, `description`, `close`, `footer`, `width`).
- */
+/** shadcn/ui modal (Radix Dialog): trapped focus, Escape, outside click, focus return. */
 export function Modal({
   open,
   title,

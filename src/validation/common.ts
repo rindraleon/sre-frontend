@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-/**
- * Shared rules, aligned with the backend DTOs (source of truth).
- * See sre-backend: registration.dto.ts, create-taxpayer.dto.ts, etc.
- * Never tighten/relax here without changing the corresponding DTO.
- */
+/** Shared rules, aligned with the backend DTOs (source of truth). */
 export const emailSchema = z
   .string()
   .min(1, "L'adresse e-mail est requise.")

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   ChevronDown,
   CircleHelp,
   LogOut,
   Menu,
+  MessageSquare,
   Moon,
   Settings,
   Sun,
@@ -17,20 +18,21 @@ import { useTheme } from "@/context/ThemeContext";
 import { ConfirmDialog } from "@/components/ui";
 import { getInitials } from "@/utils/format";
 
-
 export function Topbar({
-  //pageTitle,
   unreadNotifications,
+  unreadContactMessages = 0,
   openMobileMenu,
 }: Readonly<{
   pageTitle: string;
   unreadNotifications: number;
+  unreadContactMessages?: number;
   openMobileMenu: () => void;
 }>) {
   const { session, logOut } = useAuth();
   const { notify } = useSre();
   const { theme, toggleTheme } = useTheme();
   const navigation = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [confirmationLogout, setConfirmationLogout] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -63,6 +65,9 @@ export function Topbar({
   const isAdmin = session.role === "ADMIN";
   const rootPath = isAdmin ? "/admin" : "/client";
   const userInitials = getInitials(session.name) || "SRE";
+  const isOnContactMessagesPage = location.pathname.startsWith(
+    "/admin/messages-contact",
+  );
 
   const handleLogout = () => {
     setMenuOpen(false);
@@ -79,12 +84,15 @@ export function Topbar({
   return (
     <header className="app-header-sre">
       <div className="app-header-sre__left">
-        <button className="menu-button-sre" aria-label="Ouvrir le menu" onClick={openMobileMenu}>
+        <button
+          className="menu-button-sre"
+          aria-label="Ouvrir le menu"
+          onClick={openMobileMenu}
+        >
           <Menu size={20} />
         </button>
         <div>
           <span>{isAdmin ? "Espace Administrateur" : "Espace client"}</span>
-          {/* <strong>{titrePage}</strong> */}
         </div>
       </div>
       <div className="app-header-sre__right">
@@ -96,10 +104,37 @@ export function Topbar({
         >
           <CircleHelp size={17} />
         </Link>
+        {isAdmin && (
+          <Link
+            data-testid="topbar-contact-messages-link"
+            className={`notification-button-sre ${
+              isOnContactMessagesPage ? "notification-button-sre--active" : ""
+            }`}
+            to="/admin/messages-contact"
+            aria-label={
+              unreadContactMessages > 0
+                ? `Messagerie de contact (${unreadContactMessages} non lus)`
+                : "Messagerie de contact"
+            }
+            title={
+              unreadContactMessages > 0
+                ? `Messagerie de contact · ${unreadContactMessages} message(s) non lu(s)`
+                : "Messagerie de contact (messages reçus)"
+            }
+          >
+            <MessageSquare size={17} />
+            {unreadContactMessages > 0 && (
+              <i data-testid="topbar-contact-messages-badge">
+                {unreadContactMessages}
+              </i>
+            )}
+          </Link>
+        )}
         <Link
           className="notification-button-sre"
           to={isAdmin ? "/admin/notifications" : "/client/notifications"}
           aria-label={`${unreadNotifications} notifications non lues`}
+          title="Centre de notifications"
         >
           <Bell size={17} />
           {unreadNotifications > 0 && <i>{unreadNotifications}</i>}
@@ -133,7 +168,11 @@ export function Topbar({
                 <small>{isAdmin ? "Administrateur" : "Contribuable"}</small>
               </div>
               {!isAdmin && (
-                <Link role="menuitem" to="/client/profil" onClick={() => setMenuOpen(false)}>
+                <Link
+                  role="menuitem"
+                  to="/client/profil"
+                  onClick={() => setMenuOpen(false)}
+                >
                   <UserRound size={15} aria-hidden="true" /> Mon profil
                 </Link>
               )}

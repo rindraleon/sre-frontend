@@ -40,7 +40,10 @@ const BADGE_LABELS: Record<string, string> = {
   ECHEC: "Échec",
   SYSTEME: "Système",
   LUE: "Lu",
+  LU: "Lu",
   NON_LU: "Non lu",
+  EN_ATTENTE_REPONSE: "En attente de réponse",
+  REPONDU: "Répondu",
   ENVOYE: "Envoyé",
   NON_CONFIGURE: "Non configuré",
 };
@@ -74,7 +77,10 @@ const TONE_BY_STATUS: Record<string, keyof typeof TONES> = {
   SUCCES: "success",
   ECHEC: "error",
   LUE: "success",
+  LU: "blue",
   NON_LU: "attention",
+  EN_ATTENTE_REPONSE: "warning",
+  REPONDU: "success",
   ENVOYE: "success",
   NON_CONFIGURE: "neutral",
 };
