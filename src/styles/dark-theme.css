@@ -1,7 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/* Dark theme — targeted overrides on the project's variables and surfaces.  */
-/* The PDF document (acknowledgment/receipt) deliberately keeps a light background: it is   */
-/* a document meant for printing, not an interface surface.           */
+/* Dark theme — targeted overrides on the project's variables and surfaces. */
 /* -------------------------------------------------------------------------- */
 [data-theme="sombre"] {
   --background: 160 24% 8%;
@@ -197,6 +195,216 @@
 [data-theme="sombre"] h2,
 [data-theme="sombre"] h3 { color: var(--sre-ink); }
 [data-theme="sombre"] .payment-document-sre {
-  background: #fff;
-  color: #18283c;
+  background: var(--sre-paper);
+  border-color: var(--sre-border);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .payment-document-sre__header,
+[data-theme="sombre"] .payment-document-sre__footer,
+[data-theme="sombre"] .payment-documents-list-sre { border-color: var(--sre-border); }
+[data-theme="sombre"] .payment-document-sre__brand > span,
+[data-theme="sombre"] .payment-document-sre__amount {
+  border-color: var(--sre-border);
+  background: var(--sre-bg);
+}
+[data-theme="sombre"] .payment-document-sre__alert {
+  border-color: #6e3438;
+  background: #3a1d20;
+  color: #f0b6b8;
+}
+[data-theme="sombre"] .payment-document-sre__alert--acknowledgment {
+  border-color: #65532e;
+  background: #33291a;
+  color: #e6c177;
+}
+[data-theme="sombre"] .payment-document-sre__brand > span,
+[data-theme="sombre"] .payment-document-sre__title h2,
+[data-theme="sombre"] .payment-document-sre__grid h3,
+[data-theme="sombre"] .payment-document-sre__grid dd,
+[data-theme="sombre"] .payment-document-sre__amount strong { color: var(--sre-ink); }
+[data-theme="sombre"] .payment-document-sre__brand small,
+[data-theme="sombre"] .payment-document-sre__title p,
+[data-theme="sombre"] .payment-document-sre__title > span,
+[data-theme="sombre"] .payment-document-sre__grid dt,
+[data-theme="sombre"] .payment-document-sre__amount span,
+[data-theme="sombre"] .payment-document-sre__footer,
+[data-theme="sombre"] .payment-document-sre__note { color: var(--sre-muted); }
+[data-theme="sombre"] .payment-document-sre__grid dd a { color: var(--sre-teal); }
+[data-theme="sombre"] .payment-document-sre__note > svg { color: var(--sre-success); }
+
+[data-theme="sombre"] .sidebar-sre__footer,
+[data-theme="sombre"] .menu-button-sre,
+[data-theme="sombre"] .app-footer-sre,
+[data-theme="sombre"] .notification-card-sre {
+  background: var(--sre-paper);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .app-footer-sre { color: var(--sre-muted); }
+[data-theme="sombre"] .app-footer-sre span:last-child { color: var(--sre-ink-2); }
+[data-theme="sombre"] .navigation-sre__link { color: var(--sre-muted); }
+[data-theme="sombre"] .navigation-sre__link > svg { color: var(--sre-muted-2); }
+[data-theme="sombre"] .navigation-sre__link--active { color: var(--sre-ink); }
+[data-theme="sombre"] .organization-sre,
+[data-theme="sombre"] .navigation-sre__link:hover,
+[data-theme="sombre"] .navigation-sre__link--active,
+[data-theme="sombre"] .notification-card-sre--unread,
+[data-theme="sombre"] .payment-obligation-summary-sre {
+  background: var(--sre-blue-soft);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .perimeter-callout-sre,
+[data-theme="sombre"] .environment-badge-sre {
+  background: var(--sre-teal-soft);
+  border-color: var(--sre-border);
+  color: var(--sre-ink-2);
+}
+[data-theme="sombre"] .navigation-sre__link i {
+  background: var(--sre-gold-soft);
+  color: var(--sre-gold);
+}
+[data-theme="sombre"] .perimeter-callout-sre strong,
+[data-theme="sombre"] .payment-obligation-summary-sre strong { color: var(--sre-ink); }
+[data-theme="sombre"] .perimeter-callout-sre small,
+[data-theme="sombre"] .payment-obligation-summary-sre small { color: var(--sre-muted); }
+[data-theme="sombre"] .notification-button-sre:hover { background: var(--sre-blue-soft); }
+[data-theme="sombre"] .notification-button-sre i { border-color: var(--sre-paper); }
+
+[data-theme="sombre"] .stat-card-sre__icon--blue,
+[data-theme="sombre"] .badge-sre--blue { background: #162e3b; color: #7cb9d6; border-color: #294354; }
+[data-theme="sombre"] .stat-card-sre__icon--green,
+[data-theme="sombre"] .badge-sre--success { background: #14302a; color: #89d5ad; border-color: #285342; }
+[data-theme="sombre"] .stat-card-sre__icon--orange,
+[data-theme="sombre"] .badge-sre--attention,
+[data-theme="sombre"] .badge-sre--warning { background: #322714; color: #e6c177; border-color: #554323; }
+[data-theme="sombre"] .stat-card-sre__icon--violet,
+[data-theme="sombre"] .badge-sre--violet { background: #2a2438; color: #c4b4ed; border-color: #46395d; }
+[data-theme="sombre"] .stat-card-sre__icon--red,
+[data-theme="sombre"] .badge-sre--error { background: #3a1d20; color: #f0a3a5; border-color: #6e3438; }
+[data-theme="sombre"] .badge-sre,
+[data-theme="sombre"] .badge-sre--neutral { background: var(--sre-blue-soft); color: var(--sre-ink-2); border-color: var(--sre-border); }
+[data-theme="sombre"] .stat-card-sre > div > span { color: var(--sre-muted); }
+[data-theme="sombre"] .stat-card-sre > div > strong { color: var(--sre-ink); }
+[data-theme="sombre"] .table-tools-sre,
+[data-theme="sombre"] .search-sre,
+[data-theme="sombre"] .compact-filter-sre,
+[data-theme="sombre"] .pagination-sre select,
+[data-theme="sombre"] .pagination-sre button {
+  background: var(--sre-paper);
+  border-color: var(--sre-border);
+  color: var(--sre-ink-2);
+}
+[data-theme="sombre"] .compact-filter-sre select,
+[data-theme="sombre"] .table-mobile-sort-sre select,
+[data-theme="sombre"] .layro-data-table__page-size select,
+[data-theme="sombre"] .pagination-sre select {
+  background-color: var(--sre-paper);
+  color: var(--sre-ink);
+  color-scheme: dark;
+}
+[data-theme="sombre"] .compact-filter-sre option,
+[data-theme="sombre"] .table-mobile-sort-sre option,
+[data-theme="sombre"] .layro-data-table__page-size option,
+[data-theme="sombre"] .pagination-sre option {
+  background-color: var(--sre-paper);
+  color: var(--sre-ink);
+}
+[data-theme="sombre"] .compact-filter-sre:focus-within,
+[data-theme="sombre"] .table-mobile-sort-sre select:focus-visible,
+[data-theme="sombre"] .layro-data-table__page-size select:focus-visible,
+[data-theme="sombre"] .pagination-sre select:focus-visible {
+  border-color: var(--sre-teal);
+}
+[data-theme="sombre"] .table-sre th { background: var(--sre-bg); }
+[data-theme="sombre"] .table-sre tbody tr:hover { background: var(--sre-blue-soft); }
+[data-theme="sombre"] .table-sre td strong,
+[data-theme="sombre"] .amount-sre,
+[data-theme="sombre"] .empty-state-sre > strong,
+[data-theme="sombre"] .tax-note-sre strong { color: var(--sre-ink); }
+[data-theme="sombre"] .empty-state-sre__icon,
+[data-theme="sombre"] .tax-note-sre > span:first-child { background: var(--sre-blue-soft); color: var(--sre-ink-2); }
+[data-theme="sombre"] .empty-state-sre,
+[data-theme="sombre"] .empty-state-sre p,
+[data-theme="sombre"] .table-sre td small,
+[data-theme="sombre"] .sub-row-sre,
+[data-theme="sombre"] .pagination-sre,
+[data-theme="sombre"] .tax-note-sre p,
+[data-theme="sombre"] .security-note-sre p { color: var(--sre-muted); }
+
+[data-theme="sombre"] .tabs-sre { border-color: var(--sre-border); }
+[data-theme="sombre"] .tab-sre--active,
+[data-theme="sombre"] .import-help-sre,
+[data-theme="sombre"] .taxpayer-type-sre,
+[data-theme="sombre"] .payment-mode-sre,
+[data-theme="sombre"] .notification-card-sre {
+  background: var(--sre-paper);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .big-pending-badge-sre,
+[data-theme="sombre"] .tab-sre i { background: var(--sre-gold-soft); color: var(--sre-gold); border-color: var(--sre-border); }
+[data-theme="sombre"] .import-analysis-summary-sre > div,
+[data-theme="sombre"] .payment-mode-sre--active,
+[data-theme="sombre"] .taxpayer-type-sre--active {
+  background: var(--sre-teal-soft);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .import-analysis-summary-sre > div strong,
+[data-theme="sombre"] .taxpayer-type-sre strong,
+[data-theme="sombre"] .taxpayer-type-sre--active strong,
+[data-theme="sombre"] .payment-mode-sre strong,
+[data-theme="sombre"] .payment-mode-sre--active strong { color: var(--sre-ink); }
+[data-theme="sombre"] .import-analysis-summary-sre > div span,
+[data-theme="sombre"] .taxpayer-type-sre small,
+[data-theme="sombre"] .payment-mode-sre small { color: var(--sre-muted); }
+[data-theme="sombre"] .import-analysis-summary-sre__valid { background: #14302a !important; border-color: #285342 !important; }
+[data-theme="sombre"] .import-analysis-summary-sre__duplicate { background: #322714 !important; border-color: #554323 !important; }
+[data-theme="sombre"] .import-analysis-summary-sre__error { background: #3a1d20 !important; border-color: #6e3438 !important; }
+[data-theme="sombre"] .import-error-details-sre ul,
+[data-theme="sombre"] .initial-access-sre > p,
+[data-theme="sombre"] .supporting-document-upload-sre { background: var(--sre-blue-soft); border-color: var(--sre-border); color: var(--sre-ink-2); }
+[data-theme="sombre"] .import-error-details-sre ul { color: var(--sre-muted); }
+[data-theme="sombre"] .payment-mode-sre { color: var(--sre-ink-2); }
+[data-theme="sombre"] .form-step-sre > span { background: var(--sre-blue-soft); color: var(--sre-teal); }
+[data-theme="sombre"] .security-alert-banner-sre,
+[data-theme="sombre"] .decision-reason-sre {
+  background: var(--sre-gold-soft);
+  border-color: var(--sre-border);
+  color: var(--sre-ink-2);
+}
+[data-theme="sombre"] .security-alert-banner-sre strong,
+[data-theme="sombre"] .security-alert-banner-sre p,
+[data-theme="sombre"] .decision-reason-sre strong,
+[data-theme="sombre"] .decision-reason-sre p { color: var(--sre-ink-2); }
+[data-theme="sombre"] .alert-action-sre {
+  background: var(--sre-gold-soft);
+  border-color: var(--sre-border);
+}
+[data-theme="sombre"] .alert-action-sre > span { background: #4a3c22; color: var(--sre-warning); }
+[data-theme="sombre"] .alert-action-sre small { color: var(--sre-muted); }
+[data-theme="sombre"] .alert-action-sre > svg { color: var(--sre-warning); }
+[data-theme="sombre"] .registration-steps-sre li { border-top-color: var(--sre-border); color: var(--sre-muted); }
+[data-theme="sombre"] .registration-steps-sre li.step-completed-sre { border-top-color: var(--sre-teal); color: var(--sre-ink-2); }
+[data-theme="sombre"] .payment-decision-actions-sre,
+[data-theme="sombre"] .settings-panel-sre > .setting-row-sre,
+[data-theme="sombre"] .report-status-row-sre { border-color: var(--sre-border); }
+[data-theme="sombre"] .report-filters-sre label,
+[data-theme="sombre"] .report-filters-sre > span,
+[data-theme="sombre"] .report-status-row-sre > div small { color: var(--sre-muted); }
+[data-theme="sombre"] .report-status-row-sre > div strong { color: var(--sre-ink); }
+[data-theme="sombre"] .modal-sre > header button { background: var(--sre-paper); border-color: var(--sre-border); color: var(--sre-ink-2); }
+[data-theme="sombre"] .toast-sre--error > span { background: #3a1d20; color: #f0a3a5; }
+[data-theme="sombre"] .toast-sre--warning > span { background: var(--sre-gold-soft); color: var(--sre-warning); }
+[data-theme="sombre"] .success-text-sre { color: var(--sre-success); }
+[data-theme="sombre"] .attention-text-sre { color: var(--sre-warning); }
+[data-theme="sombre"] .secondary-text-sre,
+[data-theme="sombre"] .field-help-sre,
+[data-theme="sombre"] .text-help-sre { color: var(--sre-muted); }
+
+@media print {
+  [data-theme="sombre"] .payment-document-sre {
+    background: #fff !important;
+    color: #18283c !important;
+  }
+  [data-theme="sombre"] .payment-document-sre :is(h1, h2, h3, strong, span, p, dt, dd, small, a) {
+    color: #18283c !important;
+  }
 }

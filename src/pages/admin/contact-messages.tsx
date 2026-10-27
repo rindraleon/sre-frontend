@@ -405,7 +405,7 @@ export function AdminContactMessagesPage() {
           className={`text-left rounded-xl border p-3.5 transition-all ${
             statusFilter === "TOUS"
               ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 shadow-sm"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -423,7 +423,7 @@ export function AdminContactMessagesPage() {
           className={`text-left rounded-xl border p-3.5 transition-all ${
             statusFilter === "NON_LU"
               ? "border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 shadow-sm"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -441,7 +441,7 @@ export function AdminContactMessagesPage() {
           className={`text-left rounded-xl border p-3.5 transition-all ${
             statusFilter === "EN_ATTENTE_REPONSE"
               ? "border-orange-500 bg-orange-50/70 dark:bg-orange-950/40 shadow-sm"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -459,7 +459,7 @@ export function AdminContactMessagesPage() {
           className={`text-left rounded-xl border p-3.5 transition-all ${
             statusFilter === "REPONDU"
               ? "border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-sm"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -477,7 +477,7 @@ export function AdminContactMessagesPage() {
           className={`text-left rounded-xl border p-3.5 transition-all ${
             statusFilter === "LU"
               ? "border-sky-600 bg-sky-50/70 dark:bg-sky-950/40 shadow-sm"
-              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
+              : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">

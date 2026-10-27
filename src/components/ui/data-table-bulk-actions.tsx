@@ -8,6 +8,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type ColumnDef,
+  type CellContext,
   type OnChangeFn,
   type PaginationState,
   type RowSelectionState,
@@ -62,20 +63,15 @@ export interface DataTableBulkActionsProps<TData> {
   emptyDescription?: string;
   label?: string;
   className?: string;
-  /** Filters/main action displayed on the same bar as the search. */
   toolbarActions?: React.ReactNode;
   actionPrimary?: React.ReactNode;
-  /** Optional controlled search, used by the existing pages. */
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  /** Search text derived from data linked to a row (e.g. associated taxpayer). */
   getSearchText?: (row: TData) => string;
-  /** Optional controlled pagination (page numbered from 1). */
   page?: number;
   onPageChange?: (page: number) => void;
   rowsPerPage?: number;
   onRowsPerPageChange?: (pageSize: number) => void;
-  /** Controlled selected identifiers, useful to business actions. */
   selectedRowIds?: ReadonlySet<string>;
   onSelectedRowIdsChange?: (ids: string[]) => void;
 }
@@ -125,6 +121,19 @@ function Checkbox({
   );
 }
 
+function renderSelectionCell<TData>({ row }: CellContext<TData, unknown>) {
+  return (
+    <Checkbox
+      label={`Sélectionner la ligne ${row.id}`}
+      checked={row.getIsSelected()}
+      onCheckedChange={(value) => row.toggleSelected(value)}
+      onClick={(event) => event.stopPropagation()}
+    />
+  );
+}
+
+
+
 export function DataTableBulkActions<TData>({
   data,
   columns: userColumns,
@@ -132,7 +141,7 @@ export function DataTableBulkActions<TData>({
   selectable = false,
   bulkActions,
   onSelectionChange,
-  pageSize = 10,
+  pageSize = 5,
   columnToggle = false,
   getRowId,
   onRowClick,
@@ -198,24 +207,11 @@ export function DataTableBulkActions<TData>({
       header: ({ table }) => (
         <Checkbox
           label="Sélectionner toutes les lignes de cette page"
-          checked={
-            table.getIsAllPageRowsSelected()
-              ? true
-              : table.getIsSomePageRowsSelected()
-                ? "indeterminate"
-                : false
-          }
+          checked={pageSelectionChecked}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(value)}
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          label={`Sélectionner la ligne ${row.id}`}
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(value)}
-          onClick={(event) => event.stopPropagation()}
-        />
-      ),
+      cell: renderSelectionCell,
     };
     return [select, ...columnsWithSearch];
   }, [columnsWithSearch, selectable]);
@@ -269,11 +265,14 @@ export function DataTableBulkActions<TData>({
   });
 
   const rows = table.getRowModel().rows;
+  let pageSelectionChecked: boolean | "indeterminate" = false;
+  if (table.getIsAllPageRowsSelected()) pageSelectionChecked = true;
+  else if (table.getIsSomePageRowsSelected()) pageSelectionChecked = "indeterminate";
   const filteredCount = table.getFilteredRowModel().rows.length;
   const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original);
   const selectedKey = Object.keys(rowSelection)
     .filter((id) => rowSelection[id])
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .join(",");
   const sortableColumns = table.getAllLeafColumns().filter((column) => column.getCanSort());
   const currentSort = sorting[0];
@@ -379,13 +378,7 @@ export function DataTableBulkActions<TData>({
             <label className="table-mobile-selection-sre">
               <Checkbox
                 label="Sélectionner toute cette page"
-                checked={
-                  table.getIsAllPageRowsSelected()
-                    ? true
-                    : table.getIsSomePageRowsSelected()
-                      ? "indeterminate"
-                      : false
-                }
+                checked={pageSelectionChecked}
                 onCheckedChange={(value) => table.toggleAllPageRowsSelected(value)}
               />
               <span>Sélectionner toute la page</span>
@@ -461,30 +454,25 @@ export function DataTableBulkActions<TData>({
                     const sorted = header.column.getIsSorted();
                     const canSort = header.column.getCanSort();
                     const align = meta?.align ?? "left";
-                    return (
-                      <th
-                        key={header.id}
-                        scope="col"
-                        style={meta?.width ? { width: meta.width } : undefined}
-                        aria-sort={
-                          sorted === "asc"
-                            ? "ascending"
-                            : sorted === "desc"
-                              ? "descending"
-                              : canSort
-                                ? "none"
-                                : undefined
+                    let alignmentClass = "text-left";
+                    if (align === "right") alignmentClass = "text-right";
+                    else if (align === "center") alignmentClass = "text-center";
+                    let ariaSort: "ascending" | "descending" | "none" | undefined;
+                    if (sorted === "asc") ariaSort = "ascending";
+                    else if (sorted === "desc") ariaSort = "descending";
+                    else if (canSort) ariaSort = "none";
+                    let headerContent: React.ReactNode = null;
+                    if (!header.isPlaceholder) {
+                      if (canSort) {
+                        let sortIcon: React.ReactNode;
+                        if (sorted === "asc") {
+                          sortIcon = <ArrowUp className="size-3.5" aria-hidden />;
+                        } else if (sorted === "desc") {
+                          sortIcon = <ArrowDown className="size-3.5" aria-hidden />;
+                        } else {
+                          sortIcon = <ChevronsUpDown className="size-3.5 opacity-50" aria-hidden />;
                         }
-                        className={cn(
-                          "h-10 px-3 text-[11.5px] font-medium whitespace-nowrap text-muted-foreground",
-                          align === "right"
-                            ? "text-right"
-                            : align === "center"
-                              ? "text-center"
-                              : "text-left",
-                        )}
-                      >
-                        {header.isPlaceholder ? null : canSort ? (
+                        headerContent = (
                           <button
                             type="button"
                             onClick={header.column.getToggleSortingHandler()}
@@ -496,17 +484,25 @@ export function DataTableBulkActions<TData>({
                             )}
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
-                            {sorted === "asc" ? (
-                              <ArrowUp className="size-3.5" aria-hidden />
-                            ) : sorted === "desc" ? (
-                              <ArrowDown className="size-3.5" aria-hidden />
-                            ) : (
-                              <ChevronsUpDown className="size-3.5 opacity-50" aria-hidden />
-                            )}
+                            {sortIcon}
                           </button>
-                        ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
+                        );
+                      } else {
+                        headerContent = flexRender(header.column.columnDef.header, header.getContext());
+                      }
+                    }
+                    return (
+                      <th
+                        key={header.id}
+                        scope="col"
+                        style={meta?.width ? { width: meta.width } : undefined}
+                        aria-sort={ariaSort}
+                        className={cn(
+                          "h-10 px-3 text-[11.5px] font-medium whitespace-nowrap text-muted-foreground",
+                          alignmentClass,
                         )}
+                      >
+                        {headerContent}
                       </th>
                     );
                   })}
@@ -527,13 +523,13 @@ export function DataTableBulkActions<TData>({
                   {row.getVisibleCells().map((cell) => {
                     if (cell.column.id === "__globalSearch") return null;
                     const align = cell.column.columnDef.meta?.align ?? "left";
-                    const cellLabel =
-                      cell.column.columnDef.meta?.label ??
-                      (typeof cell.column.columnDef.header === "string"
-                        ? cell.column.columnDef.header
-                        : cell.column.id === "__select"
-                          ? "Sélection"
-                          : cell.column.id);
+                    let fallbackLabel = cell.column.id;
+                    if (typeof cell.column.columnDef.header === "string") {
+                      fallbackLabel = cell.column.columnDef.header;
+                    } else if (cell.column.id === "__select") {
+                      fallbackLabel = "Sélection";
+                    }
+                    const cellLabel = cell.column.columnDef.meta?.label ?? fallbackLabel;
                     return (
                       <td
                         key={cell.id}
@@ -559,7 +555,7 @@ export function DataTableBulkActions<TData>({
         </div>
       )}
 
-      {pageSize > 0 && table.getPageCount() > 1 && (
+      {pageSize > 0 && (rows.length > 0 || filteredCount > 0) && (
         <div className="layro-data-table__pagination">
           <span className="layro-data-table__range" aria-live="polite">
             {filteredCount === 0 ? "0 résultat" : `${start}–${end} sur ${filteredCount}`}
@@ -571,7 +567,7 @@ export function DataTableBulkActions<TData>({
               value={table.getState().pagination.pageSize}
               onChange={(event) => table.setPageSize(Number(event.target.value))}
             >
-              {[10, 20, 50].map((size) => (
+              {[5, 10, 20, 50].map((size) => (
                 <option value={size} key={size}>
                   {size}
                 </option>

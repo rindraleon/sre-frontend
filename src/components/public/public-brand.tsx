@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import logoSre from "@/assets/images/logo-sre-haute-matsiatra.webp";
 import { cn } from "@/lib/utils";
 
 type PublicBrandProps = {
@@ -19,10 +18,10 @@ export function PublicBrand({
       className={cn("brand-sre brand-sre--public", `brand-sre--${variant}`, className)}
       aria-label="SRE, retour à l’accueil"
     >
-      <img className="brand-sre__public-logo" src={logoSre} alt="" aria-hidden="true" />
+      <img className="brand-sre__public-logo" src="/logo-sre.svg" alt="" aria-hidden="true" />
       <div className="brand-sre__public-text">
         <strong>
-          SRE<span>·</span>Portail
+          SRE<span>  </span>Fianarantsoa
         </strong>
         <small>{subtitle}</small>
       </div>

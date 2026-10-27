@@ -84,6 +84,7 @@ export function AdminOverduePage() {
   const { session } = useAuth();
   const { notify } = useSre();
   const table = useTableState();
+  const historyTable = useTableState();
   const [rows, setRows] = useState<OverdueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
@@ -286,13 +287,16 @@ export function AdminOverduePage() {
           columns={toTanstackColumns(historyColumns)}
           label="Historique des envois groupés"
           getRowId={(entry) => entry.id}
+          searchPlaceholder="Destinataire, référence ou auteur"
+          searchValue={historyTable.search}
+          onSearchChange={historyTable.changeSearch}
           columnToggle
           emptyTitle="Aucun envoi"
           emptyDescription="Les campagnes envoyées apparaîtront ici."
-          page={1}
-          rowsPerPage={10}
-          onPageChange={() => undefined}
-          onRowsPerPageChange={() => undefined}
+          page={historyTable.page}
+          rowsPerPage={historyTable.perPage}
+          onPageChange={historyTable.changePage}
+          onRowsPerPageChange={historyTable.changePerPage}
         />
       </section>
 
