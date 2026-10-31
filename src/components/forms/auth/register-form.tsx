@@ -34,7 +34,9 @@ export const EMPTY_REGISTRATION: RegistrationFormValues = {
   confirmation: "",
 };
 
-export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdministrator: boolean }>) {
+export function RegisterForm({
+  isFirstAdministrator,
+}: Readonly<{ isFirstAdministrator: boolean }>) {
   const { register: signUp } = useAuth();
   const { notify } = useSre();
   const navigation = useNavigate();
@@ -120,11 +122,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
   });
 
   return (
-    <form
-      className="form-sre form-grid-sre compact-form-sre"
-      onSubmit={onSubmit}
-      noValidate
-    >
+    <form className="form-sre form-grid-sre compact-form-sre" onSubmit={onSubmit} noValidate>
       <nav
         className="registration-steps-sre field-sre-wide"
         aria-label="Progression de l’inscription"
@@ -185,36 +183,82 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
             <>
               <FormField label="Raison sociale" error={errors.raisonSociale} required>
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("raisonSociale")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom légal de l’entreprise"
+                    {...register("raisonSociale")}
+                  />
                 )}
               </FormField>
               <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("nomCommercial")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom utilisé par l’entreprise"
+                    {...register("nomCommercial")}
+                  />
                 )}
               </FormField>
-              <FormField label="NIF" error={errors.nif} help="Facultatif selon votre situation">
-                {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
+              <FormField label="NIF" error={errors.nif} required>
+                {(p) => (
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Numéro d’identification fiscale"
+                    {...register("nif")}
+                  />
+                )}
               </FormField>
               <FormField label="STAT" error={errors.stat} help="Facultatif">
-                {(p) => <input {...p} className="field-simple-sre" {...register("stat")} />}
+                {(p) => (
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Numéro statistique"
+                    {...register("stat")}
+                  />
+                )}
               </FormField>
               <FormField label="Représentant légal" error={errors.representantLegal}>
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("representantLegal")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom du représentant légal"
+                    {...register("representantLegal")}
+                  />
                 )}
               </FormField>
               <FormField label="Nom du contact" error={errors.nomContact}>
-                {(p) => <input {...p} className="field-simple-sre" {...register("nomContact")} />}
+                {(p) => (
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom du contact"
+                    {...register("nomContact")}
+                  />
+                )}
               </FormField>
               <FormField label="Prénom du contact" error={errors.prenomContact}>
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("prenomContact")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Prénom du contact"
+                    {...register("prenomContact")}
+                  />
                 )}
               </FormField>
               <FormField label="Fonction du contact" error={errors.fonctionContact}>
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("fonctionContact")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Ex. Directeur administratif"
+                    {...register("fonctionContact")}
+                  />
                 )}
               </FormField>
             </>
@@ -226,6 +270,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
                     {...p}
                     className="field-simple-sre"
                     autoComplete="family-name"
+                    placeholder="Votre nom"
                     {...register("nom")}
                   />
                 )}
@@ -236,17 +281,21 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
                     {...p}
                     className="field-simple-sre"
                     autoComplete="given-name"
+                    placeholder="Votre prénom"
                     {...register("prenom")}
                   />
                 )}
               </FormField>
               {!isFirstAdministrator && (
-                <FormField
-                  label="NIF"
-                  error={errors.nif}
-                  help="Facultatif selon votre situation"
-                >
-                  {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
+                <FormField label="NIF" error={errors.nif} required>
+                  {(p) => (
+                    <input
+                      {...p}
+                      className="field-simple-sre"
+                      placeholder="Numéro d’identification fiscale"
+                      {...register("nif")}
+                    />
+                  )}
                 </FormField>
               )}
             </>
@@ -256,17 +305,13 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
 
       {step === 1 && !isFirstAdministrator && (
         <>
-          <FormField
-            label="Adresse"
-            error={errors.adresse}
-            required
-            className="field-sre-wide"
-          >
+          <FormField label="Adresse" error={errors.adresse} required className="field-sre-wide">
             {(p) => (
               <input
                 {...p}
                 className="field-simple-sre"
                 autoComplete="street-address"
+                placeholder="Adresse complète"
                 {...register("adresse")}
               />
             )}
@@ -284,6 +329,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
                 {...p}
                 className="field-simple-sre"
                 autoComplete="address-level2"
+                placeholder="Ville ou commune"
                 {...register("ville")}
               />
             )}
@@ -301,6 +347,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
                 type="email"
                 inputMode="email"
                 autoComplete="email"
+                placeholder="nom@exemple.mg"
                 {...register("courriel")}
               />
             )}
@@ -337,6 +384,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
                   type="email"
                   inputMode="email"
                   autoComplete="email"
+                  placeholder="nom@exemple.mg"
                   {...register("courriel")}
                 />
               )}
@@ -348,6 +396,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
             help="10 caractères minimum, une majuscule, une minuscule et un chiffre."
             required
             autoComplete="new-password"
+            placeholder="Votre mot de passe"
             {...register("motDePasse")}
           />
           <PasswordField
@@ -355,6 +404,7 @@ export function RegisterForm({ isFirstAdministrator }: Readonly<{ isFirstAdminis
             error={errors.confirmation}
             required
             autoComplete="new-password"
+            placeholder="Confirmez le mot de passe"
             {...register("confirmation")}
           />
           <div className="field-sre-wide">

@@ -19,7 +19,9 @@ export function createTaxpayerColumns({
             {entry.type === "ENTREPRISE" ? <Building2 size={15} /> : <UserRound size={15} />}
           </span>
           <span>
-            <strong>{entry.legalName || `${entry.firstName ?? ""} ${entry.lastName}`.trim()}</strong>
+            <strong>
+              {entry.legalName || `${entry.firstName ?? ""} ${entry.lastName}`.trim()}
+            </strong>
             <small>{entry.email}</small>
           </span>
         </Link>
@@ -72,17 +74,10 @@ export function createTaxpayerColumns({
       title: "Actions",
       render: (entry) => (
         <ActionGroup>
-          <ActionIcon
-            title="Consulter le profil"
-            href={ROUTES_ADMIN.taxpayer(entry.id)}
-          >
+          <ActionIcon title="Consulter le profil" href={ROUTES_ADMIN.taxpayer(entry.id)}>
             <Eye size={15} />
           </ActionIcon>
-          <ActionIcon
-            title="Supprimer le profil"
-            danger
-            onClick={() => onDelete(entry)}
-          >
+          <ActionIcon title="Supprimer le profil" danger onClick={() => onDelete(entry)}>
             <Trash2 size={15} />
           </ActionIcon>
         </ActionGroup>

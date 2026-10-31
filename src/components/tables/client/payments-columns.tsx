@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import type { Payment } from "@/types";
 import { ROUTES_CLIENT } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
 import { formatMoney, formatDate } from "@/utils/format";
 
 /** Columns of the taxpayer's payment history table (client workspace). */
-export function createPaymentColumns(): TableColumn<Payment>[] {
+export function createPaymentColumns(options?: {
+  onDownloadReceipt?: (payment: Payment) => void;
+}): TableColumn<Payment>[] {
   return [
     {
       id: "ref",
@@ -50,7 +52,14 @@ export function createPaymentColumns(): TableColumn<Payment>[] {
     {
       id: "status",
       title: "Statut",
-      render: (payment) => <StatusBadge status={payment.status} />,
+      render: (payment) => (
+        <>
+          <StatusBadge status={payment.status} />
+          <small className="sub-row-sre">
+            {payment.receipt ? `Reçu ${payment.receipt.number}` : "Sans reçu définitif"}
+          </small>
+        </>
+      ),
       sortValue: (payment) => payment.status,
     },
     {
@@ -58,12 +67,17 @@ export function createPaymentColumns(): TableColumn<Payment>[] {
       title: "Actions",
       render: (payment) => (
         <ActionGroup>
-          <ActionIcon
-            title="Suivre la déclaration"
-            href={ROUTES_CLIENT.payment(payment.id)}
-          >
+          <ActionIcon title="Suivre le paiement" href={ROUTES_CLIENT.payment(payment.id)}>
             <Eye size={15} />
           </ActionIcon>
+          {payment.receipt && options?.onDownloadReceipt && (
+            <ActionIcon
+              title={`Télécharger le reçu ${payment.receipt.number}`}
+              onClick={() => options.onDownloadReceipt?.(payment)}
+            >
+              <Download size={15} />
+            </ActionIcon>
+          )}
         </ActionGroup>
       ),
     },

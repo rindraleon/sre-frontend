@@ -37,6 +37,7 @@ import { AdminActivityLogPage } from "@/pages/admin/activity-log";
 import { AdminContactMessagesPage } from "@/pages/admin/contact-messages";
 import { AdminSettingsPage } from "@/pages/admin/settings";
 import { HelpPage } from "@/pages/help";
+import { VerifyReceiptPage } from "@/pages/public/verify-receipt";
 import { ActivationPage } from "@/pages/auth/activation";
 import { InitialSetupPage } from "@/pages/auth/initial-setup";
 import { ConfirmDialog, ToastRegion } from "@/components/ui";
@@ -53,6 +54,7 @@ export function App() {
         <Route path="/mentions-legales" element={<LegalNoticePage />} />
         <Route path="/politique-confidentialite" element={<PrivacyPolicyPage />} />
         <Route path="/aide" element={<HelpRoute />} />
+        <Route path="/verifier-recu" element={<VerifyReceiptPage />} />
         <Route path="/connexion" element={<LoginRoute />} />
         <Route path="/inscription" element={<RegisterPage />} />
         <Route path="/activation" element={<ActivationPage />} />

@@ -46,10 +46,10 @@ const COMMON_SECTIONS: SectionHelp[] = [
     summary: "Comprendre les états d’un dossier et ce qu’ils autorisent.",
     points: [
       "Obligation : « À payer », « En retard », « Paiement en cours », « En vérification », « Payée », « Rejetée », « Correction demandée ».",
-      "Une déclaration de paiement est soumise en attente de validation : elle porte le statut « En vérification » jusqu’à la décision d’un administrateur.",
-      "L’accusé de réception atteste uniquement la soumission de votre déclaration.",
-      "Le reçu interne (facture) n’est émis, consultable et téléchargeable qu’après la validation effective du paiement par un administrateur autorisé.",
-      "En cas de rejet, le document reste indisponible et le motif éventuel est affiché sur la déclaration.",
+      "Une déclaration de paiement est validée automatiquement dès sa soumission : elle passe directement au statut « Confirmé ».",
+      "Le reçu officiel est émis immédiatement après la validation et transmis par e-mail au contribuable lorsqu’une adresse est disponible.",
+      "Le reçu officiel est consultable et téléchargeable à tout moment dans « Mes reçus ».",
+      "En cas de rejet d’une déclaration antérieure, le document reste indisponible et le motif éventuel est affiché sur la déclaration.",
     ],
   },
   {
@@ -61,7 +61,7 @@ const COMMON_SECTIONS: SectionHelp[] = [
       "« Identifiants incorrects » : vérifiez l’adresse e-mail, le mot de passe et le numéro STAT (requis pour les profils qui en disposent).",
       "Le bouton de connexion reste inactif tant que le service serveur n’est pas configuré : contactez l’administration.",
       "Une page vide signifie qu’aucune donnée n’est enregistrée sur le serveur pour ce filtre : aucun jeu de démonstration n’est affiché.",
-      "Téléchargement impossible : le document n’est disponible qu’après validation du paiement et pour le compte propriétaire.",
+      "Téléchargement impossible : vérifiez que vous êtes connecté au compte propriétaire du reçu.",
       "En cas d’erreur serveur, réessayez ; si l’anomalie persiste, notez le message affiché et contactez l’administration avec la référence du dossier.",
     ],
   },
@@ -75,7 +75,7 @@ const SECTIONS_CLIENT: SectionHelp[] = [
     summary: "Consulter vos obligations, déclarer un paiement et suivre vos documents.",
     points: [
       "« Mes impôts » liste vos obligations fiscales enregistrées (référence, période, montant, échéance, statut).",
-      "« Déclarer un paiement » : sélectionnez l’obligation, indiquez la référence de transaction et les informations du moyen utilisé ; la déclaration est enregistrée pour vérification.",
+      "« Déclarer un paiement » : sélectionnez l’obligation, indiquez la référence de transaction et les informations du moyen utilisé ; la déclaration est validée automatiquement et le reçu officiel est émis.",
       "« Historique des paiements » : suivez chaque déclaration et ses décisions ; « Mes reçus » regroupe les documents réellement émis.",
       "Chaque compte ne voit que ses propres dossiers : aucune donnée d’une autre entité n’est accessible.",
     ],
@@ -88,9 +88,9 @@ const SECTIONS_CLIENT: SectionHelp[] = [
     points: [
       "1. Ouvrez « Déclarer un paiement » et choisissez l’obligation concernée.",
       "2. Renseignez le mode de paiement, la référence de transaction et la date ; joignez les informations demandées.",
-      "3. Soumettez : la déclaration passe en « En vérification » et un accusé de réception est généré.",
-      "4. Un administrateur examine la déclaration puis la confirme, la rejette ou demande une correction.",
-      "5. Après confirmation, le reçu devient disponible dans « Mes reçus » (consultation et téléchargement PDF).",
+      "3. Soumettez : la déclaration est validée automatiquement et passe au statut « Confirmé ».",
+      "4. Le reçu officiel est émis immédiatement et transmis par e-mail lorsqu’une adresse est disponible.",
+      "5. Le reçu reste disponible dans « Mes reçus » (consultation et téléchargement PDF).",
     ],
   },
   {
@@ -125,9 +125,9 @@ const SECTIONS_ADMIN: SectionHelp[] = [
     icon: ClipboardCheck,
     summary: "Décision administrative et émission des reçus.",
     points: [
-      "« Vérification des paiements » liste les déclarations en attente (statut « En vérification »).",
+      "Les nouvelles déclarations sont validées automatiquement à la soumission ; « Vérification des paiements » ne conserve que les dossiers antérieurs restés en attente (statut « En vérification »).",
       "Chaque déclaration présente la référence de transaction, le montant calculé depuis l’obligation et l’historique des événements.",
-      "Confirmer : la déclaration devient « Confirmée », l’obligation « Payée » et le reçu interne est émis automatiquement.",
+      "Confirmer un dossier antérieur : la déclaration devient « Confirmée », l’obligation « Payée » et le reçu officiel est émis automatiquement.",
       "Rejeter ou demander une correction : un motif d’au moins 5 caractères est requis ; aucun reçu n’est émis et le document reste indisponible.",
       "Toute décision est tracée (administrateur, date, motif) ; une seconde décision sur la même déclaration est refusée.",
     ],
@@ -261,10 +261,10 @@ export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout
               <ul>
                 <li>
                   Vérifiez toujours le statut d’une déclaration avant de considérer un paiement comme
-                  traité : seule la validation administrative ouvre l’accès au reçu.
+                  traité : la validation automatique ouvre immédiatement l’accès au reçu officiel.
                 </li>
                 <li>
-                  Conservez vos références de transaction ; elles figurent sur l’accusé de réception et
+                  Conservez vos références de transaction ; elles figurent sur le reçu officiel et
                   dans l’historique.
                 </li>
                 <li>

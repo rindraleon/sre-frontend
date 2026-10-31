@@ -99,10 +99,11 @@ export function mapApiPayment(payment: ApiPayment): Payment {
     id: payment.id,
     internalReference: payment.referenceInterne,
     taxpayerId: payment.contribuableId,
-    obligationId: payment.obligationId,
+    obligationId: payment.obligationId ?? null,
+    origin: payment.origine ?? (payment.obligationId ? "OBLIGATION" : "DECLARATION_AUTONOME"),
     taxTypeId: payment.typeImpotId,
     taxTypeName: payment.typeImpotNom,
-    period: payment.periode,
+    period: payment.periode ?? "—",
     amount: Number(payment.montant),
     currency: payment.devise,
     mode: payment.mode,
@@ -115,9 +116,21 @@ export function mapApiPayment(payment: ApiPayment): Payment {
     supportingDocumentName: payment.justificatifNom ?? undefined,
     status: payment.statut,
     submittedAt: payment.soumisLe,
+    confirmedAt: payment.confirmeLe ?? null,
     validatedAt: payment.valideLe ?? undefined,
     validatedBy: payment.validePar ?? undefined,
     rejectionReason: payment.motifRejet ?? undefined,
+    failureReason: payment.motifEchec ?? null,
+    provider: payment.fournisseur ?? null,
+    receipt: payment.recu
+      ? {
+          id: payment.recu.id,
+          number: payment.recu.numero,
+          issuedAt: payment.recu.emisLe,
+          verificationCode: payment.recu.codeVerification ?? null,
+          pdfPath: payment.recu.lienPdf,
+        }
+      : null,
     history: payment.historique.map((entry) => ({
       status: entry.statut,
       label: entry.libelle,
@@ -138,7 +151,7 @@ export function mapApiDocument(document: ApiDocument): PaymentDocument {
     taxpayerId: document.contribuableId,
     paymentReference: document.referencePaiement,
     taxTypeName: document.typeImpotNom,
-    period: document.periode,
+    period: document.periode ?? "—",
     declaredTransactionReference: document.referenceTransactionDeclaree,
     declaredMode: document.modeDeclare,
     amount: Number(document.montant),
@@ -147,6 +160,9 @@ export function mapApiDocument(document: ApiDocument): PaymentDocument {
     issuedAt: document.emisLe,
     issuedBy: document.emisPar ?? undefined,
     mention: document.mention,
+    verificationCode: document.codeVerification ?? null,
+    paymentStatus: document.statutPaiement ?? null,
+    confirmedAt: document.confirmeLe ?? null,
   };
 }
 
@@ -160,7 +176,7 @@ export function mapApiPaymentDocuments(payment: ApiPayment): PaymentDocument[] {
     taxpayerId: payment.contribuableId,
     paymentReference: payment.referenceInterne,
     taxTypeName: payment.typeImpotNom,
-    period: payment.periode,
+    period: payment.periode ?? "—",
     declaredTransactionReference: payment.referenceTransaction,
     declaredMode: payment.mode,
     amount: Number(document.montant),
@@ -169,6 +185,9 @@ export function mapApiPaymentDocuments(payment: ApiPayment): PaymentDocument[] {
     issuedAt: document.emisLe,
     issuedBy: document.emisPar ?? undefined,
     mention: document.mention,
+    verificationCode: document.codeVerification ?? null,
+    paymentStatus: document.statutPaiement ?? null,
+    confirmedAt: document.confirmeLe ?? null,
   }));
 }
 

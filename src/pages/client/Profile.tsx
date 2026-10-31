@@ -25,6 +25,7 @@ export function ClientProfilePage() {
   useEffect(() => {
     if (!taxpayer) return;
     form.resetForm({
+      nif: taxpayer.nif ?? "",
       adresse: taxpayer.address,
       ville: taxpayer.city,
       telephone: taxpayer.phone,
@@ -55,6 +56,7 @@ export function ClientProfilePage() {
         method: "PATCH",
         token: session.apiToken,
         body: {
+          nif: values.nif.trim(),
           adresse: values.adresse.trim(),
           ville: values.ville.trim(),
           telephone: values.telephone.trim(),
@@ -150,8 +152,8 @@ export function ClientProfilePage() {
           <div className="tax-note-sre">
             <span>i</span>
             <p>
-              Le NIF, le STAT et les informations de connexion ne sont pas modifiables depuis cette
-              page.
+              Le NIF est obligatoire pour effectuer une déclaration. Vous pouvez le renseigner ou
+              le corriger dans le formulaire de coordonnées.
             </p>
           </div>
         </section>

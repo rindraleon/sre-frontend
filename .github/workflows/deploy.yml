@@ -1,0 +1,235 @@
+name: Déploiement
+
+# Déploiement continu : après un CI vert, publie le frontend sur l'hébergement statique.
+#   • branche develop → environnement GitHub « staging »
+#   • branche main    → environnement GitHub « production » (protection + approbation)
+#
+# Hébergeur choisi par la variable de dépôt FRONTEND_HOST : "vercel" ou "netlify".
+# Voir DEPLOIEMENT.md pour la liste complète des variables et secrets à créer.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environnement:
+        description: Environnement à déployer manuellement
+        type: choice
+        options: [staging, production]
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_branch || inputs.environnement }}
+  cancel-in-progress: false
+
+jobs:
+  cible:
+    name: Résolution de la cible
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      environnement: ${{ steps.calc.outputs.environnement }}
+      ref: ${{ steps.calc.outputs.ref }}
+      api_url: ${{ steps.calc.outputs.api_url }}
+      url_publique: ${{ steps.calc.outputs.url_publique }}
+    steps:
+      - name: Détermination de l'environnement
+        id: calc
+        env:
+          BRANCHE: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          ENTREE: ${{ inputs.environnement }}
+        run: |
+          set -eu
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            environnement="${ENTREE}"
+            if [ "${environnement}" = "production" ]; then ref="main"; else ref="develop"; fi
+          else
+            ref="${SHA}"
+            if [ "${BRANCHE}" = "main" ]; then environnement="production"; else environnement="staging"; fi
+          fi
+
+          if [ "${environnement}" = "production" ]; then
+            api_url="${{ vars.VITE_API_URL_PRODUCTION }}"
+            url_publique="${{ vars.FRONTEND_URL_PRODUCTION }}"
+          else
+            api_url="${{ vars.VITE_API_URL_STAGING }}"
+            url_publique="${{ vars.FRONTEND_URL_STAGING }}"
+          fi
+
+          {
+            echo "environnement=${environnement}"
+            echo "ref=${ref}"
+            echo "api_url=${api_url}"
+            echo "url_publique=${url_publique}"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Cible de déploiement"
+            echo ""
+            echo "| Clé | Valeur |"
+            echo "| --- | --- |"
+            echo "| Environnement | \`${environnement}\` |"
+            echo "| Révision | \`${ref}\` |"
+            echo "| Hébergeur | \`${{ vars.FRONTEND_HOST }}\` |"
+            echo "| API | \`${api_url}\` |"
+            echo "| URL publique | \`${url_publique}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  vercel:
+    name: Publication Vercel (${{ needs.cible.outputs.environnement }})
+    runs-on: ubuntu-latest
+    needs: cible
+    if: vars.FRONTEND_HOST == 'vercel'
+    environment:
+      name: ${{ needs.cible.outputs.environnement }}
+      url: ${{ needs.cible.outputs.url_publique }}
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ needs.cible.outputs.environnement == 'production' && secrets.VERCEL_PROJECT_ID_PRODUCTION || secrets.VERCEL_PROJECT_ID_STAGING }}
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.cible.outputs.ref }}
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: CLI Vercel
+        run: npm install --global vercel@latest
+
+      # Les variables d'environnement (dont VITE_API_URL) sont lues depuis les réglages
+      # du projet Vercel correspondant : staging et production sont deux projets distincts.
+      - name: Récupération de la configuration du projet
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Déploiement en production
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -eu
+          url="$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tail -n 1)"
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          echo "Déployé sur ${url}"
+
+  netlify:
+    name: Publication Netlify (${{ needs.cible.outputs.environnement }})
+    runs-on: ubuntu-latest
+    needs: cible
+    if: vars.FRONTEND_HOST == 'netlify'
+    environment:
+      name: ${{ needs.cible.outputs.environnement }}
+      url: ${{ needs.cible.outputs.url_publique }}
+    timeout-minutes: 20
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.cible.outputs.ref }}
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_URL: ${{ needs.cible.outputs.api_url }}
+        run: npm run build
+
+      - name: CLI Netlify
+        run: npm install --global netlify-cli@latest
+
+      - name: Déploiement en production
+        id: deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ needs.cible.outputs.environnement == 'production' && secrets.NETLIFY_SITE_ID_PRODUCTION || secrets.NETLIFY_SITE_ID_STAGING }}
+        run: |
+          set -eu
+          netlify deploy --prod --dir=dist --json > netlify.json
+          url="$(node -p "require('./netlify.json').url")"
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          echo "Déployé sur ${url}"
+
+  verification:
+    name: Vérification après déploiement
+    runs-on: ubuntu-latest
+    needs: [cible, vercel, netlify]
+    if: >-
+      always() &&
+      (needs.vercel.result == 'success' || needs.netlify.result == 'success')
+    timeout-minutes: 10
+    steps:
+      - name: Application accessible
+        env:
+          URL: ${{ vars.FRONTEND_URL_STAGING }}
+        run: |
+          set -eu
+          cible="${{ needs.cible.outputs.environnement }}"
+          if [ "${cible}" = "production" ]; then
+            URL="${{ vars.FRONTEND_URL_PRODUCTION }}"
+          fi
+          if [ -z "${URL}" ]; then
+            echo "::warning::Aucune URL publique configurée pour ${cible} ; vérification ignorée."
+            exit 0
+          fi
+
+          for essai in $(seq 1 20); do
+            code="$(curl -s -o page.html -w '%{http_code}' --max-time 20 "$URL" || true)"
+            if [ "$code" = "200" ]; then break; fi
+            echo "Essai ${essai}/20 : HTTP ${code} — nouvelle tentative dans 6 s"
+            sleep 6
+          done
+
+          if [ "$code" != "200" ]; then
+            echo "::error::La page d'accueil ${URL} répond ${code}."
+            exit 1
+          fi
+
+          if ! grep -q 'id="root"' page.html; then
+            echo "::error::La page servie ne contient pas le point de montage React (#root)."
+            exit 1
+          fi
+
+          # Vérifie la réécriture SPA : un lien profond doit renvoyer l'application, pas un 404.
+          code_profond="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL/admin/contribuables" || true)"
+          if [ "$code_profond" != "200" ]; then
+            echo "::error::Lien profond /admin/contribuables répond ${code_profond} (réécriture SPA absente)."
+            exit 1
+          fi
+
+          {
+            echo "### Vérification après déploiement"
+            echo ""
+            echo "- \`$URL\` → HTTP 200, point de montage React présent"
+            echo "- Lien profond \`/admin/contribuables\` → HTTP 200"
+          } >> "$GITHUB_STEP_SUMMARY"

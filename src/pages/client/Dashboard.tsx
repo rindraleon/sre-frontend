@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   BadgeCheck,
-  Bell,
+  FileCheck2,
   CircleDollarSign,
   Clock3,
   FileText,
@@ -44,9 +44,12 @@ export function ClientDashboardPage() {
     0,
   );
   const pendingDeclarations = payments.filter((payment) =>
-    ["EN_VERIFICATION", "CORRECTION_DEMANDEE"].includes(payment.status),
+    ["EN_ATTENTE", "EN_VERIFICATION", "CORRECTION_DEMANDEE"].includes(payment.status),
   ).length;
-  const rejectedDeclarations = payments.filter((payment) => payment.status === "REJETE").length;
+  const rejectedDeclarations = payments.filter((payment) =>
+    ["REJETE", "ECHEC", "ANNULE"].includes(payment.status),
+  ).length;
+  const receipts = payments.filter((payment) => Boolean(payment.receipt));
 
   const chartMonth = useMemo(
     () =>
@@ -92,24 +95,28 @@ export function ClientDashboardPage() {
           color="blue"
         />
         <StatCard
-          title="Déclarations en cours"
+          title="Paiements en attente"
           value={pendingDeclarations}
-          note="En attente d’une décision administrative"
+          note="Sans reçu définitif à ce stade"
           icon={Clock3}
           color="orange"
         />
         <StatCard
-          title="Décisions confirmées en interne"
+          title="Paiements confirmés"
           value={confirmedDecisions.length}
           note={formatMoney(confirmedDecisionsTotal)}
           icon={BadgeCheck}
           color="green"
         />
         <StatCard
-          title="Déclarations rejetées"
-          value={rejectedDeclarations}
-          note="Consultez le motif de décision"
-          icon={Bell}
+          title={`Reçus disponibles`}
+          value={receipts.length}
+          note={
+            rejectedDeclarations
+              ? `${rejectedDeclarations} paiement(s) sans reçu (échec, annulation, rejet)`
+              : "Téléchargeables et imprimables"
+          }
+          icon={FileCheck2}
           color="violet"
         />
       </section>
@@ -118,8 +125,8 @@ export function ClientDashboardPage() {
         <section className="card-sre chart-sre">
           <div className="card-sre__header">
             <div>
-              <h2>Décisions administratives</h2>
-              <p>Montants associés aux décisions explicites · MGA</p>
+              <h2>Paiements confirmés</h2>
+              <p>Montants confirmés par mois · MGA</p>
             </div>
             <WalletCards size={19} />
           </div>
@@ -254,9 +261,9 @@ export function ClientDashboardPage() {
           <ShieldCheck size={18} />
         </span>
         <div>
-          <strong>La soumission n’est pas une confirmation de paiement.</strong>
+          <strong>Votre déclaration est validée automatiquement à la soumission.</strong>
           <p>
-            Une déclaration reste « En vérification » jusqu’à une décision explicite. Ne communiquez
+            Le reçu officiel est émis immédiatement, sans démarche supplémentaire. Ne communiquez
             jamais votre code PIN ni un code secret.
           </p>
         </div>

@@ -1,317 +1,278 @@
-import { Select } from "@/components/ui/select";
-import { useMemo, useState } from "react";
-import { ArrowDownToLine, ChartNoAxesCombined, CircleDollarSign, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarRange, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
-import { StatusBadge, Button, PageHeader, EmptyState } from "@/components/ui";
-import { OptionsSelect } from "@/components/forms/options-select";
-import { TAXPAYER_TYPE_OPTIONS, ALL } from "@/constants";
-import { formatMoney } from "@/utils/format";
-import { matchesFiscalPeriod, listFiscalPeriods } from "@/utils/fiscal-periods";
+import { PageHeader, EmptyState, Select } from "@/components/ui";
+import {
+  EMPTY_PAYMENT_FILTERS,
+  PaymentFilterBar,
+  PaymentFilterSummary,
+  countActiveFilters,
+  toPaymentFilters,
+  type PaymentFilterState,
+} from "@/components/payments/payment-filter-bar";
+import { downloadStatisticsExportApi, loadStatisticsApi } from "@/services/api-payments";
+import { formatMoney, formatDate } from "@/utils/format";
+import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+import type { Statistics } from "@/types";
 
-function protectCsv(value: string | number) {
-  return `"${String(value).replaceAll('"', '""')}"`;
+function firstDayOfYear() {
+  return `${new Date().getFullYear()}-01-01`;
 }
+
 export function AdminReportsPage() {
+  const { session } = useAuth();
   const { state, notify } = useSre();
-  const today = new Date().toISOString().slice(0, 10);
-  const twelveMonthsAgo = new Date();
-  twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
-  const [start, setStart] = useState(twelveMonthsAgo.toISOString().slice(0, 10));
-  const [end, setEnd] = useState(today);
-  const [taxpayerType, setTaxpayerType] = useState<string>(ALL);
-  const [fiscalPeriod, setFiscalPeriod] = useState("");
-  const fiscalPeriods = useMemo(
-    () => listFiscalPeriods(state.payments.map((payment) => payment.period)),
-    [state.payments],
-  );
-  const filteredTaxpayers = useMemo(
-    () =>
-      state.taxpayers
-        .filter(
-          (taxpayer) => taxpayerType === "TOUS" || taxpayer.type === taxpayerType,
-        )
-        .filter((taxpayer) => !start || taxpayer.accountCreatedAt.slice(0, 10) >= start)
-        .filter((taxpayer) => !end || taxpayer.accountCreatedAt.slice(0, 10) <= end),
-    [state.taxpayers, taxpayerType, start, end],
-  );
-  const filteredPayments = useMemo(
-    () =>
-      state.payments
-        .filter((payment) => {
-          const taxpayer = state.taxpayers.find(
-            (entry) => entry.id === payment.taxpayerId,
-          );
-          return (
-            taxpayer && (taxpayerType === "TOUS" || taxpayer.type === taxpayerType)
-          );
-        })
-        .filter((payment) => matchesFiscalPeriod(payment.period, fiscalPeriod))
-        .filter((payment) => !start || payment.submittedAt.slice(0, 10) >= start)
-        .filter((payment) => !end || payment.submittedAt.slice(0, 10) <= end),
-    [state.payments, state.taxpayers, taxpayerType, fiscalPeriod, start, end],
-  );
-  const confirmed = filteredPayments.filter((payment) => payment.status === "CONFIRME");
-  const waiting = filteredPayments.filter((payment) => payment.status === "EN_VERIFICATION");
-  const confirmedAmount = confirmed.reduce((sum, payment) => sum + payment.amount, 0);
-  const pendingAmount = waiting.reduce((sum, payment) => sum + payment.amount, 0);
-  const dataByType = ["PARTICULIER", "ENTREPRISE"].map((type) => {
-    const accounts = filteredTaxpayers.filter((taxpayer) => taxpayer.type === type);
-    const payments = filteredPayments.filter((payment) =>
-      accounts.some((taxpayer) => taxpayer.id === payment.taxpayerId),
-    );
-    return {
-      type,
-      accounts: accounts.length,
-      payments: payments.length,
-      confirmedAmount: payments
-        .filter((payment) => payment.status === "CONFIRME")
-        .reduce((sum, payment) => sum + payment.amount, 0),
-    };
+  const [filters, setFilters] = useState<PaymentFilterState>({
+    ...EMPTY_PAYMENT_FILTERS,
+    du: firstDayOfYear(),
+    au: new Date().toISOString().slice(0, 10),
   });
-  const dataByStatus = ["EN_VERIFICATION", "CONFIRME", "REJETE", "CORRECTION_DEMANDEE"].map(
-    (status) => ({
-      status,
-      count: filteredPayments.filter((payment) => payment.status === status).length,
-      amount: filteredPayments
-        .filter((payment) => payment.status === status)
-        .reduce((sum, payment) => sum + payment.amount, 0),
-    }),
-  );
-  const exportCsv = () => {
-    const rows = [
-      ["Période début", start],
-      ["Période fin", end],
-      ["Période fiscale", fiscalPeriod || "Toutes les périodes"],
-      [],
-      ["Type contribuable", "Comptes", "Déclarations", "Montant confirmé en interne (MGA)"],
-      ...dataByType.map((entry) => [
-        entry.type,
-        entry.accounts,
-        entry.payments,
-        entry.confirmedAmount,
-      ]),
-      [],
-      ["Statut déclaration", "Nombre", "Montant déclaré (MGA)"],
-      ...dataByStatus.map((entry) => [entry.status, entry.count, entry.amount]),
-    ];
-    const csv =
-      "\uFEFF" +
-      rows
-        .map((row) => row.map((cell) => protectCsv(cell ?? "")).join(";"))
-        .join("\r\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `rapport-sre-${today}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    notify("Rapport agrégé exporté en CSV.", "success");
+  const [applied, setApplied] = useState<PaymentFilterState>(filters);
+  const [granularity, setGranularity] = useState<"jour" | "mois" | "trimestre" | "annee">("mois");
+  const [stats, setStats] = useState<Statistics | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isExporting, setIsExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const load = useCallback(async () => {
+    if (!session?.apiToken) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      const { page: _page, parPage: _parPage, ...apiFilters } = toPaymentFilters(applied);
+      setStats(
+        await loadStatisticsApi(session.apiToken, { ...apiFilters, granularite: granularity }),
+      );
+    } catch {
+      setError("Le rapport n’a pas pu être calculé. Vérifiez les filtres appliqués.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applied, granularity, session?.apiToken]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const exportFile = async (format: "csv" | "pdf") => {
+    if (!session?.apiToken) return;
+    setIsExporting(format);
+    try {
+      const { page: _page, parPage: _parPage, ...apiFilters } = toPaymentFilters(applied);
+      await downloadStatisticsExportApi(session.apiToken, format, apiFilters);
+      notify(
+        format === "csv"
+          ? "Export CSV (compatible Excel) généré depuis les données serveur."
+          : "Rapport PDF généré depuis les données serveur.",
+        "success",
+      );
+    } catch {
+      notify("L’export n’a pas pu être généré.", "error");
+    } finally {
+      setIsExporting(null);
+    }
   };
-  const monthlySeries = useMemo(
-    () =>
-      Array.from({ length: 6 }, (_, index) => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - (5 - index));
-        const rows = filteredPayments.filter((payment) => {
-          const dateRef = new Date(payment.validatedAt ?? payment.submittedAt);
-          return (
-            dateRef.getMonth() === date.getMonth() &&
-            dateRef.getFullYear() === date.getFullYear() &&
-            payment.status === "CONFIRME"
-          );
-        });
-        return {
-          month: new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date),
-          amount: rows.reduce((sum, payment) => sum + payment.amount, 0),
-        };
-      }),
-    [filteredPayments],
-  );
-  const maximum = Math.max(...monthlySeries.map((entry) => entry.amount), 1);
+
+  const indicators = stats?.indicateurs;
+  const activeFilters = countActiveFilters(applied);
+
   return (
     <div className="page-content-sre">
       <PageHeader
-        title="Rapports & statistiques"
-        description="Indicateurs calculés à partir des données transmises par le serveur."
-        breadcrumb={["Accueil", "Rapports & statistiques"]}
+        title="Rapports et exports"
+        description="Rapports cohérents avec les filtres appliqués. Les fichiers CSV et PDF sont produits par le serveur à partir des paiements réels."
+        breadcrumb={["Accueil", "Rapports"]}
         actions={
-          <Button variant="outline" onClick={exportCsv}>
-            <ArrowDownToLine size={15} /> Exporter CSV
-          </Button>
+          <>
+            <button
+              type="button"
+              className="button-sre button-sre--outline"
+              onClick={() => void load()}
+              disabled={isLoading}
+            >
+              <RefreshCw size={14} /> {isLoading ? "Calcul…" : "Recalculer"}
+            </button>
+            <button
+              type="button"
+              className="button-sre button-sre--outline"
+              onClick={() => void exportFile("csv")}
+              disabled={isExporting !== null}
+            >
+              <FileSpreadsheet size={14} /> {isExporting === "csv" ? "Export…" : "Export Excel (CSV)"}
+            </button>
+            <button
+              type="button"
+              className="button-sre button-sre--primary"
+              onClick={() => void exportFile("pdf")}
+              disabled={isExporting !== null}
+            >
+              <Download size={14} /> {isExporting === "pdf" ? "Export…" : "Export PDF"}
+            </button>
+          </>
         }
       />
-      <div className="card-sre report-filters-sre">
-        <label>
-          Période du
-          <input
-            className="field-simple-sre"
-            type="date"
-            value={start}
-            max={end || today}
-            onChange={(event) => setStart(event.target.value)}
-          />
-        </label>
-        <label>
-          Au
-          <input
-            className="field-simple-sre"
-            type="date"
-            value={end}
-            min={start}
-            max={today}
-            onChange={(event) => setEnd(event.target.value)}
-          />
-        </label>
-        <label>
-          Période fiscale
+      <PaymentFilterBar
+        filters={filters}
+        onChange={setFilters}
+        onReset={() => {
+          const reset = { ...EMPTY_PAYMENT_FILTERS, du: firstDayOfYear(), au: new Date().toISOString().slice(0, 10) };
+          setFilters(reset);
+          setApplied(reset);
+        }}
+        onSubmit={() => setApplied({ ...filters })}
+        taxpayers={state.taxpayers}
+        taxTypes={state.taxTypes}
+        isSearching={isLoading}
+      />
+      <PaymentFilterSummary
+        filters={applied}
+        taxpayers={state.taxpayers}
+        taxTypes={state.taxTypes}
+        total={indicators?.totalDeclarations}
+      />
+      <div className="form-actions-sre" style={{ justifyContent: "flex-start" }}>
+        <label className="compact-filter-sre">
+          <CalendarRange size={13} /> Granularité
           <Select
-            className="field-simple-sre"
-            value={fiscalPeriod}
-            onChange={(event) => setFiscalPeriod(event.target.value)}
-            aria-label="Période fiscale"
+            value={granularity}
+            onChange={(event) => setGranularity(event.target.value as typeof granularity)}
           >
-            <option value="">Toutes les périodes</option>
-            {fiscalPeriods.map((period) => (
-              <option key={period} value={period}>
-                {period}
-              </option>
-            ))}
+            <option value="jour">Par jour</option>
+            <option value="mois">Par mois</option>
+            <option value="trimestre">Par trimestre</option>
+            <option value="annee">Par année</option>
           </Select>
         </label>
-        <label>
-          Type de contribuable
-          <Select
-            className="field-simple-sre"
-            value={taxpayerType}
-            onChange={(event) => setTaxpayerType(event.target.value)}
-          >
-            <OptionsSelect options={TAXPAYER_TYPE_OPTIONS} />
-          </Select>
-        </label>
-        <span aria-live="polite">
-          {filteredTaxpayers.length} contribuable(s) · {filteredPayments.length} déclaration(s)
-        </span>
       </div>
-      <section className="statistics-grid-sre">
-        <article className="stat-card-sre">
-          <span className="stat-card-sre__icon stat-card-sre__icon--blue">
-            <Users size={18} />
-          </span>
+      {error && (
+        <div className="security-alert-banner-sre" role="alert">
+          <span>!</span>
           <div>
-            <span>Comptes créés</span>
-            <strong>{filteredTaxpayers.length}</strong>
-            <small>Profils dans la période choisie</small>
+            <strong>Rapport indisponible</strong>
+            <p>{error}</p>
           </div>
-        </article>
-        <article className="stat-card-sre">
-          <span className="stat-card-sre__icon stat-card-sre__icon--green">
-            <CircleDollarSign size={18} />
-          </span>
-          <div>
-            <span>Montants confirmés</span>
-            <strong className="stat-text-value-sre">{formatMoney(confirmedAmount)}</strong>
-            <small>{confirmed.length} décision(s) explicite(s)</small>
-          </div>
-        </article>
-        <article className="stat-card-sre">
-          <span className="stat-card-sre__icon stat-card-sre__icon--orange">
-            <ChartNoAxesCombined size={18} />
-          </span>
-          <div>
-            <span>En vérification</span>
-            <strong>{waiting.length}</strong>
-            <small>{formatMoney(pendingAmount)} déclaré(s), non confirmé(s)</small>
-          </div>
-        </article>
-      </section>
-      <div className="content-grid-sre">
-        <section className="card-sre chart-sre">
-          <div className="card-sre__header">
-            <div>
-              <h2>Montants confirmés par mois</h2>
-              <p>Six derniers mois de la période · MGA</p>
+        </div>
+      )}
+      {isLoading && !stats ? (
+        <div className="inline-loader-sre">
+          <i /> Calcul du rapport depuis la base de données…
+        </div>
+      ) : !stats || !indicators ? (
+        <EmptyState
+          title="Aucun résultat"
+          description={activeFilters ? "Aucun paiement ne correspond aux filtres." : "Aucune donnée disponible."}
+        />
+      ) : (
+        <>
+          <div className="kpi-grid-sre">
+            <div className="kpi-sre is-confirmed">
+              <span>Montant confirmé</span>
+              <strong>{formatMoney(indicators.montantConfirme)}</strong>
+              <small>{indicators.nombrePaiementsConfirmes} paiement(s)</small>
             </div>
-            <ChartNoAxesCombined size={18} />
+            <div className="kpi-sre">
+              <span>Montant déclaré total</span>
+              <strong>{formatMoney(indicators.montantDeclareTotal)}</strong>
+              <small>{indicators.totalDeclarations} déclaration(s)</small>
+            </div>
+            <div className="kpi-sre">
+              <span>En attente</span>
+              <strong>{formatMoney(indicators.montantEnAttente)}</strong>
+              <small>{indicators.nombreEnAttente} paiement(s)</small>
+            </div>
+            <div className="kpi-sre">
+              <span>Non aboutis</span>
+              <strong>{formatMoney(indicators.montantNonAbouti)}</strong>
+              <small>{indicators.nombreNonAbouti} paiement(s)</small>
+            </div>
           </div>
-          {filteredPayments.length ? (
-            <div className="chart-sre__content">
-              <div className="chart-sre__value">{formatMoney(confirmedAmount)}</div>
-              <div className="month-bars-sre">
-                {monthlySeries.map((month) => (
-                  <div key={month.month}>
-                    <span
-                      title={formatMoney(month.amount)}
-                      style={{ height: `${Math.max(6, (month.amount / maximum) * 100)}%` }}
-                    />
-                    <small>{month.month}</small>
-                  </div>
-                ))}
+          <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
+            <section className="card-sre">
+              <div className="card-sre__header">
+                <div>
+                  <h2>Par nature d’impôt</h2>
+                  <p>Déclarations et montants confirmés</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <EmptyState
-              title="Aucune déclaration sur la période"
-              description="Modifiez les dates ou consultez le rapport lorsque des déclarations seront enregistrées."
-            />
-          )}
-        </section>
-        <section className="card-sre">
-          <div className="card-sre__header">
-            <div>
-              <h2>Répartition par statut</h2>
-              <p>Montants déclarés, sans confirmation automatique</p>
-            </div>
+              <table className="table-sre">
+                <thead>
+                  <tr>
+                    <th>Nature</th>
+                    <th>Déclarations</th>
+                    <th>Confirmés</th>
+                    <th>Montant confirmé</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.parNatureImpot.map((row) => (
+                    <tr key={row.nature}>
+                      <td>{row.nature}</td>
+                      <td>{row.declarations}</td>
+                      <td>{row.confirmes}</td>
+                      <td>{formatMoney(row.montantConfirme)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+            <section className="card-sre">
+              <div className="card-sre__header">
+                <div>
+                  <h2>Par statut</h2>
+                  <p>Suivi des déclarations</p>
+                </div>
+              </div>
+              <table className="table-sre">
+                <thead>
+                  <tr>
+                    <th>Statut</th>
+                    <th>Déclarations</th>
+                    <th>Montant déclaré</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.parStatut.map((row) => (
+                    <tr key={row.statut}>
+                      <td>{PAYMENT_STATUS_LABELS[row.statut] ?? row.statut}</td>
+                      <td>{row.declarations}</td>
+                      <td>{formatMoney(row.montant)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
           </div>
-          {dataByStatus.map((entry) => (
-            <div className="report-status-row-sre" key={entry.status}>
-              <StatusBadge status={entry.status} />
+          <section className="card-sre" style={{ marginTop: 14 }}>
+            <div className="card-sre__header">
               <div>
-                <strong>{entry.count}</strong>
-                <small>{formatMoney(entry.amount)}</small>
+                <h2>Évolution</h2>
+                <p>Montants confirmés par période · généré le {formatDate(stats.genereLe, true)}</p>
               </div>
             </div>
-          ))}
-        </section>
-      </div>
-      <section className="card-sre">
-        <div className="card-sre__header">
-          <div>
-            <h2>Répartition par profil</h2>
-            <p>Comptes et décisions agrégés</p>
-          </div>
-        </div>
-        <div className="table-scroll-sre">
-          <table className="table-sre">
-            <thead>
-              <tr>
-                <th>Type de contribuable</th>
-                <th>Profils</th>
-                <th>Déclarations</th>
-                <th>Montant confirmé en interne</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dataByType.map((entry) => (
-                <tr key={entry.type}>
-                  <td data-label="Type de contribuable">
-                    <StatusBadge status={entry.type} />
-                  </td>
-                  <td data-label="Profils">{entry.accounts}</td>
-                  <td data-label="Déclarations">{entry.payments}</td>
-                  <td data-label="Montant confirmé en interne">{formatMoney(entry.confirmedAmount)}</td>
+            <table className="table-sre">
+              <thead>
+                <tr>
+                  <th>Période</th>
+                  <th>Déclarations</th>
+                  <th>Confirmés</th>
+                  <th>Montant confirmé</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <div className="tax-note-sre">
-        <span>i</span>
-        <p>
-          Les montants confirmés reflètent les décisions administratives enregistrées. Ils ne
-          constituent ni une vérification bancaire, ni un état de recettes officiel.
-        </p>
-      </div>
+              </thead>
+              <tbody>
+                {stats.evolution.map((row) => (
+                  <tr key={row.periode}>
+                    <td>{row.periode}</td>
+                    <td>{row.declarations}</td>
+                    <td>{row.confirmes}</td>
+                    <td>{formatMoney(row.montantConfirme)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
+      )}
     </div>
   );
 }

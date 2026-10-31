@@ -89,9 +89,9 @@ export function ClientObligationsPage() {
       <section className="tax-note-sre">
         <span>i</span>
         <p>
-          <strong>À noter :</strong> une déclaration de paiement créée dans le portail reste « En
-          vérification » jusqu’à une décision explicite. L’application ne traite aucun mouvement de
-          fonds.
+          <strong>À noter :</strong> une déclaration de paiement créée dans le portail est validée
+          automatiquement et son reçu officiel est émis immédiatement. L’application ne traite aucun
+          mouvement de fonds.
         </p>
       </section>
     </div>

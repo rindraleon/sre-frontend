@@ -4,6 +4,11 @@ import { emailSchema, phoneSchema, optionalTextSchema } from "./common";
 
 /** Contact details editable by the client — UpdateTaxpayerProfileDto. */
 export const clientProfileSchema = z.object({
+  nif: z
+    .string()
+    .trim()
+    .min(3, "Le NIF est obligatoire et doit contenir au moins 3 caractères.")
+    .max(40, "Le NIF doit contenir au plus 40 caractères."),
   nomCommercial: optionalTextSchema(1, 180, "Le nom commercial"),
   adresse: z
     .string()
@@ -25,7 +30,11 @@ export const taxpayerFormSchema = z
     prenom: optionalTextSchema(1, 120, "Le prénom"),
     raisonSociale: optionalTextSchema(1, 180, "La raison sociale"),
     nomCommercial: optionalTextSchema(1, 180, "Le nom commercial"),
-    nif: optionalTextSchema(3, 40, "Le NIF"),
+    nif: z
+      .string()
+      .trim()
+      .min(3, "Le NIF est obligatoire et doit contenir au moins 3 caractères.")
+      .max(40, "Le NIF doit contenir au plus 40 caractères."),
     stat: optionalTextSchema(3, 40, "Le STAT"),
     representantLegal: optionalTextSchema(1, 180, "Le représentant légal"),
     nomContact: optionalTextSchema(1, 120, "Le nom du contact"),

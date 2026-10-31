@@ -38,25 +38,42 @@ export function TaxTypeFormFields({
         <>
           <FormField label="Code" error={errors.code} required>
             {(p) => (
-              <input {...p} className="field-simple-sre" maxLength={32} {...register("code")} />
+              <input
+                {...p}
+                className="field-simple-sre"
+                maxLength={32}
+                placeholder="Ex. TAX-001"
+                {...register("code")}
+              />
             )}
           </FormField>
-          <FormField label="Nom du type" error={errors.nom} required>
-            {(p) => <input {...p} className="field-simple-sre" {...register("nom")} />}
+          <FormField label="Nature d'impôt" error={errors.nom} required>
+            {(p) => (
+              <input
+                {...p}
+                className="field-simple-sre"
+                placeholder="Ex. Impôt sur les revenus"
+                {...register("nom")}
+              />
+            )}
           </FormField>
           <FormField label="Catégorie" error={errors.categorie} required>
-            {(p) => <input {...p} className="field-simple-sre" {...register("categorie")} />}
+            {(p) => (
+              <input
+                {...p}
+                className="field-simple-sre"
+                placeholder="Ex. Impôt direct"
+                {...register("categorie")}
+              />
+            )}
           </FormField>
-          <FormField
-            label="Description"
-            error={errors.description}
-            className="field-sre-wide"
-          >
+          <FormField label="Description" error={errors.description} className="field-sre-wide">
             {(p) => (
               <Textarea
                 {...p}
                 className="field-simple-sre field-text-sre"
-                rows={2}
+                rows={3}
+                placeholder="Décrivez la nature et les conditions de cet impôt…"
                 {...register("description")}
               />
             )}
@@ -65,11 +82,7 @@ export function TaxTypeFormFields({
       )}
       {step === 1 && (
         <>
-          <FormField
-            label="Contribuables concernés"
-            error={errors.contribuablesConcernes}
-            required
-          >
+          <FormField label="Contribuables concernés" error={errors.contribuablesConcernes} required>
             {(p) => (
               <Select {...p} className="field-simple-sre" {...register("contribuablesConcernes")}>
                 <option value="" disabled>
@@ -81,11 +94,11 @@ export function TaxTypeFormFields({
               </Select>
             )}
           </FormField>
-          <FormField label="Périodicité" error={errors.periodicite} required>
+          <FormField label="Période" error={errors.periodicite} required>
             {(p) => (
               <Select {...p} className="field-simple-sre" {...register("periodicite")}>
                 <option value="" disabled>
-                  Choisir…
+                  Choisir une période
                 </option>
                 <option value="MENSUELLE">Mensuelle</option>
                 <option value="TRIMESTRIELLE">Trimestrielle</option>
@@ -115,6 +128,7 @@ export function TaxTypeFormFields({
                 inputMode="numeric"
                 min="0"
                 step="1"
+                placeholder="0"
                 {...register("montantReference", {
                   setValueAs: (value: string) => (value === "" ? null : Number(value)),
                 })}
@@ -122,7 +136,14 @@ export function TaxTypeFormFields({
             )}
           </FormField>
           <FormField label="Règle d’échéance validée" error={errors.regleEcheance}>
-            {(p) => <input {...p} className="field-simple-sre" {...register("regleEcheance")} />}
+            {(p) => (
+              <input
+                {...p}
+                className="field-simple-sre"
+                placeholder="Ex. Au plus tard le 15 du mois suivant"
+                {...register("regleEcheance")}
+              />
+            )}
           </FormField>
           <FormField
             label="Champs complémentaires"
@@ -134,6 +155,7 @@ export function TaxTypeFormFields({
               <input
                 {...p}
                 className="field-simple-sre"
+                placeholder="Ex. Activité, année fiscale"
                 {...register("champsComplementairesTexte")}
               />
             )}

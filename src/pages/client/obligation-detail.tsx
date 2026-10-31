@@ -86,8 +86,8 @@ export function ClientObligationDetailPage() {
         <span>i</span>
         <p>
           <strong>À noter :</strong> les données affichées reflètent les informations enregistrées
-          dans le portail. Une déclaration de paiement restera « En vérification » et ne sera pas
-          confirmée automatiquement.
+          dans le portail. Une déclaration de paiement est validée automatiquement et son reçu
+          officiel est émis immédiatement.
         </p>
       </section>
       {obligation.status !== "PAYE" && (

@@ -1,12 +1,49 @@
 import { z } from "zod";
 import { phoneSchema } from "./common";
 
-/** Client payment declaration — aligned with CreatePaymentDto (backend). */
+/**
+ * Déclaration autonome de paiement : le contribuable choisit la nature de l'impôt,
+ * saisit le montant et la période. Aucune obligation fiscale préalable n'est requise.
+ *
+ * Les bornes reprennent celles du backend (`payment-rules.ts`) pour un retour
+ * immédiat, sans remplacer la validation serveur.
+ */
+export const MONTANT_MINIMUM = 1_000;
+export const MONTANT_MAXIMUM = 1_000_000_000_000;
+
+const periodPatterns: Record<string, { regex: RegExp; message: string }> = {
+  MENSUELLE: {
+    regex: /^\d{4}-(0[1-9]|1[0-2])$/,
+    message: "Période mensuelle attendue au format AAAA-MM (ex. 2026-03).",
+  },
+  TRIMESTRIELLE: {
+    regex: /^\d{4}-[TtQq][1-4]$/,
+    message: "Période trimestrielle attendue au format AAAA-T1 à AAAA-T4.",
+  },
+  ANNUELLE: {
+    regex: /^\d{4}$/,
+    message: "Période annuelle attendue au format AAAA (ex. 2026).",
+  },
+};
+
 export const paymentDeclarationSchema = z
   .object({
-    obligationId: z.string().min(1, "Sélectionnez une obligation disponible pour votre compte."),
+    typeImpotId: z.string().min(1, "Sélectionnez la nature de l'impôt."),
+    montant: z
+      .string()
+      .min(1, "Indiquez le montant à payer.")
+      .refine((value) => /^\d+$/.test(value.replaceAll(" ", "")), {
+        message: "Le montant doit être un nombre entier d'ariary.",
+      })
+      .refine((value) => Number(value.replaceAll(" ", "")) >= MONTANT_MINIMUM, {
+        message: `Le montant minimum est de ${MONTANT_MINIMUM} MGA.`,
+      })
+      .refine((value) => Number(value.replaceAll(" ", "")) <= MONTANT_MAXIMUM, {
+        message: "Le montant dépasse le plafond autorisé.",
+      }),
+    periode: z.string().max(40, "La période contient au plus 40 caractères."),
     mode: z.enum(["MOBILE_MONEY", "VIREMENT_BANCAIRE"], {
-      message: "Choisissez le canal de l'opération déclarée.",
+      message: "Choisissez le canal utilisé pour l'opération.",
     }),
     operateur: z
       .enum(["MVOLA", "ORANGE_MONEY", "AIRTEL_MONEY"], {
@@ -15,7 +52,6 @@ export const paymentDeclarationSchema = z
       .optional(),
     telephoneUtilise: z.string(),
     banqueOuCanal: z.string(),
-    titulairePayeur: z.string().max(180, "Le titulaire doit contenir au plus 180 caractères."),
     referenceTransaction: z
       .string()
       .min(3, "La référence doit contenir au moins 3 caractères.")
@@ -26,9 +62,12 @@ export const paymentDeclarationSchema = z
       .refine((value) => !Number.isNaN(new Date(value).getTime()), {
         message: "Date invalide.",
       })
-      .refine((value) => new Date(value).getTime() <= Date.now(), {
-        message: "La date de l'opération ne peut pas être dans le futur.",
-      }),
+      .refine(
+        (value) =>
+          new Date(value).getTime() <=
+          new Date(new Date().toDateString()).getTime() + 24 * 60 * 60 * 1000,
+        { message: "La date de l'opération ne peut pas être dans le futur." },
+      ),
   })
   .superRefine((values, context) => {
     if (values.mode === "MOBILE_MONEY") {
@@ -45,12 +84,13 @@ export const paymentDeclarationSchema = z
           path: ["telephoneUtilise"],
           message:
             phone.error.issues[0]?.message ??
-            "Saisissez un numéro de téléphone valide utilisé pour l'opération.",
+            "Saisissez le numéro utilisé pour l'opération.",
         });
     }
     if (
       values.mode === "VIREMENT_BANCAIRE" &&
-      (values.banqueOuCanal.trim().length < 2 || values.banqueOuCanal.trim().length > 140)
+      (values.banqueOuCanal.trim().length < 2 ||
+        values.banqueOuCanal.trim().length > 140)
     )
       context.addIssue({
         code: "custom",
@@ -58,7 +98,43 @@ export const paymentDeclarationSchema = z
         message: "Précisez l'établissement ou le canal indiqué (2 à 140 caractères).",
       });
   });
+
 export type PaymentDeclarationFormValues = z.infer<typeof paymentDeclarationSchema>;
+
+/**
+ * Contrôle de la période selon la périodicité de la nature d'impôt sélectionnée.
+ * Utilisé par le formulaire à l'étape « montant et période ».
+ */
+export function validateFiscalPeriod(
+  periodicite: string | undefined,
+  periode: string,
+): string | null {
+  const rule = periodicite ? periodPatterns[periodicite] : undefined;
+  if (!rule) return null; // impôt ponctuel : libellé libre ou date de l'opération
+  if (!periode.trim()) return "Indiquez la période fiscale concernée.";
+  return rule.regex.test(periode.trim()) ? null : rule.message;
+}
+
+/** Affichage d'un montant saisi avec séparateurs de milliers (la valeur stockée reste numérique). */
+export function formatAmountInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return new Intl.NumberFormat("fr-FR").format(Number(digits));
+}
+
+/** Indication affichée à l'utilisateur selon la périodicité. */
+export function fiscalPeriodHint(periodicite: string | undefined): string {
+  switch (periodicite) {
+    case "MENSUELLE":
+      return "Format AAAA-MM (ex. 2026-03).";
+    case "TRIMESTRIELLE":
+      return "Format AAAA-T1 à AAAA-T4 (ex. 2026-T1).";
+    case "ANNUELLE":
+      return "Format AAAA (ex. 2026).";
+    default:
+      return "Facultatif pour un impôt ponctuel : la date de l'opération est utilisée.";
+  }
+}
 
 /** Reason of an administrative decision (rejection / correction) — PaymentDecisionDto. */
 export const decisionReasonSchema = z.object({

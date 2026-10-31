@@ -24,7 +24,7 @@ export function ClientDocumentsPage() {
     <div className="page-content-sre">
       <PageHeader
         title="Mes reçus et documents"
-        description="Retrouvez les accusés de réception et les reçus internes liés à vos déclarations."
+        description="Reçus officiels émis automatiquement après validation de vos déclarations."
         breadcrumb={["Accueil", "Mes reçus"]}
       />
       <DataTable
@@ -34,7 +34,7 @@ export function ClientDocumentsPage() {
         getRowId={(document) => document.id}
         columnToggle
         emptyTitle="Aucun document"
-        emptyDescription="Les accusés et reçus associés à vos déclarations apparaîtront ici."
+        emptyDescription="Les reçus associés à vos déclarations apparaîtront ici dès leur validation."
         page={table.page}
         rowsPerPage={table.perPage}
         onPageChange={table.changePage}

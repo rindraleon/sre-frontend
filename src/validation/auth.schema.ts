@@ -17,7 +17,7 @@ export function createRegistrationSchema(isFirstAdministrator: boolean) {
       prenom: optionalTextSchema(1, 120, "Le prénom"),
       raisonSociale: optionalTextSchema(1, 180, "La raison sociale"),
       nomCommercial: optionalTextSchema(1, 180, "Le nom commercial"),
-      nif: optionalTextSchema(3, 40, "Le NIF"),
+      nif: z.string().trim().max(40, "Le NIF doit contenir au plus 40 caractères."),
       stat: optionalTextSchema(3, 40, "Le STAT"),
       representantLegal: optionalTextSchema(1, 180, "Le représentant légal"),
       nomContact: optionalTextSchema(1, 120, "Le nom du contact"),
@@ -48,6 +48,12 @@ export function createRegistrationSchema(isFirstAdministrator: boolean) {
           code: "custom",
           path: ["raisonSociale"],
           message: "La raison sociale est requise pour une entreprise.",
+        });
+      if (values.nif.trim().length < 3)
+        context.addIssue({
+          code: "custom",
+          path: ["nif"],
+          message: "Le NIF est obligatoire et doit contenir au moins 3 caractères.",
         });
       if (values.adresse.trim().length < 3)
         context.addIssue({

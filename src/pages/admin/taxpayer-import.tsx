@@ -199,6 +199,7 @@ export function AdminTaxpayerImportPage() {
     type,
     legalName,
     name,
+    nif,
     email,
     phone,
     address,
@@ -210,6 +211,7 @@ export function AdminTaxpayerImportPage() {
     type: TaxpayerType;
     legalName: string;
     name: string;
+    nif: string;
     email: string;
     phone: string;
     address: string;
@@ -221,6 +223,8 @@ export function AdminTaxpayerImportPage() {
       errors.push({ row: number, field: "Raison sociale", message: "La raison sociale est requise." });
     if (type === "PARTICULIER" && !name)
       errors.push({ row: number, field: "Nom", message: "Le nom du contribuable est requis." });
+    if (nif.length < 3)
+      errors.push({ row: number, field: "NIF", message: "Un NIF valide est obligatoire." });
     const atSignIndex = email.indexOf("@");
     const domain = email.slice(atSignIndex + 1);
     const indexPoint = domain.indexOf(".");
@@ -270,6 +274,7 @@ export function AdminTaxpayerImportPage() {
       type,
       legalName,
       name,
+      nif,
       email,
       phone,
       address,
@@ -288,7 +293,7 @@ export function AdminTaxpayerImportPage() {
           ...(firstName.trim() ? { prenom: firstName.trim() } : {}),
           ...(legalName.trim() ? { raisonSociale: legalName.trim() } : {}),
           ...(tradeName ? { nomCommercial: tradeName } : {}),
-          ...(nif ? { nif } : {}),
+          nif,
           ...(stat ? { stat } : {}),
           adresse: address,
           region: SRE_REGION,
@@ -309,7 +314,7 @@ export function AdminTaxpayerImportPage() {
     }
     if (!validColumns) {
       setError(
-        "Mappez le type de contribuable, l’e-mail, le téléphone, l’adresse, la région et la ville/commune.",
+        "Mappez le type, le NIF, l’e-mail, le téléphone, l’adresse, la région et la ville/commune.",
       );
       return;
     }

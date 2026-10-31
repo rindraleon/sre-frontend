@@ -23,7 +23,7 @@ export interface ImportProfile {
   prenom?: string;
   raisonSociale?: string;
   nomCommercial?: string;
-  nif?: string;
+  nif: string;
   stat?: string;
   adresse: string;
   region: typeof SRE_REGION;
@@ -78,7 +78,7 @@ export const MAPPING_FIELDS: {
   {
     field: "nif",
     label: "NIF",
-    required: false,
+    required: true,
     aliases: ["nif", "numero nif", "numéro nif", "identifiant fiscal"],
   },
   {

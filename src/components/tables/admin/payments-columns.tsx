@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import type { Payment, Taxpayer } from "@/types";
 import { ROUTES_ADMIN } from "@/constants";
 import { ActionGroup, ActionIcon, StatusBadge, type TableColumn } from "@/components/ui";
@@ -7,7 +7,8 @@ import { formatMoney, formatDate } from "@/utils/format";
 
 export function createPaymentColumns({
   taxpayers,
-}: Readonly<{ taxpayers: Taxpayer[] }>): TableColumn<Payment>[] {
+  onDownloadReceipt,
+}: Readonly<{ taxpayers: Taxpayer[]; onDownloadReceipt?: (payment: Payment) => void }>): TableColumn<Payment>[] {
   return [
     {
       id: "ref",
@@ -70,7 +71,14 @@ export function createPaymentColumns({
     {
       id: "status",
       title: "Statut",
-      render: (payment) => <StatusBadge status={payment.status} />,
+      render: (payment) => (
+        <>
+          <StatusBadge status={payment.status} />
+          <small className="sub-row-sre">
+            {payment.receipt ? `Reçu ${payment.receipt.number}` : "Sans reçu définitif"}
+          </small>
+        </>
+      ),
       sortValue: (payment) => payment.status,
     },
     {
@@ -88,6 +96,14 @@ export function createPaymentColumns({
           >
             <Eye size={15} />
           </ActionIcon>
+          {payment.receipt && onDownloadReceipt && (
+            <ActionIcon
+              title={`Télécharger le reçu ${payment.receipt.number}`}
+              onClick={() => onDownloadReceipt(payment)}
+            >
+              <Download size={15} />
+            </ActionIcon>
+          )}
         </ActionGroup>
       ),
     },

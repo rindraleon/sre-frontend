@@ -16,7 +16,14 @@ export function PaymentDecisionFormFields({
   return (
     <div className="form-sre compact-form-sre">
       <FormField label="Motif détaillé" error={errors.motif} required>
-        {(p) => <Textarea {...p} rows={4} {...register("motif")} />}
+        {(p) => (
+          <Textarea
+            {...p}
+            rows={4}
+            placeholder="Expliquez la décision et les éléments qui la motivent…"
+            {...register("motif")}
+          />
+        )}
       </FormField>
       <FormError message={error} />
     </div>

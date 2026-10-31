@@ -14,10 +14,7 @@ import {
 } from "@/components/ui";
 import { OptionsSelect } from "@/components/forms/options-select";
 import { FormField, FormError } from "@/components/forms/form-field";
-import {
-  createOverdueColumns,
-  SITUATION_LABELS,
-} from "@/components/tables/admin/overdue-columns";
+import { createOverdueColumns, SITUATION_LABELS } from "@/components/tables/admin/overdue-columns";
 import { useTableState } from "@/hooks";
 import { callApi } from "@/services/api-client";
 import type { CampaignSummary, DispatchHistoryEntry, OverdueRow } from "@/types";
@@ -110,10 +107,9 @@ export function AdminOverduePage() {
       const settings = new URLSearchParams();
       if (includeSettled) settings.set("inclureRegularises", "true");
       const query = settings.toString();
-      const response = await callApi<OverdueRow[]>(
-        "admin/retards" + (query ? `?${query}` : ""),
-        { token: session.apiToken },
-      );
+      const response = await callApi<OverdueRow[]>("admin/retards" + (query ? `?${query}` : ""), {
+        token: session.apiToken,
+      });
       setRows(response);
     } catch (cause) {
       setLoadingError(
@@ -344,6 +340,7 @@ export function AdminOverduePage() {
                 value={notificationTitle}
                 onChange={(event) => setNotificationTitle(event.target.value)}
                 maxLength={160}
+                placeholder="Ex. Rappel d’échéance fiscale"
               />
             )}
           </FormField>
@@ -359,6 +356,7 @@ export function AdminOverduePage() {
                 rows={7}
                 value={messageTemplate}
                 onChange={(event) => setMessageTemplate(event.target.value)}
+                placeholder="Rédigez le message à envoyer aux contribuables concernés…"
               />
             )}
           </FormField>

@@ -75,6 +75,7 @@ export function ChangePasswordForm() {
             error={errors.motDePasseActuel}
             required
             autoComplete="current-password"
+            placeholder="Votre mot de passe actuel"
             {...register("motDePasseActuel")}
           />
           <PasswordField
@@ -83,6 +84,7 @@ export function ChangePasswordForm() {
             help="10 caractères minimum, une majuscule, une minuscule et un chiffre."
             required
             autoComplete="new-password"
+            placeholder="Votre nouveau mot de passe"
             {...register("nouveauMotDePasse")}
           />
           <PasswordField
@@ -90,6 +92,7 @@ export function ChangePasswordForm() {
             error={errors.confirmation}
             required
             autoComplete="new-password"
+            placeholder="Confirmez le nouveau mot de passe"
             {...register("confirmation")}
           />
           <FormError message={error} />

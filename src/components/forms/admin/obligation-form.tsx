@@ -45,8 +45,7 @@ export function ObligationFormFields({
             options={state.taxpayers.map((taxpayer) => ({
               value: taxpayer.id,
               label:
-                taxpayer.legalName ||
-                `${taxpayer.firstName ?? ""} ${taxpayer.lastName}`.trim(),
+                taxpayer.legalName || `${taxpayer.firstName ?? ""} ${taxpayer.lastName}`.trim(),
               description: taxpayer.nif || taxpayer.email,
             }))}
           />
@@ -60,7 +59,9 @@ export function ObligationFormFields({
       >
         {(p) => (
           <Select {...p} className="field-simple-sre" {...register("typeImpotId")}>
-            <option value="">Choisir un type actif</option>
+            <option value="" disabled>
+              Choisir un type actif
+            </option>
             {state.taxTypes
               .filter((type) => type.isActive)
               .map((type) => (
@@ -72,7 +73,14 @@ export function ObligationFormFields({
         )}
       </FormField>
       <FormField label="Période" error={errors.periode} required>
-        {(p) => <input {...p} className="field-simple-sre" {...register("periode")} />}
+        {(p) => (
+          <input
+            {...p}
+            className="field-simple-sre"
+            placeholder="Ex. 2026-03 ou 2026-T1"
+            {...register("periode")}
+          />
+        )}
       </FormField>
       <FormField label="Montant validé (MGA)" error={errors.montant} required>
         {(p) => (
@@ -83,16 +91,12 @@ export function ObligationFormFields({
             inputMode="numeric"
             min="1"
             step="1"
+            placeholder="0"
             {...register("montant", { valueAsNumber: true })}
           />
         )}
       </FormField>
-      <FormField
-        label="Échéance"
-        error={errors.echeance}
-        required
-        className="field-sre-wide"
-      >
+      <FormField label="Échéance" error={errors.echeance} required className="field-sre-wide">
         {(p) => <input {...p} className="field-simple-sre" type="date" {...register("echeance")} />}
       </FormField>
       <div className="field-sre-wide">

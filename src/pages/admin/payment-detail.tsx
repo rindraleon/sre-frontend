@@ -19,6 +19,12 @@ import {
   type ApiPayment,
 } from "@/services/api-client";
 import { StatusBadge, Button, ConfirmDialog, PageHeader, EmptyState, Modal } from "@/components/ui";
+import {
+  PaymentReceiptCard,
+  PaymentStatusTrack,
+  buildReceiptData,
+} from "@/components/payments/payment-receipt";
+import { downloadPdfApi } from "@/services/api-client";
 import { formatMoney, formatDate } from "@/utils/format";
 import { SubmitButton } from "@/components/forms/form-field";
 import {
@@ -40,6 +46,7 @@ export function AdminPaymentDetailPage() {
     null,
   );
   const [loadingDecision, setLoadingDecision] = useState(false);
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const formReason = useApiForm<DecisionReasonFormValues>({
     schema: decisionReasonSchema,
     initialValues: REASON_EMPTY,
@@ -69,7 +76,7 @@ export function AdminPaymentDetailPage() {
     status: "CONFIRME" | "REJETE" | "CORRECTION_DEMANDEE",
     reasonOptional?: string,
   ) => {
-    if (payment.status !== "EN_VERIFICATION") return;
+    if (payment.status !== "EN_VERIFICATION" && payment.status !== "EN_ATTENTE") return;
     if (!session?.apiToken) {
       throw new Error("Session serveur introuvable. Reconnectez-vous.");
     }
@@ -115,7 +122,7 @@ export function AdminPaymentDetailPage() {
       let messageDecision: string;
       if (status === "CONFIRME") {
         messageDecision =
-          "Décision enregistrée. Le reçu est interne et ne prouve pas un transfert bancaire.";
+          "Paiement confirmé : le reçu définitif a été émis automatiquement par le serveur.";
       } else if (status === "REJETE") {
         messageDecision = "Rejet enregistré sur le serveur.";
       } else {
@@ -153,6 +160,19 @@ export function AdminPaymentDetailPage() {
   const documents = state.paymentDocuments.filter(
     (document) => document.paymentId === payment.id && document.status === "VALIDE",
   );
+  const receiptDoc = documents.find((d) => d.type === "RECU_PAIEMENT") ?? documents[0];
+  const receipt = buildReceiptData(payment, taxpayerName, receiptDoc, taxpayer);
+  const downloadReceipt = async () => {
+    if (!session?.apiToken || !payment.receipt) return;
+    setIsDownloadingReceipt(true);
+    try {
+      await downloadPdfApi(payment.receipt.id, session.apiToken, payment.receipt.number);
+    } catch {
+      notify("Le reçu n’a pas pu être téléchargé.", "error");
+    } finally {
+      setIsDownloadingReceipt(false);
+    }
+  };
   return (
     <div className="page-content-sre">
       <PageHeader
@@ -178,7 +198,18 @@ export function AdminPaymentDetailPage() {
           </Link>
         }
       />
-      <div className="payment-detail-grid-sre">
+      <PaymentStatusTrack payment={payment} />
+      {receipt && (
+        <div style={{ marginTop: 14 }}>
+          <PaymentReceiptCard
+            receipt={receipt}
+            isDownloading={isDownloadingReceipt}
+            onDownload={() => void downloadReceipt()}
+            onPrint={() => window.print()}
+          />
+        </div>
+      )}
+      <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
         <section className="card-sre">
           <div className="card-sre__header">
             <div>
@@ -195,6 +226,22 @@ export function AdminPaymentDetailPage() {
             <small>Montant transmis pour examen · MGA</small>
           </div>
           <dl className="details-list-sre">
+            <div>
+              <dt>Origine</dt>
+              <dd>
+                {payment.origin === "OBLIGATION"
+                  ? "Déclaration rattachée à une obligation"
+                  : "Déclaration autonome (sans obligation préalable)"}
+              </dd>
+            </div>
+            <div>
+              <dt>Nature d’impôt</dt>
+              <dd>{payment.taxTypeName}</dd>
+            </div>
+            <div>
+              <dt>Période fiscale</dt>
+              <dd>{payment.period || "—"}</dd>
+            </div>
             <div>
               <dt>Contribuable</dt>
               <dd>{taxpayerName}</dd>
@@ -246,8 +293,13 @@ export function AdminPaymentDetailPage() {
             <div>
               <dt>Obligation liée</dt>
               <dd>
-                {obligation?.taxReference ?? "—"} ·{" "}
-                <StatusBadge status={obligation?.status ?? "INACTIF"} />
+                {obligation ? (
+                  <>
+                    {obligation.taxReference} · <StatusBadge status={obligation.status} />
+                  </>
+                ) : (
+                  "Aucune (déclaration autonome)"
+                )}
               </dd>
             </div>
             <div>
@@ -286,10 +338,10 @@ export function AdminPaymentDetailPage() {
               <p>{payment.rejectionReason}</p>
             </div>
           )}
-          {payment.status === "EN_VERIFICATION" ? (
+          {payment.status === "EN_VERIFICATION" || payment.status === "EN_ATTENTE" ? (
             <div className="payment-decision-actions-sre">
               <Button onClick={() => confirmation.open(payment)}>
-                <CheckCircle2 size={15} /> Confirmer la déclaration
+                <CheckCircle2 size={15} /> Confirmer et émettre le reçu
               </Button>
               <Button
                 variant="danger"
@@ -357,8 +409,11 @@ export function AdminPaymentDetailPage() {
           <div className="security-note-sre">
             <ShieldCheck size={16} />
             <p>
-              <strong>Vérification manuelle</strong>
-              <span>Une référence saisie seule ne constitue pas une preuve de règlement.</span>
+              <strong>Preuve de règlement</strong>
+              <span>
+                Confirmez uniquement après rapprochement avec le relevé du canal (mobile money ou
+                banque) : le reçu définitif est émis à cet instant.
+              </span>
             </p>
           </div>
         </section>
@@ -366,7 +421,7 @@ export function AdminPaymentDetailPage() {
       <ConfirmDialog
         open={!!confirmation.target}
         title="Confirmer cette déclaration ?"
-        description={`Vous allez enregistrer une décision « Confirmé par l’administration » pour ${payment.internalReference}, montant déclaré ${formatMoney(payment.amount)}. Aucun règlement bancaire n’est exécuté.`}
+        description={`Vous allez confirmer le paiement ${payment.internalReference} (${formatMoney(payment.amount)}). La confirmation déclenche l’émission automatique du reçu définitif. Le portail n’exécute aucun règlement bancaire.`}
         close={confirmation.close}
         confirm={() => void confirmation.execute(() => saveDecision("CONFIRME"))}
         confirmLabel="Confirmer la décision"

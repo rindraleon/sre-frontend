@@ -30,10 +30,12 @@ export function TaxpayerFormFields({
   form,
   error,
   step,
+  fixedType,
 }: Readonly<{
   form: UseFormReturn<TaxpayerFormValues>;
   error?: string;
   step: number;
+  fixedType?: TaxpayerFormValues["type"];
 }>) {
   const {
     register,
@@ -52,23 +54,45 @@ export function TaxpayerFormFields({
       {step === 0 && (
         <>
           <FormField label="Type" error={errors.type} required>
-            {(p) => (
-              <Select {...p} className="field-simple-sre" {...register("type")}>
-                <option value="PARTICULIER">Particulier</option>
-                <option value="ENTREPRISE">Entreprise</option>
-              </Select>
-            )}
+            {(p) =>
+              fixedType ? (
+                <>
+                  <input type="hidden" {...register("type")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    value={fixedType === "ENTREPRISE" ? "Entreprise" : "Particulier"}
+                    readOnly
+                  />
+                </>
+              ) : (
+                <Select {...p} className="field-simple-sre" {...register("type")}>
+                  <option value="PARTICULIER">Particulier</option>
+                  <option value="ENTREPRISE">Entreprise</option>
+                </Select>
+              )
+            }
           </FormField>
           {profileType === "ENTREPRISE" ? (
             <>
               <FormField label="Raison sociale" error={errors.raisonSociale} required>
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("raisonSociale")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom légal de l’entreprise"
+                    {...register("raisonSociale")}
+                  />
                 )}
               </FormField>
               <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("nomCommercial")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom utilisé par l’entreprise"
+                    {...register("nomCommercial")}
+                  />
                 )}
               </FormField>
             </>
@@ -80,6 +104,7 @@ export function TaxpayerFormFields({
                     {...p}
                     className="field-simple-sre"
                     autoComplete="family-name"
+                    placeholder="Votre nom"
                     {...register("nom")}
                   />
                 )}
@@ -90,6 +115,7 @@ export function TaxpayerFormFields({
                     {...p}
                     className="field-simple-sre"
                     autoComplete="given-name"
+                    placeholder="Votre prénom"
                     {...register("prenom")}
                   />
                 )}
@@ -100,13 +126,27 @@ export function TaxpayerFormFields({
       )}
       {step === 1 && (
         <>
-          <FormField label="NIF" error={errors.nif} help="Facultatif">
-            {(p) => <input {...p} className="field-simple-sre" {...register("nif")} />}
+          <FormField label="NIF" error={errors.nif} required>
+            {(p) => (
+              <input
+                {...p}
+                className="field-simple-sre"
+                placeholder="Numéro d’identification fiscale"
+                {...register("nif")}
+              />
+            )}
           </FormField>
           {profileType === "ENTREPRISE" && (
             <>
               <FormField label="STAT" error={errors.stat} help="Facultatif">
-                {(p) => <input {...p} className="field-simple-sre" {...register("stat")} />}
+                {(p) => (
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Numéro statistique"
+                    {...register("stat")}
+                  />
+                )}
               </FormField>
               <FormField
                 label="Représentant légal"
@@ -114,7 +154,12 @@ export function TaxpayerFormFields({
                 help="Facultatif"
               >
                 {(p) => (
-                  <input {...p} className="field-simple-sre" {...register("representantLegal")} />
+                  <input
+                    {...p}
+                    className="field-simple-sre"
+                    placeholder="Nom du représentant légal"
+                    {...register("representantLegal")}
+                  />
                 )}
               </FormField>
             </>
@@ -131,6 +176,7 @@ export function TaxpayerFormFields({
                 type="email"
                 inputMode="email"
                 autoComplete="email"
+                placeholder="nom@exemple.mg"
                 {...register("courriel")}
               />
             )}
@@ -143,6 +189,7 @@ export function TaxpayerFormFields({
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
+                placeholder="+261 …"
                 {...register("telephone")}
               />
             )}
@@ -153,6 +200,7 @@ export function TaxpayerFormFields({
                 {...p}
                 className="field-simple-sre"
                 autoComplete="street-address"
+                placeholder="Adresse complète"
                 {...register("adresse")}
               />
             )}
@@ -166,6 +214,7 @@ export function TaxpayerFormFields({
                 {...p}
                 className="field-simple-sre"
                 autoComplete="address-level2"
+                placeholder="Ville ou commune"
                 {...register("ville")}
               />
             )}

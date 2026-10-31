@@ -5,6 +5,7 @@ import type { ClientProfileFormValues } from "@/validation/profile.schema";
 
 /** Default values of the client profile contact-details form. */
 export const CONTACT_DETAILS_EMPTY: ClientProfileFormValues = {
+  nif: "",
   nomCommercial: "",
   adresse: "",
   ville: "",
@@ -29,9 +30,26 @@ export function ClientProfileFormFields({
   } = form;
   return (
     <>
+      <FormField label="NIF" error={errors.nif} required>
+        {(p) => (
+          <input
+            {...p}
+            className="field-simple-sre"
+            placeholder="Numéro d’identification fiscale"
+            {...register("nif")}
+          />
+        )}
+      </FormField>
       {isBusinessTaxpayer && (
         <FormField label="Nom commercial" error={errors.nomCommercial} help="Facultatif">
-          {(p) => <input {...p} className="field-simple-sre" {...register("nomCommercial")} />}
+          {(p) => (
+            <input
+              {...p}
+              className="field-simple-sre"
+              placeholder="Nom utilisé par l’entreprise"
+              {...register("nomCommercial")}
+            />
+          )}
         </FormField>
       )}
       <FormField label="Adresse" error={errors.adresse} required>
@@ -40,6 +58,7 @@ export function ClientProfileFormFields({
             {...p}
             className="field-simple-sre"
             autoComplete="street-address"
+            placeholder="Adresse complète"
             {...register("adresse")}
           />
         )}
@@ -53,6 +72,7 @@ export function ClientProfileFormFields({
             {...p}
             className="field-simple-sre"
             autoComplete="address-level2"
+            placeholder="Ville ou commune"
             {...register("ville")}
           />
         )}
@@ -65,6 +85,7 @@ export function ClientProfileFormFields({
             type="tel"
             inputMode="tel"
             autoComplete="tel"
+            placeholder="+261 …"
             {...register("telephone")}
           />
         )}

@@ -115,6 +115,9 @@ export interface ApiDocument {
   emisLe: string;
   emisPar?: string;
   mention: string;
+  codeVerification?: string | null;
+  statutPaiement?: string | null;
+  confirmeLe?: string | null;
 }
 
 export interface ApiPaymentHistoryStep {
@@ -129,11 +132,14 @@ export interface ApiPayment {
   id: string;
   referenceInterne: string;
   contribuableId: string;
-  obligationId: string;
+  obligationId?: string | null;
+  origine?: "DECLARATION_AUTONOME" | "OBLIGATION";
   typeImpotId: string;
   typeImpotNom: string;
-  referenceFiscale?: string;
-  periode: string;
+  referenceFiscale?: string | null;
+  periode?: string | null;
+  debutPeriode?: string | null;
+  finPeriode?: string | null;
   montant: number | string;
   devise: "MGA";
   mode: PaymentMethod;
@@ -146,9 +152,20 @@ export interface ApiPayment {
   justificatifNom?: string | null;
   statut: PaymentStatus;
   soumisLe: string;
+  confirmeLe?: string | null;
   valideLe?: string | null;
   validePar?: string | null;
   motifRejet?: string | null;
+  motifEchec?: string | null;
+  fournisseur?: string | null;
+  referenceFournisseur?: string | null;
+  recu?: {
+    id: string;
+    numero: string;
+    emisLe: string;
+    codeVerification?: string | null;
+    lienPdf: string;
+  } | null;
   historique: ApiPaymentHistoryStep[];
   documents?: Array<
     Pick<
@@ -163,7 +180,11 @@ export interface ApiPayment {
       | "mention"
       | "statut"
       | "emisPar"
-    >
+    > & {
+      codeVerification?: string | null;
+      statutPaiement?: string | null;
+      confirmeLe?: string | null;
+    }
   >;
 }
 

@@ -1,0 +1,121 @@
+name: CI
+
+# Intégration continue : types, tests, format et build de production.
+# S'exécute sur chaque PR et sur les branches de déploiement (main = production, develop = staging).
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  qualite:
+    name: Qualité (types + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Vérification des types
+        run: npx tsc --noEmit
+
+      - name: Tests unitaires
+        run: npx vitest run
+
+      - name: Format Prettier (avertissement)
+        # Non bloquant tant que le dépôt n'a pas été reformaté (npm run format).
+        # Passer continue-on-error à false une fois la mise en forme appliquée.
+        continue-on-error: true
+        run: npx prettier --check "src/**/*.{ts,tsx,css}"
+
+  build:
+    name: Build de production
+    runs-on: ubuntu-latest
+    needs: qualite
+    timeout-minutes: 15
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Build
+        # VITE_API_URL est injecté au build (variable, pas secret). Absent sur les PR :
+        # l'application affiche alors le message « service non configuré », mais le build est validé.
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL_STAGING }}
+        run: npm run build
+
+      - name: Poids du bundle (rapport)
+        run: |
+          {
+            echo "### Poids du bundle"
+            echo ""
+            echo "| Ressource | Taille | Gzip |"
+            echo "| --- | ---: | ---: |"
+            find dist/assets -type f \( -name '*.js' -o -name '*.css' \) -printf '%s %p\n' \
+              | sort -rn \
+              | while read -r size file; do
+                  gz=$(gzip -c "$file" | wc -c)
+                  awk -v n="$(basename "$file")" -v s="${size}" -v g="${gz}" \
+                    'BEGIN { printf "| `%s` | %.1f kB | %.1f kB |\n", n, s / 1024, g / 1024 }'
+                done
+            echo ""
+            echo "Total dist : $(du -sh dist | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archive du build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+          retention-days: 7
+          if-no-files-found: error
+
+  securite:
+    name: Analyse sécurité
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Détection de secrets versionnés
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+      - name: Vulnérabilités des dépendances de production (avertissement)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

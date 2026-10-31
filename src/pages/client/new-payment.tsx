@@ -1,240 +1,302 @@
-import { useMemo } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CircleDollarSign, ShieldCheck } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  callApi,
-  mapApiPaymentDocuments,
-  mapApiPayment,
-  type ApiPayment,
-} from "@/services/api-client";
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CircleDollarSign,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSre } from "@/context/SreContext";
 import { PageHeader, EmptyState } from "@/components/ui";
-import { formatMoney } from "@/utils/format";
-import {
-  paymentDeclarationSchema,
-  type PaymentDeclarationFormValues,
-} from "@/validation/payment.schema";
-import {
-  MSG_SESSION_MISSING,
-  PAYMENT_METHOD_MOBILE_MONEY,
-  PAYMENT_METHOD_BANK_TRANSFER,
-  ROUTES_CLIENT,
-  DECLARABLE_OBLIGATION_STATUSES,
-} from "@/constants";
+import { formatDate, formatMoney } from "@/utils/format";
+import { formatFiscalPeriod } from "@/utils/montant-en-lettres";
+import { paymentDeclarationSchema, validateFiscalPeriod, type PaymentDeclarationFormValues } from "@/validation/payment.schema";
+import { MSG_SESSION_MISSING, PAYMENT_METHOD_MOBILE_MONEY, ROUTES_CLIENT } from "@/constants";
 import { useApiForm } from "@/hooks";
 import { SubmitButton } from "@/components/forms/form-field";
+import { FormError } from "@/components/forms/form-field";
 import {
-  PaymentDeclarationFormFields,
   DECLARATION_PAYMENT_EMPTY,
+  currentLocalDate,
+  PAYMENT_STEPS,
+  PaymentAmountStep,
+  PaymentChannelStep,
+  PaymentNatureStep,
+  PaymentReferenceStep,
+  selectApplicableTaxTypes,
+  type PaymentStepId,
 } from "@/components/forms/client/payment-declaration-form";
+import { createAutonomousPaymentApi } from "@/services/api-payments";
+import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+
+function newIdempotencyKey() {
+  return globalThis.crypto?.randomUUID?.() ?? `idem-${Date.now()}-${Math.random()}`;
+}
 
 export function ClientNewPaymentPage() {
-  const [params] = useSearchParams();
   const navigation = useNavigate();
   const { session } = useAuth();
   const { state, updateState, notify } = useSre();
-  const availableObligations = useMemo(
-    () =>
-      state.obligations.filter(
-        (obligation) =>
-          obligation.taxpayerId === session?.taxpayerId &&
-          (DECLARABLE_OBLIGATION_STATUSES as readonly string[]).includes(obligation.status),
-      ),
-    [state.obligations, session?.taxpayerId],
+  const taxpayer = state.taxpayers.find((entry) => entry.id === session?.taxpayerId);
+  const taxTypes = useMemo(
+    () => selectApplicableTaxTypes(state.taxTypes, taxpayer),
+    [state.taxTypes, taxpayer],
   );
+  const [step, setStep] = useState<PaymentStepId>("nature");
+  const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+
   const form = useApiForm<PaymentDeclarationFormValues>({
     schema: paymentDeclarationSchema,
-    initialValues: {
-      ...DECLARATION_PAYMENT_EMPTY,
-      obligationId: params.get("obligationId") ?? "",
-    },
+    initialValues: DECLARATION_PAYMENT_EMPTY,
     fallbackMessage: "Le serveur n’a pas accepté la déclaration.",
   });
-  const obligationId = form.watch("obligationId");
-  const mode = form.watch("mode");
-  const operator = form.watch("operateur");
-  const obligation = availableObligations.find((entry) => entry.id === obligationId);
-  let declaredChannel = "Non sélectionné";
-  if (mode === PAYMENT_METHOD_MOBILE_MONEY) {
-    declaredChannel = operator || "Opérateur non choisi";
-  } else if (mode === PAYMENT_METHOD_BANK_TRANSFER) {
-    declaredChannel = "Virement / canal bancaire";
-  }
 
-  const handleSubmit = form.handleSubmit(async (values) => {
+  const values = form.watch();
+  const selectedTaxType = taxTypes.find((entry) => entry.id === values.typeImpotId);
+  const stepIndex = PAYMENT_STEPS.findIndex((entry) => entry.id === step);
+  const periodError = selectedTaxType
+    ? validateFiscalPeriod(selectedTaxType.periodicity, values.periode ?? "")
+    : null;
+
+  const payerLabel =
+    taxpayer?.legalName ||
+    [taxpayer?.firstName, taxpayer?.lastName].filter(Boolean).join(" ") ||
+    "Contribuable";
+
+  const goToStep = useCallback(
+    async (target: PaymentStepId) => {
+      const targetIndex = PAYMENT_STEPS.findIndex((entry) => entry.id === target);
+      if (targetIndex <= stepIndex) {
+        setStep(target);
+        return;
+      }
+      const fieldsByStep: Record<PaymentStepId, Array<keyof PaymentDeclarationFormValues>> = {
+        nature: ["typeImpotId"],
+        montant: ["montant", "periode"],
+        reglement: ["mode", "operateur", "telephoneUtilise", "banqueOuCanal"],
+        reference: ["referenceTransaction", "dateTransaction"],
+      };
+      const current = PAYMENT_STEPS[stepIndex]?.id;
+      if (!current) return;
+      const valid = await form.trigger(fieldsByStep[current], { shouldFocus: true });
+      if (!valid) return;
+      if (current === "montant" && periodError) {
+        form.setError("periode", { type: "manual", message: periodError });
+        return;
+      }
+      setStep(target);
+    },
+    [form, periodError, stepIndex],
+  );
+
+  const handleSubmit = form.handleSubmit(async (formValues) => {
     form.resetError();
     if (!session?.apiToken) {
       form.setError(MSG_SESSION_MISSING);
       return;
     }
-    const selectedObligation = availableObligations.find(
-      (entry) => entry.id === values.obligationId,
-    );
-    if (!selectedObligation) {
-      form.setError("obligationId", {
-        type: "server",
-        message: "Sélectionnez une obligation disponible pour votre compte.",
-      });
+    const deadline = selectedTaxType
+      ? validateFiscalPeriod(selectedTaxType.periodicity, formValues.periode)
+      : null;
+    if (deadline) {
+      form.setError("periode", { type: "manual", message: deadline });
+      setStep("montant");
       return;
     }
     try {
-      const apiPayload = {
-        obligationId: selectedObligation.id,
-        mode: values.mode,
-        ...(values.mode === PAYMENT_METHOD_MOBILE_MONEY
+      const payment = await createAutonomousPaymentApi(session.apiToken, {
+        typeImpotId: formValues.typeImpotId,
+        montant: Number(formValues.montant.replaceAll(" ", "")),
+        ...(formValues.periode.trim() ? { periode: formValues.periode.trim() } : {}),
+        mode: formValues.mode,
+        ...(formValues.mode === PAYMENT_METHOD_MOBILE_MONEY
           ? {
-              operateur: values.operateur,
-              telephoneUtilise: values.telephoneUtilise.trim(),
+              operateur: formValues.operateur,
+              telephoneUtilise: formValues.telephoneUtilise.trim(),
             }
           : {
-              banqueOuCanal: values.banqueOuCanal.trim(),
-              ...(values.titulairePayeur.trim()
-                ? { titulairePayeur: values.titulairePayeur.trim() }
-                : {}),
+              banqueOuCanal: formValues.banqueOuCanal.trim(),
             }),
-        referenceTransaction: values.referenceTransaction.trim(),
-        dateTransaction: values.dateTransaction,
-      };
-      const paymentApi = await callApi<ApiPayment>("paiements", {
-        method: "POST",
-        token: session.apiToken,
-        body: apiPayload,
+        referenceTransaction: formValues.referenceTransaction.trim(),
+        dateTransaction: currentLocalDate(),
+        cleIdempotence: idempotencyKey,
       });
-      const mappedPayment = mapApiPayment(paymentApi);
-      const mappedDocuments = mapApiPaymentDocuments(paymentApi);
       updateState((current) => ({
         ...current,
-        payments: [
-          mappedPayment,
-          ...current.payments.filter((entry) => entry.id !== mappedPayment.id),
-        ],
-        paymentDocuments: [
-          ...mappedDocuments,
-          ...current.paymentDocuments.filter(
-            (document) => document.paymentId !== mappedPayment.id,
-          ),
-        ],
-        obligations: current.obligations.map((entry) =>
-          entry.id === mappedPayment.obligationId
-            ? { ...entry, status: "EN_VERIFICATION", paymentId: mappedPayment.id }
-            : entry,
-        ),
+        payments: [payment, ...current.payments.filter((entry) => entry.id !== payment.id)],
       }));
+      const receiptLabel = payment.receipt?.number
+        ? ` Reçu officiel ${payment.receipt.number} émis.`
+        : "";
       notify(
-        "Déclaration enregistrée par le serveur. L’accusé prouve la soumission, pas le règlement.",
+        `Déclaration validée automatiquement · statut « ${PAYMENT_STATUS_LABELS[payment.status] ?? payment.status} ».${receiptLabel}`,
         "success",
       );
-      void navigation(ROUTES_CLIENT.payment(mappedPayment.id), { replace: true });
+      setIdempotencyKey(newIdempotencyKey());
+      void navigation(ROUTES_CLIENT.payment(payment.id), { replace: true });
     } catch (cause) {
       form.handleFailure(cause);
     }
   });
 
-  if (!availableObligations.length)
+  if (!taxTypes.length)
     return (
       <div className="page-content-sre">
         <PageHeader
           title="Déclarer un paiement"
-          description="Déclarez une opération effectuée en dehors du portail."
+          description="Paiement autonome : vous choisissez la nature d’impôt et le montant."
           breadcrumb={["Accueil", "Déclarer un paiement"]}
         />
         <EmptyState
-          title="Aucune obligation disponible"
-          description="Aucune obligation réglable ou régularisable n’est associée à votre compte."
+          title="Aucune nature d’impôt disponible"
+          description="L’administration n’a publié aucune nature d’impôt applicable à votre profil. Contactez le service des impôts pour la suite."
           action={
-            <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.obligations}>
-              Consulter mes obligations
+            <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.payments}>
+              Retour à l’historique
             </Link>
           }
         />
-        <div className="tax-note-sre">
-          <span>i</span>
-          <p>
-            Si une déclaration est en vérification, attendez la décision avant d’en soumettre une
-            autre pour la même obligation.
-          </p>
-        </div>
       </div>
     );
+
+  const stepProps = { form, taxTypes, selectedTaxType, payerLabel };
+  const canSubmit = step === "reference" && !form.isSubmitting;
+  const channelLabel =
+    values.mode === PAYMENT_METHOD_MOBILE_MONEY
+      ? values.operateur ?? "Mobile Money"
+      : values.mode
+        ? "Virement / dépôt bancaire"
+        : null;
 
   return (
     <div className="page-content-sre">
       <PageHeader
         title="Déclarer un paiement"
-        description="Renseignez les éléments d’une opération que l’administration devra examiner."
+        description="Paiement autonome : nature d’impôt, montant et période saisis par vos soins."
         breadcrumb={["Accueil", "Déclarer un paiement"]}
         actions={
-          <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.obligations}>
-            <ArrowLeft size={14} /> Mes obligations
+          <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.payments}>
+            <ArrowLeft size={14} /> Mes paiements
           </Link>
         }
       />
       <div className="security-alert-banner-sre">
         <ShieldCheck size={18} />
         <div>
-          <strong>Le portail ne réalise aucun paiement.</strong>
+          <strong>Aucune obligation préalable n’est exigée.</strong>
           <p>
-            La référence saisie ne confirme pas le règlement. La déclaration est soumise à examen,
-            sans intégration bancaire ou mobile-money.
+            Le portail n’effectue aucun prélèvement : vous déclarez une opération déjà réalisée. Le
+            reçu définitif est généré automatiquement dès que le paiement est confirmé.
           </p>
         </div>
       </div>
       <div className="payment-form-grid-sre">
         <form className="card-sre payment-form-sre" onSubmit={handleSubmit} noValidate>
-          <PaymentDeclarationFormFields
-            form={form}
-            error={form.error}
-            availableObligations={availableObligations}
-            obligation={obligation}
-          />
+          <nav className="payment-steps-sre" aria-label="Étapes de la déclaration">
+            {PAYMENT_STEPS.map((entry, index) => (
+              <button
+                key={entry.id}
+                type="button"
+                aria-current={entry.id === step ? "step" : undefined}
+                className={index < stepIndex ? "is-done" : undefined}
+                onClick={() => void goToStep(entry.id)}
+              >
+                <span data-step-index>{index < stepIndex ? <Check size={11} /> : index + 1}</span>
+                <strong>{entry.label}</strong>
+              </button>
+            ))}
+          </nav>
+          {step === "nature" && <PaymentNatureStep {...stepProps} />}
+          {step === "montant" && <PaymentAmountStep {...stepProps} />}
+          {step === "reglement" && <PaymentChannelStep {...stepProps} />}
+          {step === "reference" && <PaymentReferenceStep {...stepProps} />}
+          <FormError message={form.error} />
           <div className="form-actions-sre">
-            <Link to={ROUTES_CLIENT.obligations} className="button-sre button-sre--outline">
-              Annuler
-            </Link>
-            <SubmitButton inProgress={form.isSubmitting} pendingLabel="Enregistrement…">
-              Soumettre pour vérification <ArrowRight size={15} />
-            </SubmitButton>
+            {stepIndex === 0 ? (
+              <Link to={ROUTES_CLIENT.payments} className="button-sre button-sre--outline">
+                Annuler
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="button-sre button-sre--outline"
+                onClick={() => setStep(PAYMENT_STEPS[stepIndex - 1].id)}
+              >
+                <ArrowLeft size={14} /> Précédent
+              </button>
+            )}
+            {step !== "reference" ? (
+              <button
+                type="button"
+                className="button-sre button-sre--primary"
+                onClick={() => void goToStep(PAYMENT_STEPS[stepIndex + 1].id)}
+              >
+                Continuer <ArrowRight size={15} />
+              </button>
+            ) : (
+              <SubmitButton inProgress={form.isSubmitting} pendingLabel="Enregistrement…">
+                {form.isSubmitting ? <Loader2 size={15} /> : <Check size={15} />} Confirmer et
+                soumettre
+              </SubmitButton>
+            )}
           </div>
+          {!canSubmit && step === "reference" && (
+            <p className="text-help-sre">
+              La déclaration sera enregistrée au statut « En attente » puis suivie jusqu’à
+              confirmation.
+            </p>
+          )}
         </form>
-        <aside className="card-sre payment-summary-sre">
+        <aside className="card-sre payment-summary-sre is-sticky" aria-live="polite">
           <div className="card-sre__header">
             <div>
               <h2>Récapitulatif</h2>
-              <p>Avant l’envoi de la déclaration</p>
+              <p>Vérifiez avant de soumettre</p>
             </div>
             <CircleDollarSign size={18} />
           </div>
-          {obligation ? (
-            <>
-              <dl className="details-list-sre">
-                <div>
-                  <dt>Impôt</dt>
-                  <dd>{obligation.taxTypeName}</dd>
-                </div>
-                <div>
-                  <dt>Période</dt>
-                  <dd>{obligation.period}</dd>
-                </div>
-                <div>
-                  <dt>Montant</dt>
-                  <dd>{formatMoney(obligation.amount)}</dd>
-                </div>
-                <div>
-                  <dt>Canal déclaré</dt>
-                  <dd>{declaredChannel}</dd>
-                </div>
-              </dl>
-              <div className="payment-total-sre">
-                <span>Montant transmis pour examen</span>
-                <strong>{formatMoney(obligation.amount)}</strong>
-              </div>
-            </>
-          ) : (
-            <p className="text-help-sre">
-              Sélectionnez une obligation pour afficher le récapitulatif.
-            </p>
-          )}
+          <dl className="summary-lines-sre">
+            <div>
+              <dt>Contribuable</dt>
+              <dd>{payerLabel}</dd>
+            </div>
+            <div>
+              <dt>Nature d’impôt</dt>
+              <dd>{selectedTaxType?.name ?? "Non choisie"}</dd>
+            </div>
+            <div>
+              <dt>Période fiscale</dt>
+              <dd>
+                {(values.periode?.trim() && formatFiscalPeriod(values.periode)) ||
+                  (selectedTaxType?.periodicity === "PONCTUELLE" ? "Opération ponctuelle" : "—")}
+              </dd>
+            </div>
+            <div className={values.montant ? "" : "summary-empty"}>
+              <dt>Montant déclaré</dt>
+              <dd>{values.montant ? formatMoney(Number(values.montant.replaceAll(" ", ""))) : "—"}</dd>
+            </div>
+            <div>
+              <dt>Canal</dt>
+              <dd>{channelLabel ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>Référence</dt>
+              <dd>{values.referenceTransaction?.trim() || "—"}</dd>
+            </div>
+            <div>
+              <dt>Date de l’opération</dt>
+              <dd>{values.dateTransaction ? formatDate(values.dateTransaction) : "—"}</dd>
+            </div>
+          </dl>
+          <div className="payment-total-sre">
+            <span>Total déclaré</span>
+            <strong>
+              {values.montant ? formatMoney(Number(values.montant.replaceAll(" ", ""))) : "0 MGA"}
+            </strong>
+          </div>
           <div className="security-note-sre">
             <ShieldCheck size={16} />
             <p>
@@ -247,8 +309,8 @@ export function ClientNewPaymentPage() {
           <div className="tax-note-sre">
             <span>i</span>
             <p>
-              La déclaration débute au statut « En vérification »; elle n’est pas marquée réglée
-              automatiquement.
+              Statut initial « {PAYMENT_STATUS_LABELS.EN_ATTENTE} » : aucun reçu définitif n’est
+              affiché avant la confirmation réelle du paiement.
             </p>
           </div>
         </aside>

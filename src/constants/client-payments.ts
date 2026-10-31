@@ -1,9 +1,6 @@
-import type { OptionSelect } from "./options";
-
-export const PAYMENT_STATUS_OPTIONS: OptionSelect[] = [
-  { value: "TOUS", label: "Tous les statuts" },
-  { value: "EN_VERIFICATION", label: "En vérification" },
-  { value: "CONFIRME", label: "Confirmé par l’administration" },
-  { value: "REJETE", label: "Rejeté" },
-  { value: "CORRECTION_DEMANDEE", label: "Correction demandée" },
-];
+export {
+  PAYMENT_STATUSES_A_SUIVRE,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_OPTIONS,
+  paymentStatusLabel,
+} from "./payment-statuses";

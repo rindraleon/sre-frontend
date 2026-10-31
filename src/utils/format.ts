@@ -59,6 +59,11 @@ export function formatDate(date: string | null | undefined, detail = false): str
   ).format(value);
 }
 
+/** Date et heure complètes (reçus, confirmations, exports). */
+export function formatDateTime(date: string | null | undefined): string {
+  return formatDate(date, true);
+}
+
 export function getInitials(name: string): string {
   return name
     .split(/[\s@._-]+/)
