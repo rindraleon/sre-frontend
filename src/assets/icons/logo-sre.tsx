@@ -34,7 +34,7 @@ export function LogoSre({
       {withText && (
         <div className="flex min-w-0 flex-col gap-[3px]">
           <strong className="text-[15px] font-[780] tracking-[-0.45px] text-sre-ink">
-            SRE<span className="text-sre-gold">·</span>Fianarantsoa
+            SRE<span className="text-sre-gold">·</span>Haute Matsiatra  
           </strong>
           {subtitle !== null && (
             <small className="whitespace-nowrap text-[12px] font-[800] tracking-[1.05px] text-pub-muted-2">

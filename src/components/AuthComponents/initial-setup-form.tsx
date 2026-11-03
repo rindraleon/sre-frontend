@@ -74,7 +74,7 @@ export function InitialSetupForm() {
         "Configuration terminée : votre mot de passe provisoire n’est plus valable.",
         "success",
       );
-      navigation(roleHomePath(session?.role ?? "CLIENT"), { replace: true });
+      void navigation(roleHomePath(session?.role ?? "CLIENT"), { replace: true });
     } catch (cause) {
       handleFailure(cause);
     }

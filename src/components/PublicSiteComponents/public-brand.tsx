@@ -33,7 +33,7 @@ export function PublicBrand({
       />
       <div className={PUBLIC_BRAND_TEXT_CLASS}>
         <strong className={publicBrandTitleClass(variant)}>
-          SRE<span> </span>Fianarantsoa
+          SRE<span> </span>Haute Matsiatra
         </strong>
         <small className={publicBrandSubtitleClass(variant)}>{subtitle}</small>
       </div>

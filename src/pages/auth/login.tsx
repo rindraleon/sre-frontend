@@ -26,7 +26,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-pub-surface-alt text-sre-ink bg-[image:radial-gradient(ellipse_at_80%_15%,color-mix(in_srgb,var(--pub-accent-soft)_20%,transparent),transparent_32%)]">
       <AuthHeader
-        overline="ACCÈS AUX SERVICES FISCAUX"
+        // overline="ACCÈS AUX SERVICES FISCAUX"
         linkLabel="Retour au portail"
         linkPath="/accueil"
       />

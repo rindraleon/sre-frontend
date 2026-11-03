@@ -15,9 +15,8 @@ export function ContactStatusSummary({
   onFilterChange: (status: ContactFilterValue<ContactMessageStatus>) => void;
 }>) {
   return (
-    <div
+    <section
       className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 mb-5"
-      role="region"
       aria-label="Synthèse des messages par statut"
     >
       {CONTACT_STATUS_CARDS.map((card) => {
@@ -45,6 +44,6 @@ export function ContactStatusSummary({
           </button>
         );
       })}
-    </div>
+    </section>
   );
 }

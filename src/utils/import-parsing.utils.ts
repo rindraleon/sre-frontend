@@ -141,5 +141,8 @@ export const normalizedKey = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
-export const cellText = (cell: CellValue | null | undefined) =>
-  cell == null ? "" : cell instanceof Date ? cell.toISOString().slice(0, 10) : String(cell).trim();
+export const cellText = (cell: CellValue | null | undefined) => {
+  if (cell == null) return "";
+  if (cell instanceof Date) return cell.toISOString().slice(0, 10);
+  return String(cell).trim();
+};

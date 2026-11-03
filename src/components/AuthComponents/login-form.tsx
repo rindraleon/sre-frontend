@@ -53,7 +53,7 @@ export function LoginForm() {
       const destination = configurationRequired
         ? `${rootPath}/configuration-initiale`
         : (isReturnPathAllowed ?? rootPath);
-      navigation(destination, { replace: true });
+      void navigation(destination, { replace: true });
     } catch (cause) {
       handleFailure(cause);
     }

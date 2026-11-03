@@ -38,7 +38,7 @@ export function EmailVerificationCard({
 
   const validateCode = async (event: FormEvent) => {
     event.preventDefault();
-    if (!/^[0-9]{6}$/.test(code.trim())) {
+    if (!/^\d{6}$/.test(code.trim())) {
       notify("Saisissez le code à 6 chiffres reçu par courriel.", "warning");
       return;
     }

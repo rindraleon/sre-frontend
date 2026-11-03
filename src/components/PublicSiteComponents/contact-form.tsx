@@ -18,13 +18,12 @@ import {
   PUBLIC_CONTACT_PRIVACY_CLASS,
   PUBLIC_CONTACT_WARNING_CLASS,
 } from "@/components";
-import { cn } from "@/utils";
+import { cn , formatDate } from "@/utils";
 import { useApiForm } from "@/hooks";
 import { isApiConfigured } from "@/services/api";
 import { publicContactSchema, type PublicContactFormValues } from "@/schemas";
 import { submitPublicContactApi } from "@/services/contact-messages";
 import type { PublicContactSubmissionResponse } from "@/types";
-import { formatDate } from "@/utils";
 
 const EMPTY_VALUES: PublicContactFormValues = {
   nom: "",
