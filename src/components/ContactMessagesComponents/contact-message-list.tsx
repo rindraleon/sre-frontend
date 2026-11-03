@@ -31,9 +31,8 @@ export function ContactMessageList({
             description="Les messages envoyés depuis le formulaire de contact public ou l'espace client apparaissent ici en temps réel."
           />
         ) : (
-          <div
+          <ul
             className="divide-y divide-slate-200 dark:divide-slate-800"
-            role="list"
             aria-label="Liste des messages de contact"
           >
             {messages.map((item) => (
@@ -44,7 +43,7 @@ export function ContactMessageList({
                 onOpen={onOpen}
               />
             ))}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>
@@ -63,28 +62,25 @@ function ContactMessageRow({
   const status = resolveMessageStatus(entry);
   const isUnread = status === "NON_LU" || !entry.lue;
 
-  const stateClass = isSelected
-    ? "bg-blue-50/90 dark:bg-blue-950/50 ring-1 ring-blue-500/40"
-    : isUnread
-      ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-slate-50 dark:hover:bg-slate-800/60"
-      : "hover:bg-slate-50 dark:hover:bg-slate-800/50";
+  let stateClass = "hover:bg-slate-50 dark:hover:bg-slate-800/50";
+
+  if (isSelected) {
+    stateClass = "bg-blue-50/90 dark:bg-blue-950/50 ring-1 ring-blue-500/40";
+  } else if (isUnread) {
+    stateClass = "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-slate-50 dark:hover:bg-slate-800/60";
+  }
 
   return (
-    <div
-      role="listitem"
+    <li
       data-testid={`contact-message-row-${entry.id}`}
-      onClick={() => onOpen(entry)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen(entry);
-        }
-      }}
-      tabIndex={0}
-      className={`cursor-pointer p-4 transition-colors rounded-lg ${stateClass}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-2 min-w-0">
+      <button
+        type="button"
+        onClick={() => onOpen(entry)}
+        className={`block w-full cursor-pointer p-4 text-left transition-colors rounded-lg ${stateClass}`}
+      >
+      <span className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+        <span className="flex items-center gap-2 min-w-0">
           {isUnread && (
             <span
               className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"
@@ -103,19 +99,19 @@ function ContactMessageRow({
           <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
             {messageReference(entry)}
           </span>
-        </div>
+        </span>
         <span className="text-xs text-slate-500 dark:text-slate-400">
           {formatDate(entry.creeLe, true)}
         </span>
-      </div>
+      </span>
 
-      <div className="text-xs text-slate-500 dark:text-slate-400 mb-1.5 flex flex-wrap items-center gap-2">
+      <span className="text-xs text-slate-500 dark:text-slate-400 mb-1.5 flex flex-wrap items-center gap-2">
         <span>{entry.courriel}</span>
         <span>·</span>
         <span>{CONTACT_SOURCE_LABELS[entry.source ?? "SITE_PUBLIC"]}</span>
-      </div>
+      </span>
 
-      <div
+      <span
         className={`text-sm mb-1 ${
           isUnread
             ? "font-semibold text-slate-900 dark:text-white"
@@ -123,23 +119,24 @@ function ContactMessageRow({
         }`}
       >
         {entry.sujet}
-      </div>
+      </span>
 
-      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2.5">
+      <span className="block text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2.5">
         {entry.message}
-      </p>
+      </span>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <span className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex flex-wrap items-center gap-1.5">
           <StatusBadge status={status} />
           {entry.statutAccuse && <StatusBadge status={entry.statutAccuse} />}
           {entry.statutCourriel === "ECHEC" && <StatusBadge status="ECHEC" />}
-        </div>
+        </span>
 
         <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
           {isSelected ? "Ouvert" : "Ouvrir & répondre →"}
         </span>
-      </div>
-    </div>
+      </span>
+      </button>
+    </li>
   );
 }

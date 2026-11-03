@@ -25,6 +25,14 @@ export function ContactReplyForm({
   onSend: () => void;
 }>) {
   const [templateError, setTemplateError] = useState<string | null>(null);
+  const bannerToneClasses: Record<ReplyBanner["tone"], string> = {
+    success:
+      "bg-emerald-100/80 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800",
+    warning:
+      "bg-amber-100/80 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200 border border-amber-300 dark:border-amber-800",
+    error:
+      "bg-red-100/80 text-red-900 dark:bg-red-950/70 dark:text-red-200 border border-red-300 dark:border-red-800",
+  };
 
   return (
     <form
@@ -75,16 +83,9 @@ export function ContactReplyForm({
       )}
 
       {banner && (
-        <div
-          role="status"
+        <output
           data-testid="contact-reply-confirmation"
-          className={`mb-3 rounded-lg p-3 text-xs font-medium flex items-start gap-2 ${
-            banner.tone === "success"
-              ? "bg-emerald-100/80 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
-              : banner.tone === "warning"
-                ? "bg-amber-100/80 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
-                : "bg-red-100/80 text-red-900 dark:bg-red-950/70 dark:text-red-200 border border-red-300 dark:border-red-800"
-          }`}
+          className={`mb-3 rounded-lg p-3 text-xs font-medium flex items-start gap-2 ${bannerToneClasses[banner.tone]}`}
         >
           {banner.tone === "success" ? (
             <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
@@ -97,7 +98,7 @@ export function ContactReplyForm({
               <div className="mt-1 opacity-85">Détail technique : {banner.detail}</div>
             )}
           </div>
-        </div>
+        </output>
       )}
 
       <div className="space-y-3">

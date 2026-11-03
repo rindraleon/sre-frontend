@@ -3,8 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, UserRound } from "lucide-react";
 import type { RegistrationProfile } from "@/types";
-import { useAuth } from "@/contexts";
-import { useSre } from "@/contexts";
+import { useAuth , useSre } from "@/contexts";
 import {
   Button,
   COMPACT_FORM_CLASS,

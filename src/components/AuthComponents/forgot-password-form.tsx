@@ -35,10 +35,10 @@ export function ForgotPasswordForm() {
       <h1>Mot de passe oublié</h1>
       {sent ? (
         <>
-          <p role="status">
+          <output>
             Si un compte actif correspond à cette adresse, un lien de réinitialisation vient d’être
             envoyé. Le lien est à usage unique et expire dans 24 heures.
-          </p>
+          </output>
           <Link
             className="mt-[18px] flex items-center justify-center gap-[5px] text-[12px] text-pub-muted transition-colors hover:text-sre-teal"
             to={ROUTES.login}

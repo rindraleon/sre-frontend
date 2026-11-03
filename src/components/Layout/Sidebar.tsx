@@ -30,8 +30,7 @@ import {
   SIDEBAR_NAV_CLASS,
   sidebarClass,
 } from "@/components";
-import { useAuth } from "@/contexts";
-import { useSre } from "@/contexts";
+import { useAuth , useSre } from "@/contexts";
 import { LogoSre } from "@/assets/icons/logo-sre";
 
 export interface MenuEntry {
