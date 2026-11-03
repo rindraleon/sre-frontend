@@ -30,7 +30,7 @@ export function ContactReplyForm({
       "bg-emerald-100/80 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800",
     warning:
       "bg-amber-100/80 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200 border border-amber-300 dark:border-amber-800",
-    error:
+    danger:
       "bg-red-100/80 text-red-900 dark:bg-red-950/70 dark:text-red-200 border border-red-300 dark:border-red-800",
   };
 
