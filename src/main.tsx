@@ -4,7 +4,6 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "@/App";
 import { AppProviders } from "@/contexts";
-// @ts-expect-error CSS imports are handled by the bundler.
 import "./styles/index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
