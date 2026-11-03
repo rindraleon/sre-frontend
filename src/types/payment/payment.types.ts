@@ -19,7 +19,6 @@ export interface PaymentHistoryStep {
   reason?: string;
 }
 
-/** Reçu de paiement émis automatiquement après confirmation. */
 export interface PaymentReceipt {
   id: string;
   number: string;
@@ -32,12 +31,10 @@ export interface Payment {
   id: string;
   internalReference: string;
   taxpayerId: string;
-  /** Nul pour une déclaration autonome (sans obligation fiscale préalable). */
   obligationId?: string | null;
   origin: PaymentOrigin;
   taxTypeId: string;
   taxTypeName: string;
-  /** Période fiscale déclarée (AAAA-MM, AAAA-Tn, AAAA, ou date pour un impôt ponctuel). */
   period: string;
   amount: number;
   currency: "MGA";
@@ -85,7 +82,6 @@ export interface PaymentDocument {
   confirmedAt?: string | null;
 }
 
-/** Filtres multicritères de la recherche de paiements (administration). */
 export interface PaymentFilters {
   statut?: string;
   contribuableId?: string;

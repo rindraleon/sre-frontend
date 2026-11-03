@@ -1,16 +1,31 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api-client";
-import { StatusBadge, PageHeader, EmptyState } from "@/components/ui";
-import { formatDate } from "@/utils/format";
-import { MSG_RECORD_FAILURE, MSG_SESSION_MISSING, ROUTES_CLIENT } from "@/constants";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  COMPACT_FORM_CLASS,
+  DETAILS_LIST_CLASS,
+  DETAIL_GRID_CLASS,
+  EmptyState,
+  FORM_CLASS,
+  PAGE_CONTENT_CLASS,
+  PROFILE_NOTE_CLASS,
+  PageHeader,
+  SECURITY_NOTE_CLASS,
+  StatusBadge,
+  SubmitButton,
+  TAX_NOTE_CLASS,
+  buttonVariants,
+} from "@/components";
+import { formatDate, cn } from "@/utils";
+import { MSG_RECORD_FAILURE, MSG_SESSION_MISSING, ROUTES_CLIENT } from "@/data";
 import { useApiForm } from "@/hooks";
-import { SubmitButton } from "@/components/forms/form-field";
-import { ClientProfileFormFields, CONTACT_DETAILS_EMPTY } from "@/components/forms/client/profile-form";
-import { clientProfileSchema, type ClientProfileFormValues } from "@/validation/profile.schema";
+import { ClientProfileFormFields, CONTACT_DETAILS_EMPTY } from "@/components/TaxpayersComponents";
+import { clientProfileSchema, type ClientProfileFormValues } from "@/schemas";
+import { updateMyTaxpayerProfileApi } from "@/services/taxpayers";
 
 export function ClientProfilePage() {
   const { session } = useAuth();
@@ -31,12 +46,11 @@ export function ClientProfilePage() {
       telephone: taxpayer.phone,
       nomCommercial: taxpayer.tradeName ?? "",
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taxpayer?.id]);
 
   if (!taxpayer)
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader title="Profil fiscal" breadcrumb={["Accueil", "Profil fiscal"]} />
         <EmptyState
           title="Profil non disponible"
@@ -52,20 +66,13 @@ export function ClientProfilePage() {
       return;
     }
     try {
-      const response = await callApi<ApiTaxpayer>("contribuables/moi", {
-        method: "PATCH",
-        token: session.apiToken,
-        body: {
-          nif: values.nif.trim(),
-          adresse: values.adresse.trim(),
-          ville: values.ville.trim(),
-          telephone: values.telephone.trim(),
-          ...(taxpayer.type === "ENTREPRISE"
-            ? { nomCommercial: values.nomCommercial.trim() }
-            : {}),
-        },
+      const updatedProfile = await updateMyTaxpayerProfileApi(session.apiToken, {
+        nif: values.nif.trim(),
+        adresse: values.adresse.trim(),
+        ville: values.ville.trim(),
+        telephone: values.telephone.trim(),
+        ...(taxpayer.type === "ENTREPRISE" ? { nomCommercial: values.nomCommercial.trim() } : {}),
       });
-      const updatedProfile = mapApiTaxpayer(response, session.userId);
       updateState((current) => ({
         ...current,
         taxpayers: current.taxpayers.map((entry) =>
@@ -79,27 +86,30 @@ export function ClientProfilePage() {
   });
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Profil fiscal"
         description="Consultez les données rattachées à votre compte."
         breadcrumb={["Accueil", "Profil fiscal"]}
         actions={
-          <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.passwordChange}>
+          <Link
+            className={buttonVariants({ variant: "outline" })}
+            to={ROUTES_CLIENT.passwordChange}
+          >
             <KeyRound size={15} /> Modifier le mot de passe
           </Link>
         }
       />
-      <div className="profile-grid-sre">
-        <section className="card-sre">
-          <div className="card-sre__header">
+      <div className={DETAIL_GRID_CLASS}>
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Identité fiscale</h2>
               <p>Données enregistrées par le service.</p>
             </div>
             <UserRound size={18} />
           </div>
-          <dl className="details-list-sre">
+          <dl className={DETAILS_LIST_CLASS}>
             <div>
               <dt>Type de contribuable</dt>
               <dd>
@@ -149,22 +159,22 @@ export function ClientProfilePage() {
               </div>
             )}
           </dl>
-          <div className="tax-note-sre">
+          <div className={TAX_NOTE_CLASS}>
             <span>i</span>
             <p>
-              Le NIF est obligatoire pour effectuer une déclaration. Vous pouvez le renseigner ou
-              le corriger dans le formulaire de coordonnées.
+              Le NIF est obligatoire pour effectuer une déclaration. Vous pouvez le renseigner ou le
+              corriger dans le formulaire de coordonnées.
             </p>
           </div>
         </section>
-        <section className="card-sre">
-          <div className="card-sre__header">
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Coordonnées</h2>
               <p>Modifications transmises au serveur.</p>
             </div>
           </div>
-          <form className="form-sre compact-form-sre" onSubmit={save} noValidate>
+          <form className={cn(COMPACT_FORM_CLASS, FORM_CLASS)} onSubmit={save} noValidate>
             <ClientProfileFormFields
               form={form}
               error={form.error}
@@ -177,7 +187,7 @@ export function ClientProfilePage() {
           </form>
         </section>
       </div>
-      <section className="security-note-sre profile-note-sre">
+      <section className={cn(SECURITY_NOTE_CLASS, PROFILE_NOTE_CLASS)}>
         <ShieldCheck size={16} />
         <p>
           <strong>Protection des données</strong>

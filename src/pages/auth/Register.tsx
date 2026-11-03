@@ -1,11 +1,13 @@
+import { cn } from "@/utils";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSre } from "@/context/SreContext";
-import { Button } from "@/components/ui";
-import { AuthHeader } from "@/components/layout/auth-header";
-import { isApiConfigured, getRegistrationStateApi } from "@/services/api-client";
-import { RegisterForm } from "@/components/forms/auth/register-form";
-import { ROUTES } from "@/constants";
+import { useSre } from "@/contexts";
+import { Button, TAX_NOTE_CLASS, OVERLINE_CLASS } from "@/components";
+import { AuthHeader } from "@/components/Layout";
+import { isApiConfigured } from "@/services/api";
+import { RegisterForm } from "@/components/AuthComponents";
+import { getRegistrationStateApi } from "@/services/auth";
+import { ROUTES } from "@/data";
 
 export function RegisterPage() {
   const { state, isInitialLoading, updateState } = useSre();
@@ -52,7 +54,7 @@ export function RegisterPage() {
   let registrationContent;
   if (!isApiConfigured) {
     registrationContent = (
-      <div className="tax-note-sre" role="alert">
+      <div className={TAX_NOTE_CLASS} role="alert">
         <span>!</span>
         <p>
           Le service backend n’est pas configuré. Définissez VITE_API_URL puis redémarrez
@@ -62,11 +64,13 @@ export function RegisterPage() {
     );
   } else if (isInitialLoading || !isApiVerificationComplete) {
     registrationContent = (
-      <div className="loading-sre">Vérification de l’initialisation du backend…</div>
+      <div className="p-4 text-center text-[11px] text-pub-muted">
+        Vérification de l’initialisation du backend…
+      </div>
     );
   } else if (apiVerificationError) {
     registrationContent = (
-      <div className="tax-note-sre" role="alert">
+      <div className={TAX_NOTE_CLASS} role="alert">
         <span>!</span>
         <div>
           <p>{apiVerificationError}</p>
@@ -94,28 +98,31 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="page-auth-sre">
+    <div className="flex min-h-dvh flex-col bg-pub-surface-alt text-sre-ink bg-[image:radial-gradient(ellipse_at_80%_15%,color-mix(in_srgb,var(--pub-accent-soft)_20%,transparent),transparent_32%)]">
       <AuthHeader
         overline="CRÉATION DE COMPTE"
         linkLabel="Déjà un compte ? Se connecter"
         linkPath={ROUTES.login}
       />
-      <main className="auth-frame-sre auth-frame-sre--wide">
-        <section className="auth-card-sre">
-          <span className="overline-sre text-center">
+      <main className="flex w-full flex-1 items-start justify-center px-5 pb-8 pt-[29px]">
+        <section className="w-[min(100%,675px)] rounded-[14px] border border-pub-border bg-pub-glass px-7 py-[26px] shadow-pub-sm">
+          <span className={cn(OVERLINE_CLASS, "text-center")}>
             {isFirstAdministrator ? "INITIALISATION DE L’ADMINISTRATION" : "ESPACE CONTRIBUABLE"}
           </span>
-          <h1 className="text-center">
+          <h1 className="my-[7px] text-[23px] font-[780] tracking-[-0.75px] text-sre-ink text-center">
             {isFirstAdministrator ? "Créer le premier administrateur" : "Créer mon compte"}
           </h1>
-          <p className="text-center">
+          <p className="mb-[17px] mt-0 text-[11px] leading-[1.6] text-pub-muted text-center">
             {isFirstAdministrator
               ? "Un seul processus de création initiale est autorisé : ce compte deviendra l’administrateur. Le bouton disparaîtra dès la création effectuée."
               : "Créez votre accès pour consulter votre espace contribuable."}
           </p>
           {registrationContent}
-          <p className="auth-link-secondary-sre">
-            Déjà inscrit ? <Link to={ROUTES.login}>Se connecter</Link>
+          <p className="mt-[15px] text-center text-[12px] text-pub-muted">
+            Déjà inscrit ?{" "}
+            <Link className="font-[750] text-sre-blue" to={ROUTES.login}>
+              Se connecter
+            </Link>
           </p>
         </section>
       </main>

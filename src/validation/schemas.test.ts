@@ -3,10 +3,10 @@ import {
   loginSchema,
   createRegistrationSchema,
   passwordChangeSchema,
-  publicContactSchema,
-} from "./auth.schema";
-import { paymentDeclarationSchema } from "./payment.schema";
-import { taxpayerFormSchema } from "./profile.schema";
+} from "../schemas/auth.schema";
+import { publicContactSchema } from "../schemas/contact.schema";
+import { paymentDeclarationSchema } from "../schemas/payment.schema";
+import { taxpayerFormSchema } from "../schemas/profile.schema";
 
 describe("loginSchema", () => {
   it("rejects an invalid e-mail with a French message", () => {

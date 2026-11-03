@@ -1,12 +1,7 @@
-import type { UserRole } from "../user";
+import type { UserRole } from "@/types/user";
 
 export type NotificationType =
-  | "COMPTE"
-  | "PAIEMENT"
-  | "OBLIGATION"
-  | "IMPORT"
-  | "SECURITE"
-  | "ADMINISTRATION";
+  "COMPTE" | "PAIEMENT" | "OBLIGATION" | "IMPORT" | "SECURITE" | "ADMINISTRATION";
 
 export interface AppNotification {
   id: string;
@@ -18,27 +13,15 @@ export interface AppNotification {
   userId?: string;
   recipientRole?: UserRole;
   entityReference?: string;
-  /** Status of the attached e-mail — "DELIVRE" only when confirmed by the provider. */
   emailStatus: "NON_ENVOYE" | "ERREUR" | "ENVOYE" | "EN_ATTENTE" | "DELIVRE";
 }
 
-/** Situation of a record in the overdue tracking (computed by the server). */
 export type OverdueSituation =
-  | "REGULARISE"
-  | "EN_VERIFICATION"
-  | "REJETE"
-  | "CORRECTION_DEMANDEE"
-  | "EN_RETARD"
-  | "EN_ATTENTE";
+  "REGULARISE" | "EN_VERIFICATION" | "REJETE" | "CORRECTION_DEMANDEE" | "EN_RETARD" | "EN_ATTENTE";
 
 export type StatusEmailNotification =
-  | "NON_CONFIGURE"
-  | "EN_ATTENTE"
-  | "ENVOYE"
-  | "DELIVRE"
-  | "ECHEC";
+  "NON_CONFIGURE" | "EN_ATTENTE" | "ENVOYE" | "DELIVRE" | "ECHEC";
 
-/** Row of the overdue tracking table (GET /admin/retards). */
 export interface OverdueRow {
   obligationId: string;
   referenceFiscale: string;
@@ -61,7 +44,6 @@ export interface OverdueRow {
   };
 }
 
-/** Per-recipient result of a bulk campaign. */
 export interface CampaignRecipientResult {
   obligationId: string;
   destinataire: string;
@@ -71,7 +53,6 @@ export interface CampaignRecipientResult {
   erreur?: string;
 }
 
-/** Summary of a bulk notification campaign. */
 export interface CampaignSummary {
   totalSelectionnes: number;
   notificationsCreees: number;
@@ -84,7 +65,6 @@ export interface CampaignSummary {
   details: CampaignRecipientResult[];
 }
 
-/** Entry of the bulk-dispatch history. */
 export interface DispatchHistoryEntry {
   id: string;
   titre: string;

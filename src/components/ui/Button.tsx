@@ -1,11 +1,10 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { CoreSpinLoader } from "./core-spin-loader";
 
-/** shadcn/ui button (cva). */
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[12.5px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-55 [&_svg]:shrink-0",
+  "btn-sre inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[12.5px] font-bold transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-55 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -20,6 +19,7 @@ export const buttonVariants = cva(
       size: {
         normal: "min-h-9 px-4 py-2",
         small: "min-h-8 rounded-md px-3 text-xs",
+        large: "min-h-[47px] rounded-[9px] px-[18px] text-[11px]",
       },
     },
     defaultVariants: { variant: "primary", size: "normal" },
@@ -28,7 +28,6 @@ export const buttonVariants = cva(
 
 export type ButtonProps = Readonly<{
   children: ReactNode;
-  /** Shows the spinner, disables the button and signals the running operation. */
   loading?: boolean;
 }> &
   VariantProps<typeof buttonVariants> &

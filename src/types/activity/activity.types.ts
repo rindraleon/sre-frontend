@@ -1,4 +1,4 @@
-import type { UserRole } from "../user";
+import type { UserRole } from "@/types/user";
 
 export interface ActivityLogEntry {
   id: string;

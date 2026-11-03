@@ -1,8 +1,7 @@
 import { forwardRef, type ComponentPropsWithoutRef, type ElementRef } from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
-/** Label shadcn/ui (Radix Label). */
 export const Label = forwardRef<
   ElementRef<typeof LabelPrimitive.Root>,
   ComponentPropsWithoutRef<typeof LabelPrimitive.Root>

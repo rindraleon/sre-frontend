@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, CirclePlus } from "lucide-react";
 import type { TaxType } from "@/types";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { callApi, mapApiTaxType, type ApiTaxType } from "@/services/api-client";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
 import {
   Button,
   ConfirmDialog,
@@ -11,12 +10,14 @@ import {
   Modal,
   DataTable,
   toTanstackColumns,
-} from "@/components/ui";
-import { SubmitButton } from "@/components/forms/form-field";
-import { TaxTypeFormFields, TAX_TYPE_EMPTY } from "@/components/forms/admin/tax-type-form";
-import { createTaxTypeColumns } from "@/components/tables/admin/tax-types-columns";
+  SubmitButton,
+  PAGE_CONTENT_CLASS,
+} from "@/components";
+import { createTaxTypeColumns } from "@/components/TaxTypesComponents/tables/admin";
+import { TaxTypeFormFields, TAX_TYPE_EMPTY } from "@/components/TaxTypesComponents";
+import { taxTypeFormSchema, type TaxTypeFormValues } from "@/schemas";
+import { saveTaxTypeApi, setTaxTypeActiveApi } from "@/services/tax-types";
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
-import { taxTypeFormSchema, type TaxTypeFormValues } from "@/validation/admin.schema";
 
 const TAX_TYPE_STEP_FIELDS = [
   ["code", "nom", "categorie", "description"],
@@ -120,17 +121,10 @@ export function AdminTaxTypesPage() {
           .map((field) => field.trim())
           .filter(Boolean),
       };
-      const response = await callApi<ApiTaxType>(
-        typeModifie ? `types-impots/${encodeURIComponent(typeModifie)}` : "types-impots",
-        { method: typeModifie ? "PATCH" : "POST", token: session.apiToken, body: body },
-      );
-      const typeBackup = mapApiTaxType(response);
+      const typeBackup = await saveTaxTypeApi(session.apiToken, body, typeModifie ?? undefined);
       updateState((current) => ({
         ...current,
-        taxTypes: [
-          typeBackup,
-          ...current.taxTypes.filter((type) => type.id !== typeBackup.id),
-        ],
+        taxTypes: [typeBackup, ...current.taxTypes.filter((type) => type.id !== typeBackup.id)],
       }));
       notify(
         typeModifie
@@ -148,16 +142,10 @@ export function AdminTaxTypesPage() {
     if (!session?.apiToken) throw new Error("Session serveur introuvable. Reconnectez-vous.");
     const isActive = !type.isActive;
     try {
-      const response = await callApi<ApiTaxType>(
-        `types-impots/${encodeURIComponent(type.id)}/activite`,
-        { method: "PATCH", token: session.apiToken, body: { actif: isActive } },
-      );
-      const typeBackup = mapApiTaxType(response);
+      const typeBackup = await setTaxTypeActiveApi(session.apiToken, type.id, isActive);
       updateState((current) => ({
         ...current,
-        taxTypes: current.taxTypes.map((entry) =>
-          entry.id === type.id ? typeBackup : entry,
-        ),
+        taxTypes: current.taxTypes.map((entry) => (entry.id === type.id ? typeBackup : entry)),
       }));
       notify(
         isActive
@@ -174,7 +162,7 @@ export function AdminTaxTypesPage() {
   };
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Types d’impôts"
         description="Paramètres fiscaux validés par l’administration."
@@ -215,11 +203,7 @@ export function AdminTaxTypesPage() {
               Annuler
             </Button>
             {formStep > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => setStepForm(0)}
-                disabled={form.isSubmitting}
-              >
+              <Button variant="outline" onClick={() => setStepForm(0)} disabled={form.isSubmitting}>
                 <ArrowLeft size={15} /> Précédent
               </Button>
             )}
@@ -251,11 +235,7 @@ export function AdminTaxTypesPage() {
           }
           noValidate
         >
-          <TaxTypeFormFields
-            form={form}
-            error={form.error}
-            step={formStep}
-          />
+          <TaxTypeFormFields form={form} error={form.error} step={formStep} />
         </form>
       </Modal>
       <ConfirmDialog

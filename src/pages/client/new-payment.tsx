@@ -1,36 +1,54 @@
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Check, CircleDollarSign, Loader2, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CircleDollarSign,
-  Loader2,
-  ShieldCheck,
-} from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, EmptyState } from "@/components/ui";
-import { formatDate, formatMoney } from "@/utils/format";
-import { formatFiscalPeriod } from "@/utils/montant-en-lettres";
-import { paymentDeclarationSchema, validateFiscalPeriod, type PaymentDeclarationFormValues } from "@/validation/payment.schema";
-import { MSG_SESSION_MISSING, PAYMENT_METHOD_MOBILE_MONEY, ROUTES_CLIENT } from "@/constants";
-import { useApiForm } from "@/hooks";
-import { SubmitButton } from "@/components/forms/form-field";
-import { FormError } from "@/components/forms/form-field";
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  EmptyState,
+  FORM_ACTIONS_CLASS,
+  FormError,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_FORM_CLASS,
+  PAYMENT_FORM_GRID_CLASS,
+  PAYMENT_FORM_ORDER_CLASS,
+  PAYMENT_STEPS_CLASS,
+  PAYMENT_STEP_ACTIVE_CLASS,
+  PAYMENT_SUMMARY_STICKY_CLASS,
+  PAYMENT_TOTAL_CLASS,
+  PageHeader,
+  SECURITY_ALERT_BANNER_CLASS,
+  SECURITY_NOTE_CLASS,
+  SUMMARY_EMPTY_VALUE_CLASS,
+  SUMMARY_LINES_CLASS,
+  SubmitButton,
+  TAX_NOTE_CLASS,
+  TEXT_HELP_CLASS,
+  buttonVariants,
+} from "@/components";
+import { formatDate, formatMoney, formatFiscalPeriod, cn } from "@/utils";
 import {
   DECLARATION_PAYMENT_EMPTY,
   currentLocalDate,
   PAYMENT_STEPS,
-  PaymentAmountStep,
-  PaymentChannelStep,
-  PaymentNatureStep,
-  PaymentReferenceStep,
   selectApplicableTaxTypes,
   type PaymentStepId,
-} from "@/components/forms/client/payment-declaration-form";
-import { createAutonomousPaymentApi } from "@/services/api-payments";
-import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+} from "@/components/PaymentsComponents/declaration";
+import { PaymentAmountStep } from "@/components/PaymentsComponents/declaration";
+import { PaymentChannelStep } from "@/components/PaymentsComponents/declaration";
+import { PaymentNatureStep } from "@/components/PaymentsComponents/declaration";
+import { PaymentReferenceStep } from "@/components/PaymentsComponents/declaration";
+import { PAYMENT_STATUS_LABELS } from "@/data";
+import {
+  paymentDeclarationSchema,
+  validateFiscalPeriod,
+  type PaymentDeclarationFormValues,
+} from "@/schemas";
+import { createAutonomousPaymentApi } from "@/services/payments";
+import { MSG_SESSION_MISSING, PAYMENT_METHOD_MOBILE_MONEY, ROUTES_CLIENT } from "@/data";
+import { useApiForm } from "@/hooks";
 
 function newIdempotencyKey() {
   return globalThis.crypto?.randomUUID?.() ?? `idem-${Date.now()}-${Math.random()}`;
@@ -144,7 +162,7 @@ export function ClientNewPaymentPage() {
 
   if (!taxTypes.length)
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader
           title="Déclarer un paiement"
           description="Paiement autonome : vous choisissez la nature d’impôt et le montant."
@@ -154,7 +172,7 @@ export function ClientNewPaymentPage() {
           title="Aucune nature d’impôt disponible"
           description="L’administration n’a publié aucune nature d’impôt applicable à votre profil. Contactez le service des impôts pour la suite."
           action={
-            <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.payments}>
+            <Link className={buttonVariants({ variant: "outline" })} to={ROUTES_CLIENT.payments}>
               Retour à l’historique
             </Link>
           }
@@ -166,24 +184,24 @@ export function ClientNewPaymentPage() {
   const canSubmit = step === "reference" && !form.isSubmitting;
   const channelLabel =
     values.mode === PAYMENT_METHOD_MOBILE_MONEY
-      ? values.operateur ?? "Mobile Money"
+      ? (values.operateur ?? "Mobile Money")
       : values.mode
         ? "Virement / dépôt bancaire"
         : null;
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Déclarer un paiement"
         description="Paiement autonome : nature d’impôt, montant et période saisis par vos soins."
         breadcrumb={["Accueil", "Déclarer un paiement"]}
         actions={
-          <Link className="button-sre button-sre--outline" to={ROUTES_CLIENT.payments}>
+          <Link className={buttonVariants({ variant: "outline" })} to={ROUTES_CLIENT.payments}>
             <ArrowLeft size={14} /> Mes paiements
           </Link>
         }
       />
-      <div className="security-alert-banner-sre">
+      <div className={SECURITY_ALERT_BANNER_CLASS}>
         <ShieldCheck size={18} />
         <div>
           <strong>Aucune obligation préalable n’est exigée.</strong>
@@ -193,15 +211,19 @@ export function ClientNewPaymentPage() {
           </p>
         </div>
       </div>
-      <div className="payment-form-grid-sre">
-        <form className="card-sre payment-form-sre" onSubmit={handleSubmit} noValidate>
-          <nav className="payment-steps-sre" aria-label="Étapes de la déclaration">
+      <div className={PAYMENT_FORM_GRID_CLASS}>
+        <form
+          className={cn(CARD_CLASS, PAYMENT_FORM_CLASS, PAYMENT_FORM_ORDER_CLASS)}
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <nav className={PAYMENT_STEPS_CLASS} aria-label="Étapes de la déclaration">
             {PAYMENT_STEPS.map((entry, index) => (
               <button
                 key={entry.id}
                 type="button"
                 aria-current={entry.id === step ? "step" : undefined}
-                className={index < stepIndex ? "is-done" : undefined}
+                className={index <= stepIndex ? PAYMENT_STEP_ACTIVE_CLASS : undefined}
                 onClick={() => void goToStep(entry.id)}
               >
                 <span data-step-index>{index < stepIndex ? <Check size={11} /> : index + 1}</span>
@@ -214,28 +236,28 @@ export function ClientNewPaymentPage() {
           {step === "reglement" && <PaymentChannelStep {...stepProps} />}
           {step === "reference" && <PaymentReferenceStep {...stepProps} />}
           <FormError message={form.error} />
-          <div className="form-actions-sre">
+          <div className={cn(FORM_ACTIONS_CLASS)}>
             {stepIndex === 0 ? (
-              <Link to={ROUTES_CLIENT.payments} className="button-sre button-sre--outline">
+              <Link to={ROUTES_CLIENT.payments} className={buttonVariants({ variant: "outline" })}>
                 Annuler
               </Link>
             ) : (
-              <button
+              <Button
                 type="button"
-                className="button-sre button-sre--outline"
+                variant="outline"
                 onClick={() => setStep(PAYMENT_STEPS[stepIndex - 1].id)}
               >
                 <ArrowLeft size={14} /> Précédent
-              </button>
+              </Button>
             )}
             {step !== "reference" ? (
-              <button
+              <Button
                 type="button"
-                className="button-sre button-sre--primary"
+                variant="primary"
                 onClick={() => void goToStep(PAYMENT_STEPS[stepIndex + 1].id)}
               >
                 Continuer <ArrowRight size={15} />
-              </button>
+              </Button>
             ) : (
               <SubmitButton inProgress={form.isSubmitting} pendingLabel="Enregistrement…">
                 {form.isSubmitting ? <Loader2 size={15} /> : <Check size={15} />} Confirmer et
@@ -244,21 +266,21 @@ export function ClientNewPaymentPage() {
             )}
           </div>
           {!canSubmit && step === "reference" && (
-            <p className="text-help-sre">
+            <p className={TEXT_HELP_CLASS}>
               La déclaration sera enregistrée au statut « En attente » puis suivie jusqu’à
               confirmation.
             </p>
           )}
         </form>
-        <aside className="card-sre payment-summary-sre is-sticky" aria-live="polite">
-          <div className="card-sre__header">
+        <aside className={cn(CARD_CLASS, PAYMENT_SUMMARY_STICKY_CLASS)} aria-live="polite">
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Récapitulatif</h2>
               <p>Vérifiez avant de soumettre</p>
             </div>
             <CircleDollarSign size={18} />
           </div>
-          <dl className="summary-lines-sre">
+          <dl className={SUMMARY_LINES_CLASS}>
             <div>
               <dt>Contribuable</dt>
               <dd>{payerLabel}</dd>
@@ -274,9 +296,11 @@ export function ClientNewPaymentPage() {
                   (selectedTaxType?.periodicity === "PONCTUELLE" ? "Opération ponctuelle" : "—")}
               </dd>
             </div>
-            <div className={values.montant ? "" : "summary-empty"}>
+            <div>
               <dt>Montant déclaré</dt>
-              <dd>{values.montant ? formatMoney(Number(values.montant.replaceAll(" ", ""))) : "—"}</dd>
+              <dd className={values.montant ? undefined : SUMMARY_EMPTY_VALUE_CLASS}>
+                {values.montant ? formatMoney(Number(values.montant.replaceAll(" ", ""))) : "—"}
+              </dd>
             </div>
             <div>
               <dt>Canal</dt>
@@ -291,13 +315,13 @@ export function ClientNewPaymentPage() {
               <dd>{values.dateTransaction ? formatDate(values.dateTransaction) : "—"}</dd>
             </div>
           </dl>
-          <div className="payment-total-sre">
+          <div className={PAYMENT_TOTAL_CLASS}>
             <span>Total déclaré</span>
             <strong>
               {values.montant ? formatMoney(Number(values.montant.replaceAll(" ", ""))) : "0 MGA"}
             </strong>
           </div>
-          <div className="security-note-sre">
+          <div className={SECURITY_NOTE_CLASS}>
             <ShieldCheck size={16} />
             <p>
               <strong>Rappel sécurité</strong>
@@ -306,7 +330,7 @@ export function ClientNewPaymentPage() {
               </span>
             </p>
           </div>
-          <div className="tax-note-sre">
+          <div className={TAX_NOTE_CLASS}>
             <span>i</span>
             <p>
               Statut initial « {PAYMENT_STATUS_LABELS.EN_ATTENTE} » : aucun reçu définitif n’est

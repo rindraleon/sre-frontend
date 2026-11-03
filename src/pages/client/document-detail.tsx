@@ -1,15 +1,22 @@
+import { cn } from "@/utils";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Download, Printer } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, EmptyState } from "@/components/ui";
-import type { PaymentDocument } from "@/types";
-import { isApiConfigured, downloadPdfApi } from "@/services/api-client";
+import { useAuth , useSre } from "@/contexts";
 import {
-  PaymentReceiptCard,
-  buildDocumentDisplayData,
-} from "@/components/payments/payment-receipt";
+  PageHeader,
+  EmptyState,
+  Button,
+  buttonVariants,
+  PAGE_CONTENT_CLASS,
+  DOCUMENT_LINK_HIDDEN_CLASS,
+  DOCUMENT_PAGE_CLASS,
+  DOCUMENT_SCREEN_ONLY_CLASS,
+} from "@/components";
+import type { PaymentDocument } from "@/types";
+import { isApiConfigured } from "@/services/api";
+import { downloadPdfApi } from "@/services/documents";
+import { PaymentReceiptCard, buildDocumentDisplayData } from "@/components/PaymentsComponents";
 
 function documentTitle(document: PaymentDocument) {
   return document.type === "ACCUSE_DECLARATION"
@@ -25,19 +32,17 @@ export function ClientDocumentDetailPage() {
 
   const document = state.paymentDocuments.find(
     (entry) =>
-      entry.id === id &&
-      entry.taxpayerId === session?.taxpayerId &&
-      entry.status === "VALIDE",
+      entry.id === id && entry.taxpayerId === session?.taxpayerId && entry.status === "VALIDE",
   );
   if (!document)
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader title="Document introuvable" breadcrumb={["Accueil", "Mes reçus"]} />
         <EmptyState
           title="Ce document n’est pas accessible"
           description="Il n’existe pas ou ne fait pas partie de votre espace contribuable."
           action={
-            <Link className="button-sre button-sre--outline" to="/client/documents">
+            <Link className={buttonVariants({ variant: "outline" })} to="/client/documents">
               <ArrowLeft size={14} /> Retour à mes reçus
             </Link>
           }
@@ -52,9 +57,7 @@ export function ClientDocumentDetailPage() {
     session?.name ||
     "Contribuable";
 
-  const associatedPayment = state.payments.find(
-    (entry) => entry.id === document.paymentId,
-  );
+  const associatedPayment = state.payments.find((entry) => entry.id === document.paymentId);
   const displayData = buildDocumentDisplayData(
     document,
     taxpayerName,
@@ -80,25 +83,27 @@ export function ClientDocumentDetailPage() {
 
   const actions = (
     <>
-      <button
+      <Button
         type="button"
-        className="button-sre button-sre--primary screen-document-button-sre"
+        variant="primary"
+        className={DOCUMENT_SCREEN_ONLY_CLASS}
         onClick={() => void downloadPdf()}
         disabled={isDownloading}
       >
         <Download size={15} />
         {isDownloading ? "Préparation…" : "Télécharger le PDF"}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className="button-sre button-sre--outline screen-document-button-sre"
+        variant="outline"
+        className={DOCUMENT_SCREEN_ONLY_CLASS}
         onClick={() => window.print()}
       >
         <Printer size={15} />
         Imprimer
-      </button>
+      </Button>
       <Link
-        className="button-sre button-sre--outline print-document-button-sre"
+        className={cn(buttonVariants({ variant: "outline" }), DOCUMENT_LINK_HIDDEN_CLASS)}
         to={`/client/paiements/${document.paymentId}`}
       >
         <ArrowLeft size={14} /> Retour à la déclaration
@@ -107,7 +112,7 @@ export function ClientDocumentDetailPage() {
   );
 
   return (
-    <div className="page-content-sre document-detail-page-sre">
+    <div className={cn(PAGE_CONTENT_CLASS, DOCUMENT_PAGE_CLASS)}>
       <PageHeader
         title={documentTitle(document)}
         description={`Document ${document.number}`}

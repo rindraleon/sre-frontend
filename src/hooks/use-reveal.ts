@@ -1,23 +1,24 @@
 import { useEffect } from "react";
 
+function reveal(target: HTMLElement) {
+  target.style.opacity = "1";
+  target.style.transform = "none";
+}
+
 export function useReveal() {
   useEffect(() => {
-    const targets = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-reveal]"),
-    );
+    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     if (targets.length === 0) return;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion || typeof IntersectionObserver === "undefined") {
-      for (const target of targets) target.classList.add("reveal-visible");
+      for (const target of targets) reveal(target);
       return;
     }
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            entry.target.classList.add("reveal-visible");
+            reveal(entry.target as HTMLElement);
             observer.unobserve(entry.target);
           }
         }

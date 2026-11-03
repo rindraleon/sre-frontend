@@ -1,2 +1,2 @@
-export * from "./taxpayer.types";
-export * from "./import.types";
+export * from "@/types/taxpayer/taxpayer.types";
+export * from "@/types/taxpayer/import.types";

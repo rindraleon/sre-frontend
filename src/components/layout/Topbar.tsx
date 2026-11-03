@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   ChevronDown,
@@ -12,11 +12,22 @@ import {
   Sun,
   UserRound,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { useTheme } from "@/context/ThemeContext";
+import {
+  SESSION_BUTTON_CLASS,
+  TOPBAR_ACTION_CLASS,
+  TOPBAR_CLASS,
+  TOPBAR_LEFT_CLASS,
+  TOPBAR_MENU_BUTTON_CLASS,
+  TOPBAR_RIGHT_CLASS,
+  USER_MENU_IDENTITY_CLASS,
+  USER_MENU_ITEM_CLASS,
+  USER_MENU_PANEL_CLASS,
+} from "@/components";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { useTheme } from "@/contexts";
 import { ConfirmDialog } from "@/components/ui";
-import { getInitials } from "@/utils/format";
+import { getInitials } from "@/utils";
 
 export function Topbar({
   unreadNotifications,
@@ -32,7 +43,6 @@ export function Topbar({
   const { notify } = useSre();
   const { theme, toggleTheme } = useTheme();
   const navigation = useNavigate();
-  const location = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [confirmationLogout, setConfirmationLogout] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -41,8 +51,7 @@ export function Topbar({
   useEffect(() => {
     if (!isMenuOpen) return;
     const handleOutsideClick = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node))
-        setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
     };
     const handleKeyboard = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -65,9 +74,6 @@ export function Topbar({
   const isAdmin = session.role === "ADMIN";
   const rootPath = isAdmin ? "/admin" : "/client";
   const userInitials = getInitials(session.name) || "SRE";
-  const isOnContactMessagesPage = location.pathname.startsWith(
-    "/admin/messages-contact",
-  );
 
   const handleLogout = () => {
     setMenuOpen(false);
@@ -82,10 +88,10 @@ export function Topbar({
   };
 
   return (
-    <header className="app-header-sre">
-      <div className="app-header-sre__left">
+    <header className={TOPBAR_CLASS}>
+      <div className={TOPBAR_LEFT_CLASS}>
         <button
-          className="menu-button-sre"
+          className={TOPBAR_MENU_BUTTON_CLASS}
           aria-label="Ouvrir le menu"
           onClick={openMobileMenu}
         >
@@ -95,9 +101,9 @@ export function Topbar({
           <span>{isAdmin ? "Espace Administrateur" : "Espace client"}</span>
         </div>
       </div>
-      <div className="app-header-sre__right">
+      <div className={TOPBAR_RIGHT_CLASS}>
         <Link
-          className="notification-button-sre"
+          className={TOPBAR_ACTION_CLASS}
           to="/aide"
           aria-label="Aide et documentation"
           title="Aide"
@@ -107,9 +113,7 @@ export function Topbar({
         {isAdmin && (
           <Link
             data-testid="topbar-contact-messages-link"
-            className={`notification-button-sre ${
-              isOnContactMessagesPage ? "notification-button-sre--active" : ""
-            }`}
+            className={TOPBAR_ACTION_CLASS}
             to="/admin/messages-contact"
             aria-label={
               unreadContactMessages > 0
@@ -124,14 +128,12 @@ export function Topbar({
           >
             <MessageSquare size={17} />
             {unreadContactMessages > 0 && (
-              <i data-testid="topbar-contact-messages-badge">
-                {unreadContactMessages}
-              </i>
+              <i data-testid="topbar-contact-messages-badge">{unreadContactMessages}</i>
             )}
           </Link>
         )}
         <Link
-          className="notification-button-sre"
+          className={TOPBAR_ACTION_CLASS}
           to={isAdmin ? "/admin/notifications" : "/client/notifications"}
           aria-label={`${unreadNotifications} notifications non lues`}
           title="Centre de notifications"
@@ -139,11 +141,11 @@ export function Topbar({
           <Bell size={17} />
           {unreadNotifications > 0 && <i>{unreadNotifications}</i>}
         </Link>
-        <div className="user-menu-sre" ref={menuRef}>
+        <div className="relative" ref={menuRef}>
           <button
             ref={menuButtonRef}
             type="button"
-            className="session-header-sre user-menu-button-sre"
+            className={SESSION_BUTTON_CLASS}
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
             aria-label={`Menu de ${session.name}`}
@@ -157,18 +159,15 @@ export function Topbar({
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           {isMenuOpen && (
-            <div
-              className="user-menu-sre__panel"
-              role="menu"
-              aria-label="Menu utilisateur"
-            >
-              <div className="user-menu-sre__identity">
+            <div className={USER_MENU_PANEL_CLASS} role="menu" aria-label="Menu utilisateur">
+              <div className={USER_MENU_IDENTITY_CLASS}>
                 <strong>{session.name}</strong>
                 <small>{session.email}</small>
                 <small>{isAdmin ? "Administrateur" : "Contribuable"}</small>
               </div>
               {!isAdmin && (
                 <Link
+                  className={USER_MENU_ITEM_CLASS}
                   role="menuitem"
                   to="/client/profil"
                   onClick={() => setMenuOpen(false)}
@@ -177,6 +176,7 @@ export function Topbar({
                 </Link>
               )}
               <Link
+                className={USER_MENU_ITEM_CLASS}
                 role="menuitem"
                 to={`${rootPath}/parametres`}
                 onClick={() => setMenuOpen(false)}
@@ -184,6 +184,7 @@ export function Topbar({
                 <Settings size={15} aria-hidden="true" /> Paramètres
               </Link>
               <button
+                className={USER_MENU_ITEM_CLASS}
                 type="button"
                 role="menuitemcheckbox"
                 aria-checked={theme === "sombre"}
@@ -200,10 +201,20 @@ export function Topbar({
                 )}
                 {theme === "sombre" ? "Thème clair" : "Thème sombre"}
               </button>
-              <Link role="menuitem" to="/aide" onClick={() => setMenuOpen(false)}>
+              <Link
+                className={USER_MENU_ITEM_CLASS}
+                role="menuitem"
+                to="/aide"
+                onClick={() => setMenuOpen(false)}
+              >
                 <CircleHelp size={15} aria-hidden="true" /> Aide
               </Link>
-              <button type="button" role="menuitem" onClick={handleLogout}>
+              <button
+                className={USER_MENU_ITEM_CLASS}
+                type="button"
+                role="menuitem"
+                onClick={handleLogout}
+              >
                 <LogOut size={15} aria-hidden="true" /> Déconnexion
               </button>
             </div>

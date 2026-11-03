@@ -1,6 +1,5 @@
 import { type ReactNode } from "react";
 
-/** Page header (breadcrumb + title + actions), Tailwind utilities. */
 export function PageHeader({
   title,
   description,
@@ -13,7 +12,7 @@ export function PageHeader({
   actions?: ReactNode;
 }>) {
   return (
-    <header className="mb-5">
+    <header className="mb-5 print:hidden">
       <nav
         className="mb-1.5 flex flex-wrap items-center gap-1 text-[11px] font-semibold text-muted-foreground"
         aria-label="Fil d’Ariane"

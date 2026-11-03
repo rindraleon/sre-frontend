@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -77,7 +76,6 @@ async function rasterInk(
   }
 }
 
-/** Smallest dash length that renders the same ink as the finished glyph. */
 async function measureExactDashLength(svg: SVGSVGElement): Promise<number> {
   const full = await rasterInk(svg, (text) => {
     text.style.strokeDasharray = "none";
@@ -111,7 +109,6 @@ async function measureExactDashLength(svg: SVGSVGElement): Promise<number> {
   return Math.max(1, lo);
 }
 
-
 function SvgPathDrawingTextAnimation({
   text,
   fromColor = "#f093fb",
@@ -144,7 +141,8 @@ function SvgPathDrawingTextAnimation({
         if (cancelled || !svgRef.current) return;
         const dash = await measureExactDashLength(svgRef.current);
         if (!cancelled) setDashLength(dash);
-      } catch {
+      } catch (cause) {
+        console.warn("Mesure SVG exacte indisponible : estimation utilisée.", cause);
         const el = textRef.current;
         if (!el || cancelled) return;
         const width = el.getComputedTextLength() || display.length * fontSize * 0.62;

@@ -1,0 +1,15 @@
+export { AdminActivityLogPage } from "@/pages/admin/activity-log";
+export { AdminContactMessagesPage } from "@/pages/admin/contact-messages";
+export { AdminDashboardPage } from "@/pages/admin/dashboard";
+export { AdminNotificationsPage } from "@/pages/admin/notifications";
+export { AdminObligationsPage } from "@/pages/admin/obligations";
+export { AdminOverduePage } from "@/pages/admin/overdue";
+export { AdminPaymentDetailPage } from "@/pages/admin/payment-detail";
+export { AdminPaymentsPage } from "@/pages/admin/payments";
+export { AdminReportsPage } from "@/pages/admin/reports";
+export { AdminSettingsPage } from "@/pages/admin/settings";
+export { AdminTaxTypesPage } from "@/pages/admin/tax-types";
+export { AdminTaxpayerDetailPage } from "@/pages/admin/taxpayer-detail";
+export { AdminTaxpayerImportPage } from "@/pages/admin/taxpayer-import";
+export { AdminBusinessesPage, AdminTaxpayersPage } from "@/pages/admin/taxpayers";
+export { AdminUsersPage } from "@/pages/admin/users";

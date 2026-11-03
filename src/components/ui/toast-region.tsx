@@ -1,7 +1,7 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { X } from "lucide-react";
-import { useSre } from "@/context/SreContext";
-import { cn } from "@/lib/utils";
+import { useSre } from "@/contexts";
+import { cn } from "@/utils";
 
 const STYLES: Record<string, string> = {
   success: "border-emerald-300 bg-emerald-50 text-emerald-900",

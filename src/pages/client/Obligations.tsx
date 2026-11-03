@@ -1,15 +1,24 @@
-import { Select } from "@/components/ui/select";
+import {
+  COMPACT_FILTER_CLASS,
+  DataTable,
+  INFO_BANNER_CLASS,
+  OptionsSelect,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  Select,
+  TAX_NOTE_CLASS,
+  buttonVariants,
+  toTanstackColumns,
+} from "@/components";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CircleDollarSign, FileText } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
-import { OptionsSelect } from "@/components/forms/options-select";
-import { createObligationColumns } from "@/components/tables/client/obligations-columns";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { createObligationColumns as createClientObligationColumns } from "@/components/ObligationsComponents/tables/client";
 import { useTableState } from "@/hooks";
-import { OBLIGATION_STATUS_OPTIONS, ROUTES_CLIENT, ALL } from "@/constants";
-import { formatMoney } from "@/utils/format";
+import { OBLIGATION_STATUS_OPTIONS, ROUTES_CLIENT, ALL } from "@/data";
+import { formatMoney } from "@/utils";
 
 export function ClientObligationsPage() {
   const { session } = useAuth();
@@ -17,42 +26,36 @@ export function ClientObligationsPage() {
   const table = useTableState();
   const [status, setStatus] = useState<string>(ALL);
   const myObligations = useMemo(
-    () =>
-      state.obligations.filter(
-        (obligation) => obligation.taxpayerId === session?.taxpayerId,
-      ),
+    () => state.obligations.filter((obligation) => obligation.taxpayerId === session?.taxpayerId),
     [state.obligations, session?.taxpayerId],
   );
 
-  const columns = createObligationColumns();
+  const columns = createClientObligationColumns();
 
   const outstandingAmount = myObligations
     .filter((obligation) => obligation.status !== "PAYE")
     .reduce((sum, obligation) => sum + obligation.amount, 0);
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Mes obligations fiscales"
         description="Obligations enregistrées pour votre compte."
         breadcrumb={["Accueil", "Mes impôts"]}
       />
-      <div className="info-banner-sre">
+      <div className={INFO_BANNER_CLASS}>
         <span>
           <FileText size={17} />
         </span>
         <div>
           <strong>
             {myObligations.length} obligation
-            {myObligations.length === 1 ? "" : "s"} · {formatMoney(outstandingAmount)} à
-            suivre
+            {myObligations.length === 1 ? "" : "s"} · {formatMoney(outstandingAmount)} à suivre
           </strong>
         </div>
       </div>
       <DataTable
-        data={myObligations.filter(
-          (obligation) => status === ALL || obligation.status === status,
-        )}
+        data={myObligations.filter((obligation) => status === ALL || obligation.status === status)}
         columns={toTanstackColumns(columns)}
         label="Mes obligations fiscales"
         getRowId={(obligation) => obligation.id}
@@ -60,7 +63,7 @@ export function ClientObligationsPage() {
         searchValue={table.search}
         onSearchChange={table.changeSearch}
         toolbarActions={
-          <label className="compact-filter-sre">
+          <label className={COMPACT_FILTER_CLASS}>
             Statut
             <Select
               value={status}
@@ -74,7 +77,7 @@ export function ClientObligationsPage() {
           </label>
         }
         actionPrimary={
-          <Link className="button-sre button-sre--primary" to={ROUTES_CLIENT.newPayment}>
+          <Link className={buttonVariants({ variant: "primary" })} to={ROUTES_CLIENT.newPayment}>
             <CircleDollarSign size={16} /> Déclarer un paiement
           </Link>
         }
@@ -86,7 +89,7 @@ export function ClientObligationsPage() {
         onPageChange={table.changePage}
         onRowsPerPageChange={table.changePerPage}
       />
-      <section className="tax-note-sre">
+      <section className={TAX_NOTE_CLASS}>
         <span>i</span>
         <p>
           <strong>À noter :</strong> une déclaration de paiement créée dans le portail est validée

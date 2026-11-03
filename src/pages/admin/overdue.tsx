@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellRing, History, Send, Users } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
 import {
   Button,
   DataTable,
@@ -11,14 +11,29 @@ import {
   StatusBadge,
   toTanstackColumns,
   type TableColumn,
-} from "@/components/ui";
-import { OptionsSelect } from "@/components/forms/options-select";
-import { FormField, FormError } from "@/components/forms/form-field";
-import { createOverdueColumns, SITUATION_LABELS } from "@/components/tables/admin/overdue-columns";
+  OptionsSelect,
+  FormField,
+  FormError,
+  FIELD_INPUT_CLASS,
+  FIELD_TEXTAREA_CLASS,
+  PAGE_CONTENT_CLASS,
+  FORM_CLASS,
+  SUB_ROW_CLASS,
+  ERROR_MESSAGE_CLASS,
+  COMPACT_FILTER_CLASS,
+} from "@/components";
+import {
+  createOverdueColumns,
+  SITUATION_LABELS,
+} from "@/components/OverdueComponents/tables/admin";
+import {
+  loadDispatchHistoryApi,
+  loadOverdueRowsApi,
+  sendOverdueCampaignApi,
+} from "@/services/overdue";
 import { useTableState } from "@/hooks";
-import { callApi } from "@/services/api-client";
 import type { CampaignSummary, DispatchHistoryEntry, OverdueRow } from "@/types";
-import { formatDate, formatMoney } from "@/utils/format";
+import { formatDate, formatMoney, cn } from "@/utils";
 
 const DEFAULT_TEMPLATE =
   "Bonjour {nom},\n\nLe dossier {reference} ({typeImpot}, période {periode}) présente un retard de {joursRetard} jour(s) au {echeance}, pour un montant de {montant}.\nMerci de régulariser votre situation en suivant les démarches indiquées dans votre espace.\n\nService Régional des Impôts — Haute Matsiatra";
@@ -47,7 +62,7 @@ const historyColumns: TableColumn<DispatchHistoryEntry>[] = [
     render: (entry) => (
       <div>
         <strong>{entry.destinataire.nom}</strong>
-        <small className="sub-row-sre">{entry.destinataire.courriel}</small>
+        <small className={SUB_ROW_CLASS}>{entry.destinataire.courriel}</small>
       </div>
     ),
     sortValue: (entry) => entry.destinataire.nom,
@@ -104,11 +119,8 @@ export function AdminOverduePage() {
     setLoading(true);
     setLoadingError(null);
     try {
-      const settings = new URLSearchParams();
-      if (includeSettled) settings.set("inclureRegularises", "true");
-      const query = settings.toString();
-      const response = await callApi<OverdueRow[]>("admin/retards" + (query ? `?${query}` : ""), {
-        token: session.apiToken,
+      const response = await loadOverdueRowsApi(session.apiToken, {
+        inclureRegularises: includeSettled ? true : undefined,
       });
       setRows(response);
     } catch (cause) {
@@ -123,13 +135,9 @@ export function AdminOverduePage() {
   const loadHistory = useCallback(async () => {
     if (!session?.apiToken) return;
     try {
-      setHistory(
-        await callApi<DispatchHistoryEntry[]>("admin/notifications/historique-envois", {
-          token: session.apiToken,
-        }),
-      );
-    } catch {
-      // The history remains viewable even if loading it fails.
+      setHistory(await loadDispatchHistoryApi(session.apiToken));
+    } catch (cause) {
+      console.warn("Historique des envois indisponible.", cause);
     }
   }, [session?.apiToken]);
 
@@ -164,14 +172,10 @@ export function AdminOverduePage() {
     setDispatchInProgress(true);
     setDispatchError(null);
     try {
-      const result = await callApi<CampaignSummary>("admin/notifications/groupes", {
-        method: "POST",
-        token: session.apiToken,
-        body: {
-          obligationIds: validSelection.map((row) => row.obligationId),
-          titre: notificationTitle.trim() || undefined,
-          message: messageTemplate,
-        },
+      const result = await sendOverdueCampaignApi(session.apiToken, {
+        obligationIds: validSelection.map((row) => row.obligationId),
+        titre: notificationTitle.trim() || undefined,
+        message: messageTemplate,
       });
       setSummary(result);
       setModalDispatch(false);
@@ -191,14 +195,14 @@ export function AdminOverduePage() {
   const columns = createOverdueColumns();
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Retards & notifications"
         description="Dossiers en retard et notifications groupées aux entités concernées."
         breadcrumb={["Accueil", "Retards & notifications"]}
       />
       {loadingError && (
-        <p className="error-message-sre" role="alert">
+        <p className={ERROR_MESSAGE_CLASS} role="alert">
           {loadingError}
         </p>
       )}
@@ -215,7 +219,7 @@ export function AdminOverduePage() {
         onSelectedRowIdsChange={(ids) => setSelected(new Set(ids))}
         toolbarActions={
           <>
-            <label className="compact-filter-sre">
+            <label className={COMPACT_FILTER_CLASS}>
               Situation
               <Select
                 value={situation}
@@ -227,7 +231,7 @@ export function AdminOverduePage() {
                 <OptionsSelect options={SITUATION_OPTIONS} />
               </Select>
             </label>
-            <label className="compact-filter-sre">
+            <label className={COMPACT_FILTER_CLASS}>
               Entité
               <Select
                 value={typeEntity}
@@ -239,7 +243,7 @@ export function AdminOverduePage() {
                 <OptionsSelect options={ENTITY_TYPE_OPTIONS} />
               </Select>
             </label>
-            <label className="compact-filter-sre inline-flex items-center gap-1.5">
+            <label className={cn(COMPACT_FILTER_CLASS, "inline-flex items-center gap-1.5")}>
               <input
                 type="checkbox"
                 checked={includeSettled}
@@ -331,12 +335,12 @@ export function AdminOverduePage() {
           </>
         }
       >
-        <div className="form-sre">
+        <div className={cn(FORM_CLASS)}>
           <FormField label="Titre de la notification" required>
             {(p) => (
               <input
                 {...p}
-                className="field-simple-sre"
+                className={FIELD_INPUT_CLASS}
                 value={notificationTitle}
                 onChange={(event) => setNotificationTitle(event.target.value)}
                 maxLength={160}
@@ -352,7 +356,7 @@ export function AdminOverduePage() {
             {(p) => (
               <textarea
                 {...p}
-                className="field-simple-sre"
+                className={FIELD_TEXTAREA_CLASS}
                 rows={7}
                 value={messageTemplate}
                 onChange={(event) => setMessageTemplate(event.target.value)}

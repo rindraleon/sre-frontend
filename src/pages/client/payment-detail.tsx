@@ -1,18 +1,36 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, FileCheck2, RefreshCw, TimerReset, XCircle } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { StatusBadge, PageHeader, EmptyState, ConfirmDialog } from "@/components/ui";
-import { formatMoney, formatDate } from "@/utils/format";
-import { downloadPdfApi } from "@/services/api-client";
-import { cancelPaymentApi, getPaymentApi } from "@/services/api-payments";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  ConfirmDialog,
+  DECISION_REASON_CLASS,
+  DETAILS_LIST_CLASS,
+  EmptyState,
+  FORM_ACTIONS_CLASS,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_DETAIL_AMOUNT_CLASS,
+  PAYMENT_DETAIL_GRID_CLASS,
+  PageHeader,
+  StatusBadge,
+  TAX_NOTE_CLASS,
+  VERTICAL_HISTORY_ACTIVE_CLASS,
+  VERTICAL_HISTORY_CLASS,
+  buttonVariants,
+} from "@/components";
+import { formatMoney, formatDate, cn } from "@/utils";
+import { downloadPdfApi } from "@/services/documents";
 import {
   PaymentReceiptCard,
   PaymentStatusTrack,
   buildReceiptData,
-} from "@/components/payments/payment-receipt";
-import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+} from "@/components/PaymentsComponents";
+import { PAYMENT_STATUS_LABELS } from "@/data";
+import { cancelPaymentApi, getPaymentApi } from "@/services/payments";
 import type { Payment } from "@/types";
 
 export function ClientPaymentDetailPage() {
@@ -40,8 +58,8 @@ export function ClientPaymentDetailPage() {
           ? current.payments.map((entry) => (entry.id === fresh.id ? fresh : entry))
           : [fresh, ...current.payments],
       }));
-    } catch {
-      // Le détail en cache reste affiché ; l'utilisateur peut relancer la vérification.
+    } catch (cause) {
+      console.error("Actualisation du suivi de paiement impossible.", cause);
       notify("Le suivi n’a pas pu être actualisé. Vérifiez votre connexion.", "warning");
     } finally {
       setIsRefreshing(false);
@@ -54,13 +72,13 @@ export function ClientPaymentDetailPage() {
 
   if (!payment)
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader title="Paiement introuvable" breadcrumb={["Accueil", "Historique"]} />
         <EmptyState
           title="Cette déclaration n’est pas accessible"
           description="Elle n’existe pas ou ne fait pas partie de votre espace contribuable."
           action={
-            <Link className="button-sre button-sre--outline" to="/client/paiements">
+            <Link className={buttonVariants({ variant: "outline" })} to="/client/paiements">
               <ArrowLeft size={14} /> Retour à l’historique
             </Link>
           }
@@ -75,7 +93,8 @@ export function ClientPaymentDetailPage() {
     ownTaxpayer?.email ||
     "Contribuable";
   const matchingDocument = state.paymentDocuments.find(
-    (doc) => doc.paymentId === payment.id && doc.type === "RECU_PAIEMENT" && doc.status === "VALIDE",
+    (doc) =>
+      doc.paymentId === payment.id && doc.type === "RECU_PAIEMENT" && doc.status === "VALIDE",
   );
   const receipt = buildReceiptData(payment, taxpayerName, matchingDocument, ownTaxpayer);
   const obligation = payment.obligationId
@@ -88,7 +107,8 @@ export function ClientPaymentDetailPage() {
     try {
       await downloadPdfApi(payment.receipt.id, session.apiToken, payment.receipt.number);
       notify("Reçu téléchargé.", "success");
-    } catch {
+    } catch (cause) {
+      console.error("Téléchargement du reçu impossible.", cause);
       notify("Le reçu n’a pas pu être téléchargé. Réessayez.", "error");
     } finally {
       setIsDownloading(false);
@@ -107,7 +127,8 @@ export function ClientPaymentDetailPage() {
         payments: current.payments.map((entry) => (entry.id === updated.id ? updated : entry)),
       }));
       notify("Déclaration annulée. Aucun reçu n’a été émis.", "info");
-    } catch {
+    } catch (cause) {
+      console.error("Annulation du paiement impossible.", cause);
       notify("L’annulation n’a pas été acceptée par le serveur.", "error");
     } finally {
       setIsCancelling(false);
@@ -117,22 +138,22 @@ export function ClientPaymentDetailPage() {
   const canCancel = payment.status === "EN_ATTENTE" || payment.status === "ECHEC";
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Suivi du paiement"
         description={`Référence ${payment.internalReference} · ${payment.taxTypeName}`}
         breadcrumb={["Accueil", "Historique des paiements", payment.internalReference]}
         actions={
           <>
-            <button
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void refresh()}
               disabled={isRefreshing}
             >
               <RefreshCw size={14} /> {isRefreshing ? "Actualisation…" : "Actualiser"}
-            </button>
-            <Link className="button-sre button-sre--outline" to="/client/paiements">
+            </Button>
+            <Link className={buttonVariants({ variant: "outline" })} to="/client/paiements">
               <ArrowLeft size={14} /> Historique
             </Link>
           </>
@@ -149,7 +170,7 @@ export function ClientPaymentDetailPage() {
           />
         </div>
       ) : (
-        <div className="tax-note-sre" style={{ marginTop: 14 }}>
+        <div className={TAX_NOTE_CLASS} style={{ marginTop: 14 }}>
           <TimerReset size={15} />
           <p>
             <strong>Aucun reçu définitif pour l’instant.</strong> Statut actuel :{" "}
@@ -159,16 +180,16 @@ export function ClientPaymentDetailPage() {
           </p>
         </div>
       )}
-      <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
-        <section className="card-sre">
-          <div className="card-sre__header">
+      <div className={cn(PAYMENT_DETAIL_GRID_CLASS, "print:hidden")} style={{ marginTop: 14 }}>
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Déclaration</h2>
               <p>Éléments transmis au service des recettes</p>
             </div>
             <StatusBadge status={payment.status} />
           </div>
-          <div className="payment-detail-amount-sre">
+          <div className={PAYMENT_DETAIL_AMOUNT_CLASS}>
             <span>Montant déclaré</span>
             <strong>{formatMoney(payment.amount)}</strong>
             <small>
@@ -177,7 +198,7 @@ export function ClientPaymentDetailPage() {
                 : "Déclaration autonome (sans obligation préalable)"}
             </small>
           </div>
-          <dl className="details-list-sre">
+          <dl className={DETAILS_LIST_CLASS}>
             <div>
               <dt>Nature d’impôt</dt>
               <dd>{payment.taxTypeName}</dd>
@@ -226,13 +247,13 @@ export function ClientPaymentDetailPage() {
             )}
           </dl>
           {payment.failureReason && (
-            <div className="decision-reason-sre">
+            <div className={DECISION_REASON_CLASS}>
               <strong>Motif de l’échec</strong>
               <p>{payment.failureReason}</p>
             </div>
           )}
           {payment.rejectionReason && (
-            <div className="decision-reason-sre">
+            <div className={DECISION_REASON_CLASS}>
               <strong>
                 {payment.status === "REJETE" ? "Motif de rejet" : "Correction demandée"}
               </strong>
@@ -240,32 +261,32 @@ export function ClientPaymentDetailPage() {
             </div>
           )}
           {canCancel && (
-            <div className="form-actions-sre">
-              <button
+            <div className={cn(FORM_ACTIONS_CLASS)}>
+              <Button
                 type="button"
-                className="button-sre button-sre--outline"
+                variant="outline"
                 onClick={() => setConfirmCancel(true)}
                 disabled={isCancelling}
               >
                 <XCircle size={14} /> {isCancelling ? "Annulation…" : "Annuler cette déclaration"}
-              </button>
+              </Button>
             </div>
           )}
         </section>
-        <section className="card-sre">
-          <div className="card-sre__header">
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Historique</h2>
               <p>Étapes enregistrées par le serveur</p>
             </div>
             <FileCheck2 size={17} />
           </div>
-          <ol className="vertical-history-sre">
+          <ol className={VERTICAL_HISTORY_CLASS}>
             {payment.history.map((step, index) => (
               <li key={`${step.date}-${index}`}>
                 <i
                   className={
-                    index === payment.history.length - 1 ? "vertical-history-sre__active" : ""
+                    index === payment.history.length - 1 ? VERTICAL_HISTORY_ACTIVE_CLASS : undefined
                   }
                 />
                 <div>
@@ -280,7 +301,7 @@ export function ClientPaymentDetailPage() {
             ))}
           </ol>
           {obligation && (
-            <div className="tax-note-sre">
+            <div className={TAX_NOTE_CLASS}>
               <span>i</span>
               <p>
                 Obligation rattachée :{" "}

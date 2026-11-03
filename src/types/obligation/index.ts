@@ -1,1 +1,1 @@
-export * from "./obligation.types";
+export * from "@/types/obligation/obligation.types";

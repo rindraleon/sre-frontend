@@ -1,9 +1,8 @@
 import { type ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
-/** shadcn/ui modal (Radix Dialog): trapped focus, Escape, outside click, focus return. */
 export function Modal({
   open,
   title,
@@ -21,7 +20,6 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   width?: "standard" | "large";
-  /** Prevents Escape, outside click and explicit close during a mutation. */
   disableClose?: boolean;
 }>) {
   return (

@@ -1,3 +1,40 @@
+import {
+  PUBLIC_HEADER_CLASS,
+  PUBLIC_LEGAL_ALERT_CLASS,
+  PUBLIC_LEGAL_ALERT_ICON_CLASS,
+  PUBLIC_LEGAL_BODY_CLASS,
+  PUBLIC_LEGAL_BREADCRUMB_CLASS,
+  PUBLIC_LEGAL_CARD_CLASS,
+  PUBLIC_LEGAL_CARD_DECOR_CLASS,
+  PUBLIC_LEGAL_CARD_ICON_CLASS,
+  PUBLIC_LEGAL_CONTENT_CLASS,
+  PUBLIC_LEGAL_DEFINITIONS_CLASS,
+  PUBLIC_LEGAL_GRID_CLASS,
+  PUBLIC_LEGAL_HEADER_CLASS,
+  PUBLIC_LEGAL_HERO_CLASS,
+  PUBLIC_LEGAL_HERO_LEAD_CLASS,
+  PUBLIC_LEGAL_HERO_TEXT_CLASS,
+  PUBLIC_LEGAL_LIST_CLASS,
+  PUBLIC_LEGAL_NAV_CLASS,
+  PUBLIC_LEGAL_NAV_LINK_CLASS,
+  PUBLIC_LEGAL_NOTE_CLASS,
+  PUBLIC_LEGAL_OVERLINE_CLASS,
+  PUBLIC_LEGAL_PLACE_CLASS,
+  PUBLIC_LEGAL_SECTION_CLASS,
+  PUBLIC_LEGAL_SECTION_NUMBER_CLASS,
+  PUBLIC_LEGAL_SOURCE_LINKS_CLASS,
+  PUBLIC_LEGAL_SOURCE_LINK_CLASS,
+  PUBLIC_LEGAL_SUMMARY_CLASS,
+  PUBLIC_LEGAL_SUMMARY_HELP_CLASS,
+  PUBLIC_LEGAL_SUMMARY_LINK_CLASS,
+  PUBLIC_LEGAL_SUMMARY_TITLE_CLASS,
+  PUBLIC_LEGAL_TEXT_CLASS,
+  PUBLIC_SITE_CLASS,
+  REVEAL_CLASS,
+  REVEAL_UP_CLASS,
+  REVEAL_LEFT_CLASS,
+  buttonVariants,
+} from "@/components";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -10,10 +47,11 @@ import {
   UserRoundCheck,
   type LucideIcon,
 } from "lucide-react";
-import { SRE_REGION } from "@/utils/constants";
-import { PublicBrand } from "@/components/public/public-brand";
-import { PublicFooter } from "@/components/public/public-footer";
-import { PublicThemeToggle } from "@/components/public/public-theme-toggle";
+import { SRE_REGION } from "@/data";
+import { cn } from "@/utils";
+import { PublicBrand } from "@/components/PublicSiteComponents";
+import { PublicFooter } from "@/components/PublicSiteComponents";
+import { PublicThemeToggle } from "@/components/PublicSiteComponents";
 import { useHeaderHeight, useReveal } from "@/hooks";
 
 const SOURCE_DGI = "https://portal.impots.mg/textes/";
@@ -57,64 +95,81 @@ function PublicLegalShell({
   }, [title]);
 
   return (
-    <div className="public-site-sre public-legal-site-sre">
-      <header className="public-header-sre public-legal-header-sre" ref={header}>
+    <div className={PUBLIC_SITE_CLASS}>
+      <header className={`${PUBLIC_HEADER_CLASS} ${PUBLIC_LEGAL_HEADER_CLASS}`} ref={header}>
         <PublicBrand subtitle={SRE_REGION} />
-        <nav className="legal-navigation-sre" aria-label="Navigation du portail">
-          <a href="/accueil#contact">Contact</a>
+        <nav className={PUBLIC_LEGAL_NAV_CLASS} aria-label="Navigation du portail">
+          <a className={PUBLIC_LEGAL_NAV_LINK_CLASS} href="/accueil#contact">
+            Contact
+          </a>
           <PublicThemeToggle />
-          <Link className="button-sre button-sre--outline button-sre--small" to="/connexion">
+          <Link className={buttonVariants({ variant: "outline", size: "small" })} to="/connexion">
             Connexion
           </Link>
         </nav>
       </header>
 
-      <main className="legal-content-sre">
-        <nav className="legal-breadcrumb-sre" aria-label="Fil d’Ariane">
-          <Link to="/accueil">Accueil</Link>
+      <main className={PUBLIC_LEGAL_CONTENT_CLASS}>
+        <nav className={PUBLIC_LEGAL_BREADCRUMB_CLASS} aria-label="Fil d’Ariane">
+          <Link className="hover:text-pub-accent" to="/accueil">
+            Accueil
+          </Link>
           <span aria-hidden="true">/</span>
-          <span aria-current="page">{title}</span>
+          <span className="text-pub-body" aria-current="page">
+            {title}
+          </span>
         </nav>
 
-        <section className="legal-hero-sre" data-reveal="gauche">
-          <div className="legal-hero-sre__text">
-            <span className="legal-overline-sre">{overline}</span>
+        <section
+          className={cn(PUBLIC_LEGAL_HERO_CLASS, REVEAL_CLASS, REVEAL_LEFT_CLASS)}
+          data-reveal="gauche"
+        >
+          <div className={PUBLIC_LEGAL_HERO_TEXT_CLASS}>
+            <span className={PUBLIC_LEGAL_OVERLINE_CLASS}>{overline}</span>
             <h1>{title}</h1>
-            <p>{introduction}</p>
-            <span className="legal-hero-sre__place">
+            <p className={PUBLIC_LEGAL_HERO_LEAD_CLASS}>{introduction}</p>
+            <span className={PUBLIC_LEGAL_PLACE_CLASS}>
               <Building2 size={15} aria-hidden="true" /> SRE · {SRE_REGION} · Madagascar
             </span>
           </div>
-          <div className="legal-card-sre" aria-label={cardLabel}>
-            <span className="legal-card-sre__icon">
+          <div className={PUBLIC_LEGAL_CARD_CLASS} aria-label={cardLabel}>
+            <span className={PUBLIC_LEGAL_CARD_ICON_CLASS}>
               <Icon size={25} aria-hidden="true" />
             </span>
             <strong>{cardLabel}</strong>
             <small>Informations publiques du portail SRE</small>
-            <span className="legal-card-sre__decor" aria-hidden="true" />
+            <span className={PUBLIC_LEGAL_CARD_DECOR_CLASS} aria-hidden="true" />
           </div>
         </section>
 
-        <div className="legal-grid-sre">
-          <aside className="legal-summary-sre">
-            <div className="legal-summary-sre__inner">
-              <span className="legal-summary-sre__title">Sur cette page</span>
+        <div className={PUBLIC_LEGAL_GRID_CLASS}>
+          <aside>
+            <div className={PUBLIC_LEGAL_SUMMARY_CLASS}>
+              <span className={PUBLIC_LEGAL_SUMMARY_TITLE_CLASS}>Sur cette page</span>
               {sections.map((section) => (
-                <a key={section.id} href={`#${section.id}`}>
+                <a
+                  key={section.id}
+                  className={PUBLIC_LEGAL_SUMMARY_LINK_CLASS}
+                  href={`#${section.id}`}
+                >
                   {section.label}
                 </a>
               ))}
-              <a className="legal-summary-sre__help" href="/accueil#contact">
+              <a className={PUBLIC_LEGAL_SUMMARY_HELP_CLASS} href="/accueil#contact">
                 Poser une question <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             </div>
           </aside>
 
-          <article className="legal-text-sre">{children}</article>
+          <article className={PUBLIC_LEGAL_TEXT_CLASS}>{children}</article>
         </div>
 
-        <aside className="legal-alert-sre" role="note" data-reveal>
-          <span className="legal-alert-sre__icon">
+        <aside
+          className={cn(PUBLIC_LEGAL_ALERT_CLASS, REVEAL_CLASS, REVEAL_UP_CLASS)}
+          role="note"
+          data-reveal
+        >
+          <span className={PUBLIC_LEGAL_ALERT_ICON_CLASS}>
             <ShieldCheck size={19} aria-hidden="true" />
           </span>
           <div>
@@ -136,11 +191,15 @@ function LegalSection({
   children,
 }: Readonly<{ id: string; number: string; title: string; children: ReactNode }>) {
   return (
-    <section className="legal-text-section-sre" id={id} data-reveal>
-      <span className="legal-text-section-sre__number">{number}</span>
+    <section
+      className={cn(PUBLIC_LEGAL_SECTION_CLASS, REVEAL_CLASS, REVEAL_UP_CLASS)}
+      id={id}
+      data-reveal
+    >
+      <span className={PUBLIC_LEGAL_SECTION_NUMBER_CLASS}>{number}</span>
       <div>
         <h2>{title}</h2>
-        <div className="legal-text-section-sre__body">{children}</div>
+        <div className={PUBLIC_LEGAL_BODY_CLASS}>{children}</div>
       </div>
     </section>
   );
@@ -173,7 +232,7 @@ export function LegalNoticePage() {
           de l’autorité éditrice doit être confirmée par le service responsable avant la mise en
           ligne définitive.
         </p>
-        <dl className="legal-definitions-sre">
+        <dl className={PUBLIC_LEGAL_DEFINITIONS_CLASS}>
           <div>
             <dt>Service présenté</dt>
             <dd>SRE · {SRE_REGION}</dd>
@@ -198,7 +257,7 @@ export function LegalNoticePage() {
           cette page. Ces renseignements doivent être publiés après validation par l’administration
           et l’équipe technique.
         </p>
-        <div className="legal-note-sre">
+        <div className={PUBLIC_LEGAL_NOTE_CLASS}>
           <LockKeyhole size={17} aria-hidden="true" />
           <span>
             Aucun nom d’hébergeur, aucune adresse physique et aucune adresse électronique directe ne
@@ -225,11 +284,21 @@ export function LegalNoticePage() {
           taux et échéances sont susceptibles d’évoluer. Pour toute vérification, consultez les
           publications de la Direction générale des impôts.
         </p>
-        <div className="legal-source-links-sre">
-          <a href={SOURCE_DGI} target="_blank" rel="noreferrer">
+        <div className={PUBLIC_LEGAL_SOURCE_LINKS_CLASS}>
+          <a
+            className={PUBLIC_LEGAL_SOURCE_LINK_CLASS}
+            href={SOURCE_DGI}
+            target="_blank"
+            rel="noreferrer"
+          >
             Recueil des textes de la DGI <ArrowUpRight size={14} aria-hidden="true" />
           </a>
-          <a href="https://portal.impots.mg/" target="_blank" rel="noreferrer">
+          <a
+            className={PUBLIC_LEGAL_SOURCE_LINK_CLASS}
+            href="https://portal.impots.mg/"
+            target="_blank"
+            rel="noreferrer"
+          >
             Portail de la Direction générale des impôts{" "}
             <ArrowUpRight size={14} aria-hidden="true" />
           </a>
@@ -288,7 +357,7 @@ export function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection id="donnees" number="02" title="Données concernées">
-        <ul className="legal-list-sre">
+        <ul className={PUBLIC_LEGAL_LIST_CLASS}>
           <li>
             <strong>Compte et profil :</strong> nom, prénom ou raison sociale, adresse électronique,
             téléphone, adresse et ville, région, ainsi que les identifiants fiscaux ou
@@ -313,7 +382,7 @@ export function PrivacyPolicyPage() {
 
       <LegalSection id="finalites" number="03" title="Utilisation des données">
         <p>Les données sont utilisées, selon les fonctionnalités activées, pour :</p>
-        <ul className="legal-list-sre">
+        <ul className={PUBLIC_LEGAL_LIST_CLASS}>
           <li>créer et gérer les accès aux espaces du portail ;</li>
           <li>présenter à chaque compte les informations de dossier qui lui sont rattachées ;</li>
           <li>recevoir et faire examiner les déclarations adressées à l’administration ;</li>
@@ -376,7 +445,8 @@ export function PrivacyPolicyPage() {
           responsable devront être complétées afin de permettre une demande directe.
         </p>
         <a
-          className="data-law-link-sre"
+          className={cn(PUBLIC_LEGAL_SOURCE_LINK_CLASS, "mt-2")}
+          data-law-link=""
           href={DATA_LAW_SOURCE}
           target="_blank"
           rel="noreferrer"
@@ -397,7 +467,7 @@ export function PrivacyPolicyPage() {
           public audité. Cette information devra être revue si de nouveaux outils ou intégrations
           sont ajoutés au portail.
         </p>
-        <div className="legal-note-sre">
+        <div className={PUBLIC_LEGAL_NOTE_CLASS}>
           <ClipboardList size={17} aria-hidden="true" />
           <span>
             Pour une question ou une demande relative à vos données, vous pouvez utiliser le

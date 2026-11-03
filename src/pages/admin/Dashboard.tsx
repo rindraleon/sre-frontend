@@ -1,3 +1,4 @@
+import { cn } from "@/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -11,14 +12,34 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, StatusBadge, EmptyState } from "@/components/ui";
-import { Select } from "@/components/ui/select";
-import { ROUTES_ADMIN } from "@/constants";
-import { loadStatisticsApi } from "@/services/api-payments";
-import { formatMoney, formatDate } from "@/utils/format";
-import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  CHART_BARS_CLASS,
+  CHART_BAR_ROW_CLASS,
+  CHART_BAR_TRACK_CLASS,
+  EmptyState,
+  INLINE_LOADER_CLASS,
+  KPI_CLASS,
+  KPI_CONFIRMED_CLASS,
+  KPI_GRID_CLASS,
+  MINI_LIST_CLASS,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_DETAIL_GRID_CLASS,
+  PageHeader,
+  SECURITY_ALERT_BANNER_CLASS,
+  Select,
+  StatusBadge,
+  TEXT_HELP_CLASS,
+  buttonVariants,
+} from "@/components";
+import { ROUTES_ADMIN } from "@/data";
+import { PAYMENT_STATUS_LABELS } from "@/data";
+import { loadStatisticsApi } from "@/services/payments";
+import { formatMoney, formatDate } from "@/utils";
 import type { Statistics } from "@/types";
 
 const GRANULARITIES = [
@@ -36,13 +57,13 @@ function ChartBars({
   emptyLabel: string;
 }>) {
   const max = Math.max(...rows.map((row) => row.value), 1);
-  if (!rows.length) return <p className="text-help-sre">{emptyLabel}</p>;
+  if (!rows.length) return <p className={TEXT_HELP_CLASS}>{emptyLabel}</p>;
   return (
-    <div className="chart-bars-sre">
+    <div className={CHART_BARS_CLASS}>
       {rows.map((row) => (
-        <div className="chart-bars-sre__row" key={row.label}>
+        <div className={CHART_BAR_ROW_CLASS} key={row.label}>
           <span title={row.label}>{row.label}</span>
-          <span className="chart-bars-sre__track">
+          <span className={CHART_BAR_TRACK_CLASS}>
             <i style={{ width: `${Math.max(2, Math.round((row.value / max) * 100))}%` }} />
           </span>
           <strong>{row.display}</strong>
@@ -66,7 +87,8 @@ export function AdminDashboardPage() {
     setError("");
     try {
       setStats(await loadStatisticsApi(session.apiToken, { granularite: granularity }));
-    } catch {
+    } catch (cause) {
+      console.error("Statistiques du tableau de bord indisponibles.", cause);
       setError("Les statistiques ne sont pas disponibles pour le moment.");
     } finally {
       setIsLoading(false);
@@ -102,7 +124,7 @@ export function AdminDashboardPage() {
   );
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Tableau de bord"
         description={`Indicateurs calculés sur les paiements réellement enregistrés · périmètre ${stats?.perimetre ?? "régional"} · généré le ${stats ? formatDate(stats.genereLe, true) : "—"}. Les montants confirmés sont distingués des montants déclarés.`}
@@ -111,9 +133,7 @@ export function AdminDashboardPage() {
           <>
             <Select
               value={granularity}
-              onChange={(event) =>
-                setGranularity(event.target.value as typeof granularity)
-              }
+              onChange={(event) => setGranularity(event.target.value as typeof granularity)}
               aria-label="Granularité de l’évolution"
             >
               {GRANULARITIES.map((entry) => (
@@ -122,15 +142,15 @@ export function AdminDashboardPage() {
                 </option>
               ))}
             </Select>
-            <button
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void load()}
               disabled={isLoading}
             >
               <RefreshCw size={14} /> Actualiser
-            </button>
-            <Link className="button-sre button-sre--primary" to={ROUTES_ADMIN.reports}>
+            </Button>
+            <Link className={buttonVariants({ variant: "primary" })} to={ROUTES_ADMIN.reports}>
               <FileSpreadsheet size={14} /> Rapports
             </Link>
           </>
@@ -138,7 +158,7 @@ export function AdminDashboardPage() {
       />
 
       {error && (
-        <div className="security-alert-banner-sre" role="alert" style={{ marginBottom: 12 }}>
+        <div className={SECURITY_ALERT_BANNER_CLASS} role="alert" style={{ marginBottom: 12 }}>
           <AlertTriangle size={16} />
           <div>
             <strong>Statistiques indisponibles</strong>
@@ -148,7 +168,7 @@ export function AdminDashboardPage() {
       )}
 
       {isLoading && !stats ? (
-        <div className="inline-loader-sre">
+        <div className={INLINE_LOADER_CLASS}>
           <i /> Calcul des indicateurs depuis la base de données…
         </div>
       ) : !stats || !indicators ? (
@@ -158,29 +178,29 @@ export function AdminDashboardPage() {
         />
       ) : (
         <>
-          <div className="kpi-grid-sre">
-            <div className="kpi-sre is-confirmed">
+          <div className={KPI_GRID_CLASS}>
+            <div className={KPI_CONFIRMED_CLASS}>
               <span>
                 <BadgeCheck size={13} /> Montant confirmé
               </span>
               <strong>{formatMoney(indicators.montantConfirme)}</strong>
               <small>{indicators.nombrePaiementsConfirmes} paiement(s) confirmé(s)</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>
                 <WalletCards size={13} /> Total des paiements
               </span>
               <strong>{indicators.totalDeclarations}</strong>
               <small>{formatMoney(indicators.montantDeclareTotal)} déclarés</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>
                 <Clock3 size={13} /> En attente
               </span>
               <strong>{formatMoney(indicators.montantEnAttente)}</strong>
               <small>{indicators.nombreEnAttente} paiement(s) sans reçu</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>
                 <AlertTriangle size={13} /> Non aboutis
               </span>
@@ -190,7 +210,7 @@ export function AdminDashboardPage() {
                 {indicators.nombreEchecs} échec(s)
               </small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>
                 <Users size={13} /> Contribuables payeurs
               </span>
@@ -199,9 +219,9 @@ export function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
-            <section className="card-sre">
-              <div className="card-sre__header">
+          <div className={cn(PAYMENT_DETAIL_GRID_CLASS, "print:hidden")} style={{ marginTop: 14 }}>
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Répartition par nature d’impôt</h2>
                   <p>Montants confirmés</p>
@@ -210,8 +230,8 @@ export function AdminDashboardPage() {
               </div>
               <ChartBars rows={byNature} emptyLabel="Aucun paiement confirmé par nature." />
             </section>
-            <section className="card-sre">
-              <div className="card-sre__header">
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Répartition par statut</h2>
                   <p>Toutes déclarations de la période</p>
@@ -229,9 +249,9 @@ export function AdminDashboardPage() {
             </section>
           </div>
 
-          <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
-            <section className="card-sre">
-              <div className="card-sre__header">
+          <div className={cn(PAYMENT_DETAIL_GRID_CLASS, "print:hidden")} style={{ marginTop: 14 }}>
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Évolution ({GRANULARITIES.find((g) => g.value === granularity)?.label})</h2>
                   <p>Montants confirmés par période</p>
@@ -239,14 +259,14 @@ export function AdminDashboardPage() {
               </div>
               <ChartBars rows={evolutionRows} emptyLabel="Aucune période à afficher." />
             </section>
-            <section className="card-sre">
-              <div className="card-sre__header">
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Principaux contribuables</h2>
                   <p>Montants confirmés (10 premiers)</p>
                 </div>
               </div>
-              <ul className="mini-list-sre">
+              <ul className={MINI_LIST_CLASS}>
                 {(stats.principauxContribuables ?? []).map((row) => (
                   <li key={row.id}>
                     <span>
@@ -271,17 +291,17 @@ export function AdminDashboardPage() {
             </section>
           </div>
 
-          <section className="card-sre" style={{ marginTop: 14 }}>
-            <div className="card-sre__header">
+          <section className={CARD_CLASS} style={{ marginTop: 14 }}>
+            <div className={CARD_HEADER_CLASS}>
               <div>
                 <h2>Transactions à suivre</h2>
                 <p>Déclarations sans reçu définitif : en attente, échec, annulation ou rejet</p>
               </div>
-              <Link className="button-sre button-sre--outline" to={ROUTES_ADMIN.payments}>
+              <Link className={buttonVariants({ variant: "outline" })} to={ROUTES_ADMIN.payments}>
                 Voir tous les paiements
               </Link>
             </div>
-            <ul className="mini-list-sre">
+            <ul className={MINI_LIST_CLASS}>
               {(stats.aSuivre ?? []).map((row) => (
                 <li key={row.id}>
                   <span>

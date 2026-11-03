@@ -1,0 +1,11 @@
+export { ClientDashboardPage } from "@/pages/client/dashboard";
+export { ClientDocumentDetailPage } from "@/pages/client/document-detail";
+export { ClientDocumentsPage } from "@/pages/client/documents";
+export { ClientNewPaymentPage } from "@/pages/client/new-payment";
+export { ClientNotificationsPage } from "@/pages/client/notifications";
+export { ClientObligationDetailPage } from "@/pages/client/obligation-detail";
+export { ClientObligationsPage } from "@/pages/client/obligations";
+export { ClientPaymentDetailPage } from "@/pages/client/payment-detail";
+export { ClientPaymentsPage } from "@/pages/client/payments";
+export { ClientProfilePage } from "@/pages/client/profile";
+export { ClientSettingsPage } from "@/pages/client/settings";

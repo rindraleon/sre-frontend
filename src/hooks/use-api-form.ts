@@ -9,7 +9,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import type { ZodType } from "zod";
-import { applyApiErrors, apiErrorMessage } from "@/validation/apiErrors";
+import { applyApiErrors, apiErrorMessage } from "@/services/api";
 
 export type UseApiFormResult<T extends FieldValues> = UseFormReturn<T> & {
   errors: FieldErrors<T>;

@@ -1,20 +1,27 @@
-import { Select } from "@/components/ui/select";
+import {
+  ATTENTION_TEXT_CLASS,
+  Button,
+  COMPACT_FILTER_CLASS,
+  ConfirmDialog,
+  DataTable,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  ROW_AVATAR_CLASS,
+  SECONDARY_TEXT_CLASS,
+  SUCCESS_TEXT_CLASS,
+  Select,
+  StatusBadge,
+  TABLE_IDENTITY_LINK_CLASS,
+  toTanstackColumns,
+  type TableColumn,
+} from "@/components";
 import { useMemo, useState } from "react";
 import { KeyRound, UserRoundCog } from "lucide-react";
 import type { AppUser } from "@/types";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { callApi, mapApiUser, type ApiUser } from "@/services/api-client";
-import {
-  StatusBadge,
-  Button,
-  ConfirmDialog,
-  PageHeader,
-  DataTable,
-  toTanstackColumns,
-  type TableColumn,
-} from "@/components/ui";
-import { formatDate } from "@/utils/format";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { formatDate } from "@/utils";
+import { updateUserStatusApi } from "@/services/user";
 
 export function AdminUsersPage() {
   const { state, updateState, notify } = useSre();
@@ -36,8 +43,8 @@ export function AdminUsersPage() {
       id: "compte",
       title: "Utilisateur",
       render: (account) => (
-        <div className="table-identity-link-sre">
-          <span className="row-avatar-sre">
+        <div className={TABLE_IDENTITY_LINK_CLASS}>
+          <span className={ROW_AVATAR_CLASS}>
             <UserRoundCog size={15} />
           </span>
           <span>
@@ -65,11 +72,11 @@ export function AdminUsersPage() {
       title: "Sécurité",
       render: (account) =>
         account.mustChangePassword ? (
-          <span className="attention-text-sre">
+          <span className={ATTENTION_TEXT_CLASS}>
             <KeyRound size={13} /> Changement requis
           </span>
         ) : (
-          <span className="success-text-sre">Mot de passe défini</span>
+          <span className={SUCCESS_TEXT_CLASS}>Mot de passe défini</span>
         ),
     },
     {
@@ -89,7 +96,7 @@ export function AdminUsersPage() {
       title: "Action",
       render: (account) =>
         account.id === session?.userId ? (
-          <span className="secondary-text-sre">Session actuelle</span>
+          <span className={SECONDARY_TEXT_CLASS}>Session actuelle</span>
         ) : (
           <Button
             size="small"
@@ -108,11 +115,7 @@ export function AdminUsersPage() {
     setErrorAction("");
     setProcessing(true);
     try {
-      const response = await callApi<ApiUser>(
-        `utilisateurs/${encodeURIComponent(accountTarget.id)}/statut`,
-        { method: "PATCH", token: session.apiToken, body: { statut: status } },
-      );
-      const userUpdated = mapApiUser(response);
+      const userUpdated = await updateUserStatusApi(session.apiToken, accountTarget.id, status);
       updateState((current) => ({
         ...current,
         users: current.users.map((account) =>
@@ -143,7 +146,7 @@ export function AdminUsersPage() {
 
   const reactivate = accountTarget?.status !== "ACTIF";
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Comptes utilisateurs"
         description="Consultez les comptes et gérez leur statut d’accès."
@@ -159,7 +162,7 @@ export function AdminUsersPage() {
         searchValue={search}
         onSearchChange={setSearch}
         toolbarActions={
-          <label className="compact-filter-sre">
+          <label className={COMPACT_FILTER_CLASS}>
             Rôle
             <Select
               value={roleFilter}

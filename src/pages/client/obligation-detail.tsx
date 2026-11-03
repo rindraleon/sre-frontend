@@ -1,9 +1,23 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CalendarDays, CircleDollarSign } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { StatusBadge, PageHeader, EmptyState } from "@/components/ui";
-import { formatMoney, formatDate } from "@/utils/format";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  ACTION_LINK_CLASS,
+  CARD_CLASS,
+  DETAILS_LIST_CLASS,
+  DETAIL_GRID_CLASS,
+  EmptyState,
+  OBLIGATION_AMOUNT_CARD_CLASS,
+  OVERLINE_CLASS,
+  PAGE_BOTTOM_ACTIONS_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  StatusBadge,
+  TAX_NOTE_CLASS,
+  buttonVariants,
+} from "@/components";
+import { formatMoney, formatDate, cn } from "@/utils";
 
 export function ClientObligationDetailPage() {
   const { id } = useParams();
@@ -15,13 +29,13 @@ export function ClientObligationDetailPage() {
 
   if (!obligation) {
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader title="Obligation introuvable" breadcrumb={["Accueil", "Mes impôts"]} />
         <EmptyState
           title="Cette obligation n’est pas accessible"
           description="Elle n’existe pas ou ne fait pas partie des données de votre compte."
           action={
-            <Link className="button-sre button-sre--outline" to="/client/obligations">
+            <Link className={buttonVariants({ variant: "outline" })} to="/client/obligations">
               <ArrowLeft size={15} /> Retour aux obligations
             </Link>
           }
@@ -32,27 +46,27 @@ export function ClientObligationDetailPage() {
 
   const type = state.taxTypes.find((entry) => entry.id === obligation.taxTypeId);
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title={obligation.taxTypeName}
         description={`Référence ${obligation.taxReference}`}
         breadcrumb={["Accueil", "Mes impôts", obligation.taxReference]}
         actions={
-          <Link className="button-sre button-sre--outline" to="/client/obligations">
+          <Link className={buttonVariants({ variant: "outline" })} to="/client/obligations">
             <ArrowLeft size={15} /> Retour
           </Link>
         }
       />
-      <section className="obligation-detail-grid-sre">
-        <article className="card-sre obligation-amount-card-sre">
-          <span className="overline-sre">MONTANT ENREGISTRÉ · MGA</span>
+      <section className={DETAIL_GRID_CLASS}>
+        <article className={cn(CARD_CLASS, OBLIGATION_AMOUNT_CARD_CLASS)}>
+          <span className={OVERLINE_CLASS}>MONTANT ENREGISTRÉ · MGA</span>
           <strong>{formatMoney(obligation.amount)}</strong>
           <StatusBadge status={obligation.status} />
           <small>Valeur transmise par le serveur</small>
         </article>
-        <article className="card-sre">
+        <article className={CARD_CLASS}>
           <h2>Détails de l’obligation</h2>
-          <dl className="details-list-sre">
+          <dl className={DETAILS_LIST_CLASS}>
             <div>
               <dt>Catégorie</dt>
               <dd>{type?.category || "Non renseignée"}</dd>
@@ -82,7 +96,7 @@ export function ClientObligationDetailPage() {
           </dl>
         </article>
       </section>
-      <section className="tax-note-sre">
+      <section className={TAX_NOTE_CLASS}>
         <span>i</span>
         <p>
           <strong>À noter :</strong> les données affichées reflètent les informations enregistrées
@@ -91,14 +105,14 @@ export function ClientObligationDetailPage() {
         </p>
       </section>
       {obligation.status !== "PAYE" && (
-        <div className="page-bottom-actions-sre">
+        <div className={PAGE_BOTTOM_ACTIONS_CLASS}>
           <Link
-            className="button-sre button-sre--primary"
+            className={buttonVariants({ variant: "primary" })}
             to={`/client/paiements/nouveau?obligationId=${encodeURIComponent(obligation.id)}`}
           >
             <CircleDollarSign size={16} /> Déclarer une opération
           </Link>
-          <Link className="action-link-sre" to="/client/paiements">
+          <Link className={ACTION_LINK_CLASS} to="/client/paiements">
             Consulter l’historique <ArrowRight size={14} />
           </Link>
         </div>

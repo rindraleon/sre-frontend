@@ -1,6 +1,6 @@
 import { type LucideIcon } from "lucide-react";
 import { Card } from "./card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 const COLORS: Record<string, string> = {
   blue: "bg-sky-100 text-sky-700",
@@ -10,7 +10,6 @@ const COLORS: Record<string, string> = {
   red: "bg-red-100 text-red-700",
 };
 
-/** Statistics card built on the shadcn/ui Card. */
 export function StatCard({
   title,
   value,
@@ -26,9 +25,7 @@ export function StatCard({
 }>) {
   return (
     <Card className="flex items-center gap-3 p-4">
-      <span
-        className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-lg", COLORS[color])}
-      >
+      <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-lg", COLORS[color])}>
         <Icon size={18} aria-hidden="true" />
       </span>
       <div className="min-w-0">

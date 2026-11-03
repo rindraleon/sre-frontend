@@ -1,7 +1,7 @@
+import { ERROR_MESSAGE_CLASS } from "@/components";
 import { Button } from "./button";
 import { Modal } from "./modal";
 
-/** Confirmation for sensitive mutations; controls stay blocked while sending. */
 export function ConfirmDialog({
   open,
   title,
@@ -38,18 +38,14 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={closeIfAvailable} disabled={loading}>
             Annuler
           </Button>
-          <Button
-            variant={danger ? "danger" : "primary"}
-            onClick={confirm}
-            loading={loading}
-          >
+          <Button variant={danger ? "danger" : "primary"} onClick={confirm} loading={loading}>
             {loading ? "Traitement…" : confirmLabel}
           </Button>
         </>
       }
     >
       {error && (
-        <p className="error-message-sre" role="alert" aria-live="assertive">
+        <p className={ERROR_MESSAGE_CLASS} role="alert" aria-live="assertive">
           {error}
         </p>
       )}

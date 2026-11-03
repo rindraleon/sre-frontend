@@ -1,0 +1,18 @@
+export {
+  activateAccountApi,
+  changePasswordApi,
+  completeInitialSetupApi,
+  confirmEmailVerificationApi,
+  fetchCurrentUserApi,
+  getRegistrationStateApi,
+  loginApi,
+  lookupActivationApi,
+  registerApi,
+  requestEmailVerificationApi,
+  requestPasswordResetApi,
+  resetPasswordApi,
+  type ActivationInformation,
+  type PasswordUpdatePayload,
+  type RegistrationPayload,
+  type RegistrationState,
+} from "./auth.service";

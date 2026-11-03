@@ -18,8 +18,20 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
+import { cn } from "@/utils";
+import {
+  MENU_OVERLAY_CLASS,
+  NAV_BADGE_CLASS,
+  NAV_LINK_ACTIVE_CLASS,
+  NAV_LINK_CLASS,
+  SIDEBAR_BRAND_CLASS,
+  SIDEBAR_CLOSE_CLASS,
+  SIDEBAR_LABEL_CLASS,
+  SIDEBAR_NAV_CLASS,
+  sidebarClass,
+} from "@/components";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
 import { LogoSre } from "@/assets/icons/logo-sre";
 
 export interface MenuEntry {
@@ -71,16 +83,14 @@ export function Sidebar({
     (notification) =>
       !notification.isRead &&
       (isAdmin
-        ? notification.recipientRole === "ADMIN" ||
-          notification.userId === session.userId
+        ? notification.recipientRole === "ADMIN" || notification.userId === session.userId
         : notification.userId === session.userId),
   ).length;
   const underReview = state.payments.filter(
     (payment) => payment.status === "EN_VERIFICATION",
   ).length;
   const validReceived = state.paymentDocuments.filter(
-    (document) =>
-      document.taxpayerId === session.taxpayerId && document.status === "VALIDE",
+    (document) => document.taxpayerId === session.taxpayerId && document.status === "VALIDE",
   ).length;
   const countFor = (title: string) => {
     switch (title) {
@@ -99,17 +109,14 @@ export function Sidebar({
     <>
       {isMobileMenuOpen && (
         <button
-          className="menu-overlay-sre"
+          className={MENU_OVERLAY_CLASS}
           aria-label="Fermer la navigation"
           onClick={closeMobileMenu}
         />
       )}
-      <aside
-        className={`sidebar-sre ${isMobileMenuOpen ? "sidebar-sre--mobile" : ""}`}
-        aria-label="Barre latérale"
-      >
+      <aside className={sidebarClass(isMobileMenuOpen)} aria-label="Barre latérale">
         <Link
-          className="brand-sre"
+          className={SIDEBAR_BRAND_CLASS}
           to={isAdmin ? "/admin" : "/client"}
           onClick={closeMobileMenu}
         >
@@ -117,14 +124,14 @@ export function Sidebar({
         </Link>
         <button
           type="button"
-          className="close-mobile-menu-sre"
+          className={SIDEBAR_CLOSE_CLASS}
           aria-label="Fermer le menu"
           onClick={closeMobileMenu}
         >
           <X size={18} />
         </button>
-        <div className="menu-sre__label">{isAdmin ? "MENU FISCALE" : "CLIENT FISCAL"}</div>
-        <nav className="navigation-sre" aria-label="Navigation principale">
+        <div className={SIDEBAR_LABEL_CLASS}>{isAdmin ? "MENU FISCALE" : "CLIENT FISCAL"}</div>
+        <nav className={SIDEBAR_NAV_CLASS} aria-label="Navigation principale">
           {menus.map(({ title, path, icon: Icon }) => {
             const counter = countFor(title);
             return (
@@ -133,13 +140,15 @@ export function Sidebar({
                 end={path === "/admin" || path === "/client"}
                 to={path}
                 onClick={closeMobileMenu}
-                className={({ isActive }) =>
-                  `navigation-sre__link ${isActive ? "navigation-sre__link--active" : ""}`
-                }
+                className={({ isActive }) => cn(NAV_LINK_CLASS, isActive && NAV_LINK_ACTIVE_CLASS)}
               >
                 <Icon size={17} aria-hidden="true" />
                 <span>{title}</span>
-                {counter > 0 && <i aria-label={`${counter} éléments`}>{counter}</i>}
+                {counter > 0 && (
+                  <i className={NAV_BADGE_CLASS} aria-label={`${counter} éléments`}>
+                    \n {counter}\n{" "}
+                  </i>
+                )}
               </NavLink>
             );
           })}

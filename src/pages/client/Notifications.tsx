@@ -1,64 +1,25 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { callApi } from "@/services/api-client";
-import { Button, PageHeader, EmptyState } from "@/components/ui";
-import { formatDate } from "@/utils/format";
+import {
+  Button,
+  EmptyState,
+  NOTIFICATIONS_LIST_CLASS,
+  NOTIFICATION_CARD_CLASS,
+  NOTIFICATION_CARD_FOOTER_CLASS,
+  NOTIFICATION_CARD_ROW_CLASS,
+  NOTIFICATION_CARD_UNREAD_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+} from "@/components";
+import { cn, formatDate } from "@/utils";
+import { useNotificationInbox } from "@/hooks";
 
 export function ClientNotificationsPage() {
-  const { session } = useAuth();
-  const { state, updateState, notify } = useSre();
-  const [inProgress, setInProgress] = useState<string | null>(null);
-  const notifications = state.notifications.filter(
-    (notification) => notification.userId === session?.userId,
-  );
-  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
-
-  const markAsRead = async (id: string) => {
-    if (!session?.apiToken || inProgress !== null) return;
-    setInProgress(id);
-    try {
-      await callApi(`notifications/${id}/lue`, { method: "PATCH", token: session.apiToken });
-      updateState((current) => ({
-        ...current,
-        notifications: current.notifications.map((notification) =>
-          notification.id === id ? { ...notification, isRead: true } : notification,
-        ),
-      }));
-    } catch {
-      notify("Impossible de marquer cette notification comme lue.", "error");
-    } finally {
-      setInProgress(null);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!session?.apiToken || inProgress !== null) return;
-    setInProgress("toutes");
-    try {
-      await callApi("notifications/toutes-lues", {
-        method: "PATCH",
-        token: session.apiToken,
-      });
-      updateState((current) => ({
-        ...current,
-        notifications: current.notifications.map((notification) =>
-          notification.userId === session.userId
-            ? { ...notification, isRead: true }
-            : notification,
-        ),
-      }));
-    } catch {
-      notify("Impossible de mettre à jour les notifications.", "error");
-    } finally {
-      setInProgress(null);
-    }
-  };
+  const { notifications, unreadCount, inProgress, markAsRead, markAllAsRead } =
+    useNotificationInbox("CLIENT");
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Notifications"
         description="Rappels d’échéances et messages liés à votre dossier, générés par le serveur."
@@ -84,22 +45,25 @@ export function ClientNotificationsPage() {
           description="Vous n’avez reçu aucun rappel pour le moment. Les échéances à venir apparaîtront ici et, si le courriel est configuré, dans votre boîte e-mail."
         />
       ) : (
-        <div className="notifications-list-sre">
+        <div className={NOTIFICATIONS_LIST_CLASS}>
           {notifications.map((notification) => (
             <article
               key={notification.id}
-              className={`notification-card-sre${notification.isRead ? "" : " notification-card-sre--unread"}`}
+              className={cn(
+                NOTIFICATION_CARD_CLASS,
+                !notification.isRead && NOTIFICATION_CARD_UNREAD_CLASS,
+              )}
             >
-              <span className="notification-card-sre__icon">
+              <span className="grid size-[31px] flex-none place-items-center rounded-[9px] bg-[#eef5f6] text-sre-blue">
                 <Bell size={16} />
               </span>
               <div>
-                <div className="notification-card-sre__row">
+                <div className={NOTIFICATION_CARD_ROW_CLASS}>
                   <strong>{notification.title}</strong>
                   <small>{formatDate(notification.date, true)}</small>
                 </div>
                 <p>{notification.message}</p>
-                <div className="notification-card-sre__footer">
+                <div className={NOTIFICATION_CARD_FOOTER_CLASS}>
                   <Link to="/client/obligations">Voir mes obligations</Link>
                   {!notification.isRead && (
                     <Button
@@ -113,9 +77,7 @@ export function ClientNotificationsPage() {
                       {inProgress === notification.id ? "Mise à jour…" : "Marquer comme lue"}
                     </Button>
                   )}
-                  <small>
-                    {notification.isRead ? "Notification lue" : "Notification non lue"}
-                  </small>
+                  <small>{notification.isRead ? "Notification lue" : "Notification non lue"}</small>
                   <small>
                     {notification.emailStatus === "DELIVRE"
                       ? "Courriel : délivré"
@@ -136,4 +98,3 @@ export function ClientNotificationsPage() {
     </div>
   );
 }
-

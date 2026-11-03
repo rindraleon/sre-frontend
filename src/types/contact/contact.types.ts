@@ -1,22 +1,10 @@
-export type ContactMessageStatus =
-  | "NON_LU"
-  | "LU"
-  | "EN_ATTENTE_REPONSE"
-  | "REPONDU";
+export type ContactMessageStatus = "NON_LU" | "LU" | "EN_ATTENTE_REPONSE" | "REPONDU";
 
-export type ContactEmailStatus =
-  | "NON_CONFIGURE"
-  | "EN_ATTENTE"
-  | "ENVOYE"
-  | "ECHEC";
+export type ContactEmailStatus = "NON_CONFIGURE" | "EN_ATTENTE" | "ENVOYE" | "ECHEC";
 
 export type ContactMessageSource = "SITE_PUBLIC" | "ESPACE_CLIENT";
 
-export type ContactEmailRetryType =
-  | "NOTIFICATION_ADMIN"
-  | "ACCUSE_VISITEUR"
-  | "REPONSE"
-  | "TOUS";
+export type ContactEmailRetryType = "NOTIFICATION_ADMIN" | "ACCUSE_VISITEUR" | "REPONSE" | "TOUS";
 
 export interface ContactReplyHistoryItem {
   id: string;
@@ -29,7 +17,6 @@ export interface ContactReplyHistoryItem {
   erreurCourriel?: string | null;
 }
 
-/** Message submitted through the public contact form or client workspace. */
 export interface ContactMessageEntry {
   id: string;
   reference?: string;

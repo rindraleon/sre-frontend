@@ -1,40 +1,51 @@
+import { cn } from "@/utils";
 import { Link } from "react-router-dom";
 import { ArrowRight, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { StatusBadge, PageHeader } from "@/components/ui";
-import { EmailVerificationCard } from "@/components/forms/auth/email-verification-card";
-import { ROUTES_ADMIN, SRE_REGION } from "@/constants";
+import { EmailVerificationCard } from "@/components/AuthComponents";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  SECURITY_NOTE_CLASS,
+  SETTING_ROW_CLASS,
+  StatusBadge,
+  TEXT_HELP_CLASS,
+  buttonVariants,
+} from "@/components";
+import { ROUTES_ADMIN, SRE_REGION } from "@/data";
 
 export function AdminSettingsPage() {
   const { session } = useAuth();
   const { state } = useSre();
   const account = state.users.find((user) => user.id === session?.userId);
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Paramètres"
         description="Périmètre de service et sécurité du compte administrateur."
         breadcrumb={["Accueil", "Paramètres"]}
       />
-      <section className="card-sre region-settings-sre">
-        <div className="card-sre__header">
+      <section className={cn(CARD_CLASS, "")}>
+        <div className={CARD_HEADER_CLASS}>
           <div>
             <h2>Périmètre de service</h2>
             <p>Ce portail est configuré pour une seule région.</p>
           </div>
           <MapPinned size={18} />
         </div>
-        <div className="region-setting-sre">
+        <div className="">
           <strong>{SRE_REGION}</strong>
           <StatusBadge status="ACTIF" />
         </div>
-        <p className="text-help-sre">
+        <p className={TEXT_HELP_CLASS}>
           Les autres régions ne sont pas proposées par l’inscription, les formulaires ou les
           opérations contribuables.
         </p>
       </section>
-      <section className="card-sre setting-row-sre">
+      <section className={cn(CARD_CLASS, SETTING_ROW_CLASS)}>
         <span>
           <KeyRound size={18} />
         </span>
@@ -48,7 +59,7 @@ export function AdminSettingsPage() {
         </div>
         <Link
           to={ROUTES_ADMIN.passwordChange}
-          className="button-sre button-sre--outline button-sre--small"
+          className={buttonVariants({ variant: "outline", size: "small" })}
         >
           Modifier <ArrowRight size={14} />
         </Link>
@@ -59,7 +70,7 @@ export function AdminSettingsPage() {
           isEmailVerified={account?.isEmailVerified ?? false}
         />
       )}
-      <section className="security-note-sre">
+      <section className={SECURITY_NOTE_CLASS}>
         <ShieldCheck size={16} />
         <p>
           <strong>Configuration serveur</strong>

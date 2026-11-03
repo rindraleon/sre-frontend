@@ -1,4 +1,4 @@
-import type { TaxpayerType } from "../taxpayer";
+import type { TaxpayerType } from "@/types/taxpayer";
 
 export type TaxPeriodicity = "MENSUELLE" | "TRIMESTRIELLE" | "ANNUELLE" | "PONCTUELLE";
 

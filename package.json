@@ -4,17 +4,21 @@
   "version": "1.0.0",
   "type": "module",
   "author": "Rindra & Harena",
-  "description": "Interface web du portail SRE \u2014 Madagascar",
+  "description": "Interface web du portail SRE — Madagascar",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "preview:mock": "node tools/mock/server.mjs & VITE_API_URL=/api vite --config tools/mock/vite.preview.config.ts --port 5200 --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "typecheck": "tsc --noEmit",
+    "check:imports": "node tools/check-imports.mjs",
+    "check:layout": "node tools/check-register-layout.mjs",
+    "check:classes": "node tools/check-classes.mjs",
     "test": "vitest run"
   },
   "dependencies": {

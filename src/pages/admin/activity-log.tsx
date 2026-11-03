@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts";
 import {
   Button,
   DataTable,
@@ -8,11 +8,14 @@ import {
   StatusBadge,
   toTanstackColumns,
   type TableColumn,
-} from "@/components/ui";
+  PAGE_CONTENT_CLASS,
+  SUB_ROW_CLASS,
+  ERROR_MESSAGE_CLASS,
+} from "@/components";
 import { useTableState } from "@/hooks";
-import { loadActivityLogApi } from "@/services/api-client";
+import { loadActivityLogApi } from "@/services/activity-log";
 import type { ActivityLogEntry } from "@/types";
-import { formatDate } from "@/utils/format";
+import { formatDate } from "@/utils";
 
 const columns: TableColumn<ActivityLogEntry>[] = [
   {
@@ -27,7 +30,7 @@ const columns: TableColumn<ActivityLogEntry>[] = [
     render: (entry) => (
       <div>
         <strong>{entry.acteur}</strong>
-        {entry.details && <small className="sub-row-sre">{entry.details}</small>}
+        {entry.details && <small className={SUB_ROW_CLASS}>{entry.details}</small>}
       </div>
     ),
     sortValue: (entry) => entry.acteur,
@@ -50,7 +53,7 @@ const columns: TableColumn<ActivityLogEntry>[] = [
     render: (entry) => entry.ressource,
     sortValue: (entry) => entry.ressource,
   },
-  
+
   {
     id: "resultat",
     title: "Résultat",
@@ -86,7 +89,7 @@ export function AdminActivityLogPage() {
   }, [loadLog]);
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Journal d’activité"
         description="Actions réalisées par les comptes : acteur, ressource, résultat et horodatage."
@@ -98,7 +101,7 @@ export function AdminActivityLogPage() {
         }
       />
       {loadingError && (
-        <p className="error-message-sre" role="alert">
+        <p className={ERROR_MESSAGE_CLASS} role="alert">
           {loadingError}
         </p>
       )}

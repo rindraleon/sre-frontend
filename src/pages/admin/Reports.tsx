@@ -1,8 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarRange, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, EmptyState, Select } from "@/components/ui";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  COMPACT_FILTER_CLASS,
+  EmptyState,
+  FORM_ACTIONS_CLASS,
+  INLINE_LOADER_CLASS,
+  KPI_CLASS,
+  KPI_CONFIRMED_CLASS,
+  KPI_GRID_CLASS,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_DETAIL_GRID_CLASS,
+  PageHeader,
+  SECURITY_ALERT_BANNER_CLASS,
+  Select,
+  TABLE_SRE_CLASS,
+} from "@/components";
 import {
   EMPTY_PAYMENT_FILTERS,
   PaymentFilterBar,
@@ -10,10 +27,10 @@ import {
   countActiveFilters,
   toPaymentFilters,
   type PaymentFilterState,
-} from "@/components/payments/payment-filter-bar";
-import { downloadStatisticsExportApi, loadStatisticsApi } from "@/services/api-payments";
-import { formatMoney, formatDate } from "@/utils/format";
-import { PAYMENT_STATUS_LABELS } from "@/constants/payment-statuses";
+} from "@/components/PaymentsComponents";
+import { PAYMENT_STATUS_LABELS } from "@/data";
+import { downloadStatisticsExportApi, loadStatisticsApi } from "@/services/payments";
+import { formatMoney, formatDate, cn } from "@/utils";
 import type { Statistics } from "@/types";
 
 function firstDayOfYear() {
@@ -44,7 +61,8 @@ export function AdminReportsPage() {
       setStats(
         await loadStatisticsApi(session.apiToken, { ...apiFilters, granularite: granularity }),
       );
-    } catch {
+    } catch (cause) {
+      console.error("Calcul du rapport impossible.", cause);
       setError("Le rapport n’a pas pu être calculé. Vérifiez les filtres appliqués.");
     } finally {
       setIsLoading(false);
@@ -67,7 +85,8 @@ export function AdminReportsPage() {
           : "Rapport PDF généré depuis les données serveur.",
         "success",
       );
-    } catch {
+    } catch (cause) {
+      console.error("Export du rapport impossible.", cause);
       notify("L’export n’a pas pu être généré.", "error");
     } finally {
       setIsExporting(null);
@@ -78,37 +97,38 @@ export function AdminReportsPage() {
   const activeFilters = countActiveFilters(applied);
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Rapports et exports"
         description="Rapports cohérents avec les filtres appliqués. Les fichiers CSV et PDF sont produits par le serveur à partir des paiements réels."
         breadcrumb={["Accueil", "Rapports"]}
         actions={
           <>
-            <button
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void load()}
               disabled={isLoading}
             >
               <RefreshCw size={14} /> {isLoading ? "Calcul…" : "Recalculer"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void exportFile("csv")}
               disabled={isExporting !== null}
             >
-              <FileSpreadsheet size={14} /> {isExporting === "csv" ? "Export…" : "Export Excel (CSV)"}
-            </button>
-            <button
+              <FileSpreadsheet size={14} />{" "}
+              {isExporting === "csv" ? "Export…" : "Export Excel (CSV)"}
+            </Button>
+            <Button
               type="button"
-              className="button-sre button-sre--primary"
+              variant="primary"
               onClick={() => void exportFile("pdf")}
               disabled={isExporting !== null}
             >
               <Download size={14} /> {isExporting === "pdf" ? "Export…" : "Export PDF"}
-            </button>
+            </Button>
           </>
         }
       />
@@ -116,7 +136,11 @@ export function AdminReportsPage() {
         filters={filters}
         onChange={setFilters}
         onReset={() => {
-          const reset = { ...EMPTY_PAYMENT_FILTERS, du: firstDayOfYear(), au: new Date().toISOString().slice(0, 10) };
+          const reset = {
+            ...EMPTY_PAYMENT_FILTERS,
+            du: firstDayOfYear(),
+            au: new Date().toISOString().slice(0, 10),
+          };
           setFilters(reset);
           setApplied(reset);
         }}
@@ -131,8 +155,8 @@ export function AdminReportsPage() {
         taxTypes={state.taxTypes}
         total={indicators?.totalDeclarations}
       />
-      <div className="form-actions-sre" style={{ justifyContent: "flex-start" }}>
-        <label className="compact-filter-sre">
+      <div className={cn(FORM_ACTIONS_CLASS)} style={{ justifyContent: "flex-start" }}>
+        <label className={COMPACT_FILTER_CLASS}>
           <CalendarRange size={13} /> Granularité
           <Select
             value={granularity}
@@ -146,7 +170,7 @@ export function AdminReportsPage() {
         </label>
       </div>
       {error && (
-        <div className="security-alert-banner-sre" role="alert">
+        <div className={SECURITY_ALERT_BANNER_CLASS} role="alert">
           <span>!</span>
           <div>
             <strong>Rapport indisponible</strong>
@@ -155,47 +179,51 @@ export function AdminReportsPage() {
         </div>
       )}
       {isLoading && !stats ? (
-        <div className="inline-loader-sre">
+        <div className={INLINE_LOADER_CLASS}>
           <i /> Calcul du rapport depuis la base de données…
         </div>
       ) : !stats || !indicators ? (
         <EmptyState
           title="Aucun résultat"
-          description={activeFilters ? "Aucun paiement ne correspond aux filtres." : "Aucune donnée disponible."}
+          description={
+            activeFilters
+              ? "Aucun paiement ne correspond aux filtres."
+              : "Aucune donnée disponible."
+          }
         />
       ) : (
         <>
-          <div className="kpi-grid-sre">
-            <div className="kpi-sre is-confirmed">
+          <div className={KPI_GRID_CLASS}>
+            <div className={KPI_CONFIRMED_CLASS}>
               <span>Montant confirmé</span>
               <strong>{formatMoney(indicators.montantConfirme)}</strong>
               <small>{indicators.nombrePaiementsConfirmes} paiement(s)</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>Montant déclaré total</span>
               <strong>{formatMoney(indicators.montantDeclareTotal)}</strong>
               <small>{indicators.totalDeclarations} déclaration(s)</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>En attente</span>
               <strong>{formatMoney(indicators.montantEnAttente)}</strong>
               <small>{indicators.nombreEnAttente} paiement(s)</small>
             </div>
-            <div className="kpi-sre">
+            <div className={KPI_CLASS}>
               <span>Non aboutis</span>
               <strong>{formatMoney(indicators.montantNonAbouti)}</strong>
               <small>{indicators.nombreNonAbouti} paiement(s)</small>
             </div>
           </div>
-          <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
-            <section className="card-sre">
-              <div className="card-sre__header">
+          <div className={cn(PAYMENT_DETAIL_GRID_CLASS, "print:hidden")} style={{ marginTop: 14 }}>
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Par nature d’impôt</h2>
                   <p>Déclarations et montants confirmés</p>
                 </div>
               </div>
-              <table className="table-sre">
+              <table className={TABLE_SRE_CLASS}>
                 <thead>
                   <tr>
                     <th>Nature</th>
@@ -216,14 +244,14 @@ export function AdminReportsPage() {
                 </tbody>
               </table>
             </section>
-            <section className="card-sre">
-              <div className="card-sre__header">
+            <section className={CARD_CLASS}>
+              <div className={CARD_HEADER_CLASS}>
                 <div>
                   <h2>Par statut</h2>
                   <p>Suivi des déclarations</p>
                 </div>
               </div>
-              <table className="table-sre">
+              <table className={TABLE_SRE_CLASS}>
                 <thead>
                   <tr>
                     <th>Statut</th>
@@ -243,14 +271,14 @@ export function AdminReportsPage() {
               </table>
             </section>
           </div>
-          <section className="card-sre" style={{ marginTop: 14 }}>
-            <div className="card-sre__header">
+          <section className={CARD_CLASS} style={{ marginTop: 14 }}>
+            <div className={CARD_HEADER_CLASS}>
               <div>
                 <h2>Évolution</h2>
                 <p>Montants confirmés par période · généré le {formatDate(stats.genereLe, true)}</p>
               </div>
             </div>
-            <table className="table-sre">
+            <table className={TABLE_SRE_CLASS}>
               <thead>
                 <tr>
                   <th>Période</th>

@@ -2,8 +2,9 @@ import "@fontsource-variable/manrope";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { App, AppProviders } from "@/app";
-import "./index.css";
+import { App } from "@/App";
+import { AppProviders } from "@/contexts";
+import "./styles/index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

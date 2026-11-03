@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock3, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, toTanstackColumns, EmptyState } from "@/components/ui";
-import { createPaymentColumns } from "@/components/tables/admin/payments-columns";
-import { useTableState } from "@/hooks";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  Button,
+  DataTable,
+  EmptyState,
+  INLINE_LOADER_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  SECURITY_ALERT_BANNER_CLASS,
+  TAX_NOTE_CLASS,
+  TEXT_HELP_CLASS,
+  toTanstackColumns,
+} from "@/components";
 import {
   EMPTY_PAYMENT_FILTERS,
   PaymentFilterBar,
@@ -12,19 +21,25 @@ import {
   countActiveFilters,
   toPaymentFilters,
   type PaymentFilterState,
-} from "@/components/payments/payment-filter-bar";
-import { downloadStatisticsExportApi, searchPaymentsApi } from "@/services/api-payments";
-import { downloadPdfApi } from "@/services/api-client";
+} from "@/components/PaymentsComponents";
+import { createPaymentColumns as createAdminPaymentColumns } from "@/components/PaymentsComponents/tables/admin";
+import { downloadStatisticsExportApi, searchPaymentsApi } from "@/services/payments";
+import { useTableState } from "@/hooks";
+import { downloadPdfApi } from "@/services/documents";
 import type { Payment, PaymentPage } from "@/types";
 
 const EMPTY_PAGE: PaymentPage = { donnees: [], total: 0, page: 1, parPage: 25, pages: 1 };
 
-export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verificationOnly?: boolean }>) {
+export function AdminPaymentsPage({
+  verificationOnly = false,
+}: Readonly<{ verificationOnly?: boolean }>) {
   const { session } = useAuth();
   const { state, notify } = useSre();
   const table = useTableState(25);
   const [filters, setFilters] = useState<PaymentFilterState>(
-    verificationOnly ? { ...EMPTY_PAYMENT_FILTERS, statut: "EN_VERIFICATION" } : EMPTY_PAYMENT_FILTERS,
+    verificationOnly
+      ? { ...EMPTY_PAYMENT_FILTERS, statut: "EN_VERIFICATION" }
+      : EMPTY_PAYMENT_FILTERS,
   );
   const [applied, setApplied] = useState<PaymentFilterState>(filters);
   const [result, setResult] = useState<PaymentPage>(EMPTY_PAGE);
@@ -43,7 +58,8 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
           toPaymentFilters(filterState, page, perPage),
         );
         setResult(data);
-      } catch {
+      } catch (cause) {
+        console.error("Recherche de paiements impossible.", cause);
         setError("La recherche n’a pas abouti. Vérifiez les filtres ou réessayez.");
       } finally {
         setIsLoading(false);
@@ -60,18 +76,18 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
     if (!session?.apiToken || !payment.receipt) return;
     try {
       await downloadPdfApi(payment.receipt.id, session.apiToken, payment.receipt.number);
-    } catch {
+    } catch (cause) {
+      console.error("Téléchargement du reçu impossible.", cause);
       notify("Le reçu n’a pas pu être téléchargé.", "error");
     }
   };
 
   const columns = useMemo(
     () =>
-      createPaymentColumns({
+      createAdminPaymentColumns({
         taxpayers: state.taxpayers,
         onDownloadReceipt: (payment) => void downloadReceipt(payment),
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.taxpayers],
   );
 
@@ -82,7 +98,8 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
       const { page: _page, parPage: _parPage, ...exportFilters } = toPaymentFilters(applied);
       await downloadStatisticsExportApi(session.apiToken, format, exportFilters);
       notify(`Export ${format.toUpperCase()} généré depuis les données serveur.`, "success");
-    } catch {
+    } catch (cause) {
+      console.error("Export des paiements impossible.", cause);
       notify("L’export n’a pas pu être généré.", "error");
     } finally {
       setIsExporting(null);
@@ -92,7 +109,7 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
   const activeFilters = countActiveFilters(applied);
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title={verificationOnly ? "Transactions à suivre" : "Paiements"}
         description={
@@ -103,35 +120,35 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
         breadcrumb={["Accueil", verificationOnly ? "Transactions à suivre" : "Paiements"]}
         actions={
           <>
-            <button
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void fetchPage(applied, table.page, table.perPage)}
               disabled={isLoading}
             >
               <RefreshCw size={14} /> Actualiser
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="button-sre button-sre--outline"
+              variant="outline"
               onClick={() => void exportFile("csv")}
               disabled={isExporting !== null}
             >
               <FileSpreadsheet size={14} /> {isExporting === "csv" ? "Export…" : "Export CSV"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="button-sre button-sre--primary"
+              variant="primary"
               onClick={() => void exportFile("pdf")}
               disabled={isExporting !== null}
             >
               <Download size={14} /> {isExporting === "pdf" ? "Export…" : "Rapport PDF"}
-            </button>
+            </Button>
           </>
         }
       />
       {verificationOnly && (
-        <div className="tax-note-sre" style={{ marginBottom: 12 }}>
+        <div className={TAX_NOTE_CLASS} style={{ marginBottom: 12 }}>
           <Clock3 size={15} />
           <p>
             {result.total} déclaration(s) à examiner. Une confirmation par rapprochement
@@ -165,7 +182,7 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
         total={result.total}
       />
       {error && (
-        <div className="security-alert-banner-sre" role="alert">
+        <div className={SECURITY_ALERT_BANNER_CLASS} role="alert">
           <span>!</span>
           <div>
             <strong>Recherche impossible</strong>
@@ -174,7 +191,7 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
         </div>
       )}
       {isLoading && result.donnees.length === 0 ? (
-        <div className="inline-loader-sre">
+        <div className={INLINE_LOADER_CLASS}>
           <i /> Chargement des paiements depuis le serveur…
         </div>
       ) : !isLoading && result.donnees.length === 0 ? (
@@ -202,7 +219,7 @@ export function AdminPaymentsPage({ verificationOnly = false }: Readonly<{ verif
           onRowsPerPageChange={table.changePerPage}
         />
       )}
-      <p className="text-help-sre">
+      <p className={TEXT_HELP_CLASS}>
         Page {result.page} sur {result.pages} · {result.total} paiement(s) correspondant aux
         filtres, pagination assurée par le serveur.
       </p>

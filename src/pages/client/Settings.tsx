@@ -1,23 +1,32 @@
+import { cn } from "@/utils";
 import { Link } from "react-router-dom";
 import { ArrowRight, KeyRound, ShieldCheck } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader } from "@/components/ui";
-import { EmailVerificationCard } from "@/components/forms/auth/email-verification-card";
+import { EmailVerificationCard } from "@/components/AuthComponents";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  CARD_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  SETTINGS_GRID_CLASS,
+  SETTING_ROW_CLASS,
+  TAX_NOTE_CLASS,
+  buttonVariants,
+} from "@/components";
 
 export function ClientSettingsPage() {
   const { session } = useAuth();
   const { state } = useSre();
   const account = state.users.find((user) => user.id === session?.userId);
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Paramètres du compte"
         description="Options de sécurité et informations de session."
         breadcrumb={["Accueil", "Paramètres"]}
       />
-      <div className="settings-grid-sre">
-        <section className="card-sre setting-row-sre">
+      <div className={SETTINGS_GRID_CLASS}>
+        <section className={cn(CARD_CLASS, SETTING_ROW_CLASS)}>
           <span>
             <KeyRound size={18} />
           </span>
@@ -29,7 +38,7 @@ export function ClientSettingsPage() {
             </p>
           </div>
           <Link
-            className="button-sre button-sre--outline button-sre--small"
+            className={buttonVariants({ variant: "outline", size: "small" })}
             to="/client/changement-mot-de-passe"
           >
             Modifier <ArrowRight size={14} />
@@ -41,7 +50,7 @@ export function ClientSettingsPage() {
             isEmailVerified={account?.isEmailVerified ?? false}
           />
         )}
-        <section className="card-sre setting-row-sre">
+        <section className={cn(CARD_CLASS, SETTING_ROW_CLASS)}>
           <span>
             <ShieldCheck size={18} />
           </span>
@@ -51,7 +60,7 @@ export function ClientSettingsPage() {
           </div>
         </section>
       </div>
-      <div className="tax-note-sre">
+      <div className={TAX_NOTE_CLASS}>
         <span>i</span>
         <p>
           Les rappels d’échéances sont générés par le serveur (centre de notifications et, si le

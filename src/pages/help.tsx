@@ -13,8 +13,22 @@ import {
   TriangleAlert,
   WalletCards,
 } from "lucide-react";
-import { AuthHeader } from "@/components/layout/auth-header";
-import { useAuth } from "@/context/AuthContext";
+import { AuthHeader } from "@/components/Layout";
+import {
+  BREADCRUMB_CLASS,
+  HELP_BODY_CLASS,
+  HELP_CONTENT_CLASS,
+  HELP_FOOTER_CLASS,
+  HELP_HEADER_CLASS,
+  HELP_PAGE_AREA_CLASS,
+  HELP_PAGE_CLASS,
+  HELP_SECTION_CLASS,
+  HELP_SECTIONS_CLASS,
+  HELP_SUMMARY_CLASS,
+  HELP_TOC_CLASS,
+} from "@/components";
+import { cn } from "@/utils";
+import { useAuth } from "@/contexts";
 
 type SectionHelp = {
   id: string;
@@ -177,11 +191,11 @@ const SECTIONS_ADMIN: SectionHelp[] = [
 function BlockSection({ section }: Readonly<{ section: SectionHelp }>) {
   const Icon = section.icon;
   return (
-    <section id={section.id} className="help-section-sre">
+    <section id={section.id} className={HELP_SECTION_CLASS}>
       <h2>
         <Icon size={18} aria-hidden="true" /> {section.title}
       </h2>
-      <p className="help-summary-sre">{section.summary}</p>
+      <p className={HELP_SUMMARY_CLASS}>{section.summary}</p>
       <ul>
         {section.points.map((point) => (
           <li key={point}>{point}</li>
@@ -191,7 +205,6 @@ function BlockSection({ section }: Readonly<{ section: SectionHelp }>) {
   );
 }
 
-/** Help page: concise documentation, organized and adapted to the signed-in profile. */
 export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout?: boolean }>) {
   const { session } = useAuth();
   const [searchParams] = useSearchParams();
@@ -215,22 +228,22 @@ export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout
   }
 
   return (
-    <div className={`help-page-sre ${withinAppLayout ? "help-page-sre--area" : ""}`}>
+    <div className={cn(HELP_PAGE_CLASS, withinAppLayout && HELP_PAGE_AREA_CLASS)}>
       {!withinAppLayout && (
         <AuthHeader
           linkLabel={session ? returnTo.label : "Connexion"}
           linkPath={session ? returnTo.path : "/connexion"}
         />
       )}
-      <main className="help-content-sre">
+      <main className={HELP_CONTENT_CLASS}>
         {withinAppLayout && (
-          <nav className="breadcrumb-sre" aria-label="Fil d’Ariane">
+          <nav className={BREADCRUMB_CLASS} aria-label="Fil d’Ariane">
             <span>Accueil</span>
             <i aria-hidden="true">/</i>
             <span aria-current="page">Aide &amp; documentation</span>
           </nav>
         )}
-        <header className="help-header-sre">
+        <header className={HELP_HEADER_CLASS}>
           <h1>
             <BookOpenCheck size={22} aria-hidden="true" /> Aide &amp; documentation
           </h1>
@@ -241,8 +254,8 @@ export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout
               : "Le contenu s’adapte à votre profil."}
           </p>
         </header>
-        <div className="help-body-sre">
-          <nav className="help-toc-sre" aria-label="Sommaire de l’aide">
+        <div className={HELP_BODY_CLASS}>
+          <nav className={HELP_TOC_CLASS} aria-label="Sommaire de l’aide">
             <strong>Sommaire</strong>
             {sections.map((section) => (
               <a key={section.id} href={`#${section.id}`}>
@@ -250,29 +263,31 @@ export function HelpPage({ withinAppLayout = false }: Readonly<{ withinAppLayout
               </a>
             ))}
           </nav>
-          <div className="help-sections-sre">
+          <div className={HELP_SECTIONS_CLASS}>
             {sections.map((section) => (
               <BlockSection key={section.id} section={section} />
             ))}
-            <section className="help-section-sre">
+            <section className={HELP_SECTION_CLASS}>
               <h2>
                 <FileText size={18} aria-hidden="true" /> Bonnes pratiques
               </h2>
               <ul>
                 <li>
-                  Vérifiez toujours le statut d’une déclaration avant de considérer un paiement comme
-                  traité : la validation automatique ouvre immédiatement l’accès au reçu officiel.
+                  Vérifiez toujours le statut d’une déclaration avant de considérer un paiement
+                  comme traité : la validation automatique ouvre immédiatement l’accès au reçu
+                  officiel.
                 </li>
                 <li>
                   Conservez vos références de transaction ; elles figurent sur le reçu officiel et
                   dans l’historique.
                 </li>
                 <li>
-                  Utilisez un mot de passe unique et ne le transmettez jamais, y compris par courriel.
+                  Utilisez un mot de passe unique et ne le transmettez jamais, y compris par
+                  courriel.
                 </li>
               </ul>
             </section>
-            <p className="help-footer-sre">
+            <p className={HELP_FOOTER_CLASS}>
               Une question reste sans réponse ?{" "}
               {session ? (
                 <Link to={returnTo.path}>{returnTo.label}</Link>

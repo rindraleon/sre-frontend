@@ -1,17 +1,28 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CircleDollarSign, Download, ReceiptText } from "lucide-react";
-import { Select } from "@/components/ui/select";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
-import { OptionsSelect } from "@/components/forms/options-select";
-import { createPaymentColumns } from "@/components/tables/client/payments-columns";
+import {
+  Select,
+  PageHeader,
+  DataTable,
+  toTanstackColumns,
+  OptionsSelect,
+  buttonVariants,
+  PAGE_CONTENT_CLASS,
+  KPI_GRID_CLASS,
+  KPI_CONFIRMED_CLASS,
+  KPI_CLASS,
+  COMPACT_FILTER_CLASS,
+  INLINE_LOADER_CLASS,
+} from "@/components";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { createPaymentColumns as createClientPaymentColumns } from "@/components/PaymentsComponents/tables/client";
+import { PAYMENT_STATUS_OPTIONS } from "@/data";
 import { useTableState } from "@/hooks";
-import { ALL, ROUTES_CLIENT } from "@/constants";
-import { PAYMENT_STATUS_OPTIONS } from "@/constants/payment-statuses";
-import { formatMoney } from "@/utils/format";
-import { downloadPdfApi } from "@/services/api-client";
+import { ALL, ROUTES_CLIENT } from "@/data";
+import { formatMoney } from "@/utils";
+import { downloadPdfApi } from "@/services/documents";
 import type { Payment } from "@/types";
 
 export function ClientPaymentsPage() {
@@ -48,38 +59,41 @@ export function ClientPaymentsPage() {
     setDownloadingId(payment.id);
     try {
       await downloadPdfApi(payment.receipt.id, session.apiToken, payment.receipt.number);
-    } catch {
+    } catch (cause) {
+      console.error("Téléchargement du reçu impossible.", cause);
       notify("Le reçu n’a pas pu être téléchargé.", "error");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const columns = createPaymentColumns({ onDownloadReceipt: (payment) => void downloadReceipt(payment) });
+  const columns = createClientPaymentColumns({
+    onDownloadReceipt: (payment) => void downloadReceipt(payment),
+  });
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Mes paiements"
         description="Déclarations, statuts et reçus définitifs de votre compte."
         breadcrumb={["Accueil", "Mes paiements"]}
       />
-      <div className="kpi-grid-sre" style={{ marginBottom: 14 }}>
-        <div className="kpi-sre is-confirmed">
+      <div className={KPI_GRID_CLASS} style={{ marginBottom: 14 }}>
+        <div className={KPI_CONFIRMED_CLASS}>
           <span>
             <ReceiptText size={13} /> Montant confirmé
           </span>
           <strong>{formatMoney(totals.confirmedAmount)}</strong>
           <small>{totals.confirmedCount} paiement(s) avec reçu définitif</small>
         </div>
-        <div className="kpi-sre">
+        <div className={KPI_CLASS}>
           <span>
             <CircleDollarSign size={13} /> En attente
           </span>
           <strong>{totals.pendingCount}</strong>
           <small>Suivi en cours, sans reçu</small>
         </div>
-        <div className="kpi-sre">
+        <div className={KPI_CLASS}>
           <span>
             <Download size={13} /> Reçus disponibles
           </span>
@@ -99,7 +113,7 @@ export function ClientPaymentsPage() {
         searchValue={table.search}
         onSearchChange={table.changeSearch}
         toolbarActions={
-          <label className="compact-filter-sre">
+          <label className={COMPACT_FILTER_CLASS}>
             Statut
             <Select
               value={status}
@@ -113,7 +127,7 @@ export function ClientPaymentsPage() {
           </label>
         }
         actionPrimary={
-          <Link className="button-sre button-sre--primary" to={ROUTES_CLIENT.newPayment}>
+          <Link className={buttonVariants({ variant: "primary" })} to={ROUTES_CLIENT.newPayment}>
             <CircleDollarSign size={16} /> Déclarer un paiement
           </Link>
         }
@@ -125,7 +139,11 @@ export function ClientPaymentsPage() {
         onPageChange={table.changePage}
         onRowsPerPageChange={table.changePerPage}
       />
-      {downloadingId && <div className="inline-loader-sre"><i /> Préparation du reçu…</div>}
+      {downloadingId && (
+        <div className={INLINE_LOADER_CLASS}>
+          <i /> Préparation du reçu…
+        </div>
+      )}
     </div>
   );
 }

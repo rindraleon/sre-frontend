@@ -1,1 +1,1 @@
-export * from "./platform.types";
+export * from "@/types/platform/platform.types";

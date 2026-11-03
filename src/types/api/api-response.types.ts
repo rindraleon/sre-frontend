@@ -1,13 +1,8 @@
-import type { AccountStatus, UserRole } from "../user";
-import type { TaxpayerType } from "../taxpayer";
-import type { TaxType } from "../tax";
-import type { StatusObligation } from "../obligation";
-import type {
-  Payment,
-  PaymentDocument,
-  PaymentMethod,
-  PaymentStatus,
-} from "../payment";
+import type { AccountStatus, UserRole } from "@/types/user";
+import type { TaxpayerType } from "@/types/taxpayer";
+import type { TaxType } from "@/types/tax";
+import type { StatusObligation } from "@/types/obligation";
+import type { Payment, PaymentDocument, PaymentMethod, PaymentStatus } from "@/types/payment";
 
 export interface ApiUser {
   id: string;

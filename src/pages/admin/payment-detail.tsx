@@ -1,3 +1,4 @@
+import { cn } from "@/utils";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -10,29 +11,44 @@ import {
   XCircle,
 } from "lucide-react";
 import type { Payment } from "@/types";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { mapApiPaymentDocuments } from "@/services/documents";
+import { downloadPdfApi } from "@/services/documents";
 import {
-  callApi,
-  mapApiPaymentDocuments,
-  mapApiPayment,
-  type ApiPayment,
-} from "@/services/api-client";
-import { StatusBadge, Button, ConfirmDialog, PageHeader, EmptyState, Modal } from "@/components/ui";
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  ConfirmDialog,
+  DECISION_REASON_CLASS,
+  DETAILS_LIST_CLASS,
+  DOCUMENTS_LIST_CLASS,
+  DOCUMENTS_ROW_CLASS,
+  EmptyState,
+  Modal,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_DECISION_ACTIONS_CLASS,
+  PAYMENT_DETAIL_AMOUNT_CLASS,
+  PAYMENT_DETAIL_GRID_CLASS,
+  PageHeader,
+  SECURITY_NOTE_CLASS,
+  StatusBadge,
+  SubmitButton,
+  TAX_NOTE_CLASS,
+  VERTICAL_HISTORY_ACTIVE_CLASS,
+  VERTICAL_HISTORY_CLASS,
+  buttonVariants,
+} from "@/components";
+import { PaymentDecisionFormFields, REASON_EMPTY } from "@/components/PaymentsComponents";
 import {
   PaymentReceiptCard,
   PaymentStatusTrack,
   buildReceiptData,
-} from "@/components/payments/payment-receipt";
-import { downloadPdfApi } from "@/services/api-client";
-import { formatMoney, formatDate } from "@/utils/format";
-import { SubmitButton } from "@/components/forms/form-field";
-import {
-  PaymentDecisionFormFields,
-  REASON_EMPTY,
-} from "@/components/forms/admin/payment-decision-form";
+} from "@/components/PaymentsComponents";
+import { decisionReasonSchema, type DecisionReasonFormValues } from "@/schemas";
+import { submitPaymentDecisionApi } from "@/services/payments";
+import { formatMoney, formatDate } from "@/utils";
 import { useApiForm, useConfirmation } from "@/hooks";
-import { decisionReasonSchema, type DecisionReasonFormValues } from "@/validation/payment.schema";
 
 export function AdminPaymentDetailPage() {
   const { id } = useParams();
@@ -42,9 +58,7 @@ export function AdminPaymentDetailPage() {
   const taxpayer = state.taxpayers.find((entry) => entry.id === payment?.taxpayerId);
   const obligation = state.obligations.find((entry) => entry.id === payment?.obligationId);
   const confirmation = useConfirmation<Payment>();
-  const [reasonDialog, setReasonDialog] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(
-    null,
-  );
+  const [reasonDialog, setReasonDialog] = useState<"REJETE" | "CORRECTION_DEMANDEE" | null>(null);
   const [loadingDecision, setLoadingDecision] = useState(false);
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const formReason = useApiForm<DecisionReasonFormValues>({
@@ -55,7 +69,7 @@ export function AdminPaymentDetailPage() {
 
   if (!payment)
     return (
-      <div className="page-content-sre">
+      <div className={PAGE_CONTENT_CLASS}>
         <PageHeader
           title="Déclaration introuvable"
           breadcrumb={["Accueil", "Historique des paiements"]}
@@ -64,7 +78,7 @@ export function AdminPaymentDetailPage() {
           title="Cette déclaration n’existe pas"
           description="Elle n’a pas été trouvée dans les données accessibles à la session."
           action={
-            <Link className="button-sre button-sre--outline" to="/admin/paiements">
+            <Link className={buttonVariants({ variant: "outline" })} to="/admin/paiements">
               Retour aux paiements
             </Link>
           }
@@ -83,16 +97,13 @@ export function AdminPaymentDetailPage() {
     setLoadingDecision(true);
     formReason.resetError();
     try {
-      const apiResult = await callApi<ApiPayment>(
-        `paiements/${encodeURIComponent(payment.id)}/decision`,
-        {
-          method: "PATCH",
-          token: session.apiToken,
-          body: { statut: status, ...(reasonOptional ? { motif: reasonOptional } : {}) },
-        },
+      const { payment: updatedPayment, apiPayment } = await submitPaymentDecisionApi(
+        session.apiToken,
+        payment.id,
+        status,
+        reasonOptional,
       );
-      const updatedPayment = mapApiPayment(apiResult);
-      const documentsApi = mapApiPaymentDocuments(apiResult);
+      const documentsApi = mapApiPaymentDocuments(apiPayment);
       let statusObligation: "PAYE" | "REJETE" | "CORRECTION_DEMANDEE";
       if (status === "CONFIRME") {
         statusObligation = "PAYE";
@@ -114,9 +125,7 @@ export function AdminPaymentDetailPage() {
           ...documentsApi,
         ],
         obligations: current.obligations.map((entry) =>
-          entry.id === updatedPayment.obligationId
-            ? { ...entry, status: statusObligation }
-            : entry,
+          entry.id === updatedPayment.obligationId ? { ...entry, status: statusObligation } : entry,
         ),
       }));
       let messageDecision: string;
@@ -167,14 +176,15 @@ export function AdminPaymentDetailPage() {
     setIsDownloadingReceipt(true);
     try {
       await downloadPdfApi(payment.receipt.id, session.apiToken, payment.receipt.number);
-    } catch {
+    } catch (cause) {
+      console.error("Téléchargement du reçu impossible.", cause);
       notify("Le reçu n’a pas pu être téléchargé.", "error");
     } finally {
       setIsDownloadingReceipt(false);
     }
   };
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Examen d’une déclaration"
         description={`Référence interne ${payment.internalReference}`}
@@ -187,7 +197,7 @@ export function AdminPaymentDetailPage() {
         ]}
         actions={
           <Link
-            className="button-sre button-sre--outline"
+            className={buttonVariants({ variant: "outline" })}
             to={
               payment.status === "EN_VERIFICATION"
                 ? "/admin/paiements-a-verifier"
@@ -209,9 +219,9 @@ export function AdminPaymentDetailPage() {
           />
         </div>
       )}
-      <div className="payment-detail-grid-sre" style={{ marginTop: 14 }}>
-        <section className="card-sre">
-          <div className="card-sre__header">
+      <div className={cn(PAYMENT_DETAIL_GRID_CLASS, "print:hidden")} style={{ marginTop: 14 }}>
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Déclaration {payment.internalReference}</h2>
               <p>
@@ -220,12 +230,12 @@ export function AdminPaymentDetailPage() {
             </div>
             <StatusBadge status={payment.status} />
           </div>
-          <div className="payment-detail-amount-sre">
+          <div className={PAYMENT_DETAIL_AMOUNT_CLASS}>
             <span>Montant déclaré</span>
             <strong>{formatMoney(payment.amount)}</strong>
             <small>Montant transmis pour examen · MGA</small>
           </div>
-          <dl className="details-list-sre">
+          <dl className={DETAILS_LIST_CLASS}>
             <div>
               <dt>Origine</dt>
               <dd>
@@ -308,16 +318,18 @@ export function AdminPaymentDetailPage() {
             </div>
           </dl>
           {documents.length > 0 && (
-            <div className="payment-documents-list-sre">
-              <div className="card-sre__header">
+            <div className={DOCUMENTS_LIST_CLASS}>
+              <div className={cn(CARD_HEADER_CLASS, "mb-[9px]")}>
                 <div>
-                  <h3>Documents du serveur</h3>
-                  <p>Documents associés à l’état de cette déclaration</p>
+                  <h3 className="m-0 text-[11px] text-[#253a54]">Documents du serveur</h3>
+                  <p className="mt-1 mb-0 text-[12px] text-[#7b899a]">
+                    Documents associés à l’état de cette déclaration
+                  </p>
                 </div>
                 <BadgeCheck size={16} />
               </div>
               {documents.map((document) => (
-                <div className="payment-documents-row-sre" key={document.id}>
+                <div className={DOCUMENTS_ROW_CLASS} key={document.id}>
                   <span>
                     <strong>{document.number}</strong>
                     <small>
@@ -331,7 +343,7 @@ export function AdminPaymentDetailPage() {
             </div>
           )}
           {payment.rejectionReason && (
-            <div className="decision-reason-sre">
+            <div className={DECISION_REASON_CLASS}>
               <strong>
                 {payment.status === "REJETE" ? "Motif de rejet" : "Motif de correction"}
               </strong>
@@ -339,7 +351,7 @@ export function AdminPaymentDetailPage() {
             </div>
           )}
           {payment.status === "EN_VERIFICATION" || payment.status === "EN_ATTENTE" ? (
-            <div className="payment-decision-actions-sre">
+            <div className={PAYMENT_DECISION_ACTIONS_CLASS}>
               <Button onClick={() => confirmation.open(payment)}>
                 <CheckCircle2 size={15} /> Confirmer et émettre le reçu
               </Button>
@@ -363,7 +375,7 @@ export function AdminPaymentDetailPage() {
               </Button>
             </div>
           ) : (
-            <div className="tax-note-sre">
+            <div className={TAX_NOTE_CLASS}>
               <span>
                 <BadgeCheck size={14} />
               </span>
@@ -374,15 +386,15 @@ export function AdminPaymentDetailPage() {
             </div>
           )}
         </section>
-        <section className="card-sre">
-          <div className="card-sre__header">
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Historique de traitement</h2>
               <p>Étapes renvoyées par le serveur</p>
             </div>
             <Clock3 size={18} />
           </div>
-          <ol className="vertical-history-sre">
+          <ol className={VERTICAL_HISTORY_CLASS}>
             {payment.history
               .slice()
               .sort((a, b) => a.date.localeCompare(b.date))
@@ -391,8 +403,8 @@ export function AdminPaymentDetailPage() {
                   <i
                     className={
                       index === payment.history.length - 1
-                        ? "vertical-history-sre__active"
-                        : ""
+                        ? VERTICAL_HISTORY_ACTIVE_CLASS
+                        : undefined
                     }
                   />
                   <div>
@@ -406,7 +418,7 @@ export function AdminPaymentDetailPage() {
                 </li>
               ))}
           </ol>
-          <div className="security-note-sre">
+          <div className={SECURITY_NOTE_CLASS}>
             <ShieldCheck size={16} />
             <p>
               <strong>Preuve de règlement</strong>

@@ -1,1 +1,1 @@
-export * from "./activity.types";
+export * from "@/types/activity/activity.types";

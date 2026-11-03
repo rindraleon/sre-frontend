@@ -1,1 +1,1 @@
-export * from "./tax-type.types";
+export * from "@/types/tax/tax-type.types";

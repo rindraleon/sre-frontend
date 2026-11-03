@@ -1,4 +1,4 @@
-import type { AccountStatus } from "../user";
+import type { AccountStatus } from "@/types/user";
 
 export type TaxpayerType = "PARTICULIER" | "ENTREPRISE";
 

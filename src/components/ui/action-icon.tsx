@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 const classesAction =
   "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 
-/** Table action icon with tooltip (title + aria-label): view, edit, delete or any allowed operation. */
 export function ActionIcon({
   title,
   onClick,
@@ -14,13 +13,11 @@ export function ActionIcon({
   disabled = false,
   href,
 }: Readonly<{
-  /** Tooltip and screen-reader label (e.g. "View the record"). */
   title: string;
   onClick?: () => void;
   children: ReactNode;
   danger?: boolean;
   disabled?: boolean;
-  /** When provided, renders a navigation link instead of a button. */
   href?: string;
 }>) {
   const className = cn(classesAction, danger && "hover:bg-destructive/10 hover:text-destructive");
@@ -51,7 +48,6 @@ export function ActionIcon({
   );
 }
 
-/** Group of actions aligned in the "Actions" column. */
 export function ActionGroup({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <fieldset className="flex items-center justify-end gap-1">

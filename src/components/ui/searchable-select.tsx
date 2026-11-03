@@ -1,6 +1,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { CoreSpinLoader } from "./core-spin-loader";
+import {
+  SEARCHABLE_SELECT_CLASS,
+  SEARCHABLE_SELECT_EMPTY_CLASS,
+  SEARCHABLE_SELECT_FIELD_CLASS,
+  SEARCHABLE_SELECT_INPUT_CLASS,
+  SEARCHABLE_SELECT_LIST_CLASS,
+  SEARCHABLE_SELECT_OPTION_ACTIVE_CLASS,
+} from "./feedback-styles";
 
 export interface SelectOption {
   value: string;
@@ -12,7 +20,6 @@ function normalize(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-/** Local filtering insensitive to accents and case. */
 export function filterSelectOptions(options: SelectOption[], search: string): SelectOption[] {
   const request = normalize(search.trim());
   if (!request) return options;
@@ -34,7 +41,6 @@ interface SearchableSelectProps {
   "aria-describedby"?: string;
 }
 
-/** Select with local search, for long lists (e.g. */
 export function SearchableSelect({
   id,
   value,
@@ -57,16 +63,12 @@ export function SearchableSelect({
   const refField = useRef<HTMLInputElement | null>(null);
 
   const selection = options.find((option) => option.value === value);
-  const filteredOptions = useMemo(
-    () => filterSelectOptions(options, search),
-    [options, search],
-  );
+  const filteredOptions = useMemo(() => filterSelectOptions(options, search), [options, search]);
 
   useEffect(() => {
     if (!open) return;
     const handleOutsideClick = (event: MouseEvent) => {
-      if (refRoot.current && !refRoot.current.contains(event.target as Node))
-        setOpen(false);
+      if (refRoot.current && !refRoot.current.contains(event.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
@@ -107,8 +109,8 @@ export function SearchableSelect({
   };
 
   return (
-    <div className="searchable-select-sre" ref={refRoot}>
-      <div className="searchable-select-sre__field">
+    <div className={SEARCHABLE_SELECT_CLASS} ref={refRoot}>
+      <div className={SEARCHABLE_SELECT_FIELD_CLASS}>
         <Search size={15} aria-hidden="true" />
         <input
           ref={refField}
@@ -122,6 +124,7 @@ export function SearchableSelect({
           }
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedby}
+          className={SEARCHABLE_SELECT_INPUT_CLASS}
           disabled={disabled || loading}
           placeholder={selection ? selection.label : placeholder}
           value={open ? search : (selection?.label ?? "")}
@@ -165,13 +168,13 @@ export function SearchableSelect({
         </button>
       </div>
       {open && (
-        <ul className="searchable-select-sre__list" role="listbox" id={listId}>
+        <ul className={SEARCHABLE_SELECT_LIST_CLASS} role="listbox" id={listId}>
           {loadingError ? (
-            <li className="searchable-select-sre__empty" role="alert">
+            <li className={SEARCHABLE_SELECT_EMPTY_CLASS} role="alert">
               {loadingError}
             </li>
           ) : filteredOptions.length === 0 ? (
-            <li className="searchable-select-sre__empty">Aucun résultat pour cette recherche.</li>
+            <li className={SEARCHABLE_SELECT_EMPTY_CLASS}>Aucun résultat pour cette recherche.</li>
           ) : (
             filteredOptions.map((option, index) => (
               <li
@@ -180,7 +183,7 @@ export function SearchableSelect({
                 role="option"
                 aria-selected={option.value === value}
                 className={
-                  index === activeIndex ? "searchable-select-sre__option--active" : undefined
+                  index === activeIndex ? SEARCHABLE_SELECT_OPTION_ACTIVE_CLASS : undefined
                 }
                 onMouseEnter={() => setActiveIndex(index)}
                 onMouseDown={(event) => {

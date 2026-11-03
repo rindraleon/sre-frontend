@@ -1,7 +1,6 @@
-import type { TaxpayerType } from "../taxpayer";
-import type { UserRole } from "../user";
+import type { TaxpayerType } from "@/types/taxpayer";
+import type { UserRole } from "@/types/user";
 
-/** Profile sent to the API when creating a taxpayer account. */
 export interface RegistrationProfile {
   nom: string;
   prenom?: string;
@@ -21,7 +20,6 @@ export interface RegistrationProfile {
   fonctionContact?: string;
 }
 
-/** In-memory session of the portal. The token is persisted in sessionStorage only. */
 export interface ApiSession {
   userId: string;
   name: string;

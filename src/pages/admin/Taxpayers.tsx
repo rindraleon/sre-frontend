@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CirclePlus } from "lucide-react";
 import type { Taxpayer } from "@/types";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { callApi, mapApiTaxpayer, type ApiTaxpayer } from "@/services/api-client";
-import { SRE_REGION, MSG_SESSION_MISSING_ADMIN } from "@/constants";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { SRE_REGION, MSG_SESSION_MISSING_ADMIN } from "@/data";
 import {
   Button,
   ConfirmDialog,
@@ -12,12 +11,14 @@ import {
   Modal,
   DataTable,
   toTanstackColumns,
-} from "@/components/ui";
-import { SubmitButton } from "@/components/forms/form-field";
-import { TaxpayerFormFields, PROFILE_EMPTY } from "@/components/forms/admin/taxpayer-form";
-import { createTaxpayerColumns } from "@/components/tables/admin/taxpayers-columns";
+  SubmitButton,
+  PAGE_CONTENT_CLASS,
+} from "@/components";
+import { createTaxpayerColumns } from "@/components/TaxpayersComponents/tables/admin";
+import { TaxpayerFormFields, PROFILE_EMPTY } from "@/components/TaxpayersComponents";
+import { taxpayerFormSchema, type TaxpayerFormValues } from "@/schemas";
+import { createTaxpayerApi, deleteTaxpayerApi } from "@/services/taxpayers";
 import { useApiForm, useTableState, useConfirmation } from "@/hooks";
-import { taxpayerFormSchema, type TaxpayerFormValues } from "@/validation/profile.schema";
 
 const PROFILE_STEP_FIELDS = [
   ["type", "nom", "prenom", "raisonSociale", "nomCommercial"],
@@ -95,12 +96,7 @@ export function AdminTaxpayersPage({
           ? { fonctionContact: values.fonctionContact.trim() }
           : {}),
       };
-      const response = await callApi<ApiTaxpayer>("contribuables", {
-        method: "POST",
-        token: session.apiToken,
-        body: body,
-      });
-      const newTaxpayer = mapApiTaxpayer(response);
+      const newTaxpayer = await createTaxpayerApi(session.apiToken, body);
       updateState((current) => ({
         ...current,
         taxpayers: [newTaxpayer, ...current.taxpayers],
@@ -114,10 +110,7 @@ export function AdminTaxpayersPage({
 
   const remove = async (target: Taxpayer) => {
     if (!session?.apiToken) throw new Error(MSG_SESSION_MISSING_ADMIN);
-    await callApi<{ message: string }>(`contribuables/${encodeURIComponent(target.id)}`, {
-      method: "DELETE",
-      token: session.apiToken,
-    });
+    await deleteTaxpayerApi(session.apiToken, target.id);
     updateState((current) => ({
       ...current,
       taxpayers: current.taxpayers.filter((entry) => entry.id !== target.id),
@@ -131,7 +124,7 @@ export function AdminTaxpayersPage({
     [deletion.target?.firstName, deletion.target?.lastName].filter(Boolean).join(" ");
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title={business ? "Entreprises" : "Contribuables"}
         description={`Profils du périmètre ${SRE_REGION}.`}

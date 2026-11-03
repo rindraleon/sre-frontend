@@ -1,8 +1,6 @@
 import { cva } from "class-variance-authority";
-import { cn } from "@/lib/utils";
-import { formatStatus } from "@/utils/format";
+import { cn, formatStatus } from "@/utils";
 
-/** shadcn/ui badge: dot + label, tinted by status category. */
 const TONES = {
   success: "border-emerald-200 bg-emerald-50 text-emerald-700",
   attention: "border-amber-200 bg-amber-50 text-amber-700",
@@ -13,7 +11,6 @@ const TONES = {
   neutral: "border-border bg-muted text-muted-foreground",
 } as const;
 
-// Cautious business labels (an internal decision is not a bank confirmation).
 const BADGE_LABELS: Record<string, string> = {
   A_PAYER: "À payer",
   PAIEMENT_EN_COURS: "Paiement en cours",

@@ -1,2 +1,2 @@
-export * from "./api-error.types";
-export * from "./api-response.types";
+export * from "@/types/api/api-error.types";
+export * from "@/types/api/api-response.types";

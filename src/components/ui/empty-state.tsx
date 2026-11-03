@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
 import { Card } from "./card";
 
-/** Empty state on a shadcn/ui Card (dashed border). */
 export function EmptyState({
   title,
   description,

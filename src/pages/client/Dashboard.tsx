@@ -11,10 +11,35 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { StatusBadge, StatCard, PageHeader, EmptyState } from "@/components/ui";
-import { formatMoney, formatDate } from "@/utils/format";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import {
+  AMOUNT_CLASS,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  CHART_CLASS,
+  CHART_CONTENT_CLASS,
+  CHART_VALUE_CLASS,
+  CONTENT_GRID_CLASS,
+  EmptyState,
+  MONTH_BARS_CLASS,
+  NOTIFICATION_MINI_CLASS,
+  NOTIFICATION_MINI_DOT_CLASS,
+  PAGE_CONTENT_CLASS,
+  PageHeader,
+  QUICK_ACTIONS_CLASS,
+  REFERENCE_CLASS,
+  SHORTCUT_CLASS,
+  STATISTICS_GRID_CLASS,
+  SUBTLE_LINK_CLASS,
+  StatCard,
+  StatusBadge,
+  TABLE_SCROLL_CLASS,
+  TABLE_SRE_CLASS,
+  TIP_BANNER_CLASS,
+  buttonVariants,
+} from "@/components";
+import { formatMoney, formatDate, cn } from "@/utils";
 
 export function ClientDashboardPage() {
   const { session } = useAuth();
@@ -34,10 +59,7 @@ export function ClientDashboardPage() {
       obligation.status,
     ),
   );
-  const outstandingAmount = openObligations.reduce(
-    (sum, obligation) => sum + obligation.amount,
-    0,
-  );
+  const outstandingAmount = openObligations.reduce((sum, obligation) => sum + obligation.amount, 0);
   const confirmedDecisions = payments.filter((payment) => payment.status === "CONFIRME");
   const confirmedDecisionsTotal = confirmedDecisions.reduce(
     (sum, payment) => sum + payment.amount,
@@ -72,21 +94,19 @@ export function ClientDashboardPage() {
   const maximumChart = Math.max(...chartMonth.map((month) => month.total), 1);
 
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title={`Bonjour, ${taxpayer?.type === "ENTREPRISE" ? taxpayer.legalName : (taxpayer?.firstName ?? session?.name ?? "Contribuable")}`}
         description="Retrouvez les obligations et déclarations enregistrées pour votre compte."
         breadcrumb={["Accueil", "Vue d’ensemble"]}
         actions={
-          <Link className="button-sre button-sre--primary" to="/client/paiements/nouveau">
+          <Link className={buttonVariants({ variant: "primary" })} to="/client/paiements/nouveau">
             <CircleDollarSign size={16} /> Déclarer une opération
           </Link>
         }
       />
 
-      
-
-      <section className="statistics-grid-sre">
+      <section className={STATISTICS_GRID_CLASS}>
         <StatCard
           title="Obligations à suivre"
           value={openObligations.length}
@@ -121,9 +141,9 @@ export function ClientDashboardPage() {
         />
       </section>
 
-      <div className="content-grid-sre">
-        <section className="card-sre chart-sre">
-          <div className="card-sre__header">
+      <div className={CONTENT_GRID_CLASS}>
+        <section className={cn(CARD_CLASS, CHART_CLASS)}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Paiements confirmés</h2>
               <p>Montants confirmés par mois · MGA</p>
@@ -131,9 +151,9 @@ export function ClientDashboardPage() {
             <WalletCards size={19} />
           </div>
           {confirmedDecisions.length ? (
-            <div className="chart-sre__content">
-              <div className="chart-sre__value">{formatMoney(confirmedDecisionsTotal)}</div>
-              <div className="month-bars-sre">
+            <div className={CHART_CONTENT_CLASS}>
+              <div className={CHART_VALUE_CLASS}>{formatMoney(confirmedDecisionsTotal)}</div>
+              <div className={MONTH_BARS_CLASS}>
                 {chartMonth.map((month) => (
                   <div key={month.nom}>
                     <span
@@ -153,14 +173,14 @@ export function ClientDashboardPage() {
           )}
         </section>
 
-        <section className="card-sre quick-actions-sre">
-          <div className="card-sre__header">
+        <section className={cn(CARD_CLASS, QUICK_ACTIONS_CLASS)}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Accès rapides</h2>
               <p>Gérez vos démarches</p>
             </div>
           </div>
-          <Link to="/client/obligations" className="shortcut-sre">
+          <Link to="/client/obligations" className={SHORTCUT_CLASS}>
             <span>
               <FileText size={17} />
             </span>
@@ -170,7 +190,7 @@ export function ClientDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/client/paiements/nouveau" className="shortcut-sre">
+          <Link to="/client/paiements/nouveau" className={SHORTCUT_CLASS}>
             <span>
               <CircleDollarSign size={17} />
             </span>
@@ -180,7 +200,7 @@ export function ClientDashboardPage() {
             </div>
             <ArrowRight size={15} />
           </Link>
-          <Link to="/client/profil" className="shortcut-sre">
+          <Link to="/client/profil" className={SHORTCUT_CLASS}>
             <span>
               <Users size={17} />
             </span>
@@ -193,19 +213,19 @@ export function ClientDashboardPage() {
         </section>
       </div>
 
-      <section className="card-sre">
-        <div className="card-sre__header">
+      <section className={CARD_CLASS}>
+        <div className={CARD_HEADER_CLASS}>
           <div>
             <h2>Dernières déclarations</h2>
             <p>Historique des éléments liés à votre compte</p>
           </div>
-          <Link className="subtle-link-sre" to="/client/paiements">
+          <Link className={SUBTLE_LINK_CLASS} to="/client/paiements">
             Tout l’historique <ArrowRight size={14} />
           </Link>
         </div>
         {payments.length ? (
-          <div className="table-scroll-sre">
-            <table className="table-sre">
+          <div className={TABLE_SCROLL_CLASS}>
+            <table className={TABLE_SRE_CLASS}>
               <thead>
                 <tr>
                   <th>Référence interne</th>
@@ -221,13 +241,15 @@ export function ClientDashboardPage() {
                 {payments.slice(0, 5).map((payment) => (
                   <tr key={payment.id}>
                     <td data-label="Référence interne">
-                      <Link className="reference-sre" to={`/client/paiements/${payment.id}`}>
+                      <Link className={REFERENCE_CLASS} to={`/client/paiements/${payment.id}`}>
                         {payment.internalReference}
                       </Link>
                     </td>
                     <td data-label="Impôt / catégorie">{payment.taxTypeName}</td>
                     <td data-label="Période">{payment.period}</td>
-                    <td data-label="Montant déclaré" className="amount-sre">{formatMoney(payment.amount)}</td>
+                    <td data-label="Montant déclaré" className={AMOUNT_CLASS}>
+                      {formatMoney(payment.amount)}
+                    </td>
                     <td data-label="Mode déclaré">
                       <StatusBadge status={payment.mode} />
                     </td>
@@ -246,7 +268,7 @@ export function ClientDashboardPage() {
             description="Lorsqu’une déclaration sera soumise, son suivi apparaîtra ici. La soumission ne confirme pas le règlement."
             action={
               <Link
-                className="button-sre button-sre--primary button-sre--small"
+                className={buttonVariants({ variant: "primary", size: "small" })}
                 to="/client/paiements/nouveau"
               >
                 Déclarer une opération
@@ -256,7 +278,7 @@ export function ClientDashboardPage() {
         )}
       </section>
 
-      <section className="tip-banner-sre">
+      <section className={TIP_BANNER_CLASS}>
         <span>
           <ShieldCheck size={18} />
         </span>
@@ -270,19 +292,19 @@ export function ClientDashboardPage() {
       </section>
 
       {notifications.length > 0 && (
-        <section className="card-sre recent-notifications-sre">
-          <div className="card-sre__header">
+        <section className={cn(CARD_CLASS, "")}>
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Notifications récentes</h2>
               <p>Messages adressés à votre compte uniquement</p>
             </div>
-            <Link className="subtle-link-sre" to="/client/notifications">
+            <Link className={SUBTLE_LINK_CLASS} to="/client/notifications">
               Voir tout <ArrowRight size={14} />
             </Link>
           </div>
           {notifications.map((notification) => (
-            <div className="notification-mini-sre" key={notification.id}>
-              <i className={notification.isRead ? "" : "notification-mini-sre__dot"} />
+            <div className={NOTIFICATION_MINI_CLASS} key={notification.id}>
+              <i className={notification.isRead ? "" : NOTIFICATION_MINI_DOT_CLASS} />
               <div>
                 <strong>{notification.title}</strong>
                 <p>{notification.message}</p>

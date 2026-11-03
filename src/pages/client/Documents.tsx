@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useSre } from "@/context/SreContext";
-import { PageHeader, DataTable, toTanstackColumns } from "@/components/ui";
-import { createDocumentColumns } from "@/components/tables/client/documents-columns";
+import { useAuth } from "@/contexts";
+import { useSre } from "@/contexts";
+import { PageHeader, DataTable, toTanstackColumns, PAGE_CONTENT_CLASS } from "@/components";
+import { createDocumentColumns } from "@/components/DocumentsComponents/tables/client";
 import { useTableState } from "@/hooks";
 
 export function ClientDocumentsPage() {
@@ -13,15 +13,14 @@ export function ClientDocumentsPage() {
     () =>
       state.paymentDocuments
         .filter(
-          (document) =>
-            document.taxpayerId === session?.taxpayerId && document.status === "VALIDE",
+          (document) => document.taxpayerId === session?.taxpayerId && document.status === "VALIDE",
         )
         .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt)),
     [state.paymentDocuments, session?.taxpayerId],
   );
   const columns = createDocumentColumns();
   return (
-    <div className="page-content-sre">
+    <div className={PAGE_CONTENT_CLASS}>
       <PageHeader
         title="Mes reçus et documents"
         description="Reçus officiels émis automatiquement après validation de vos déclarations."

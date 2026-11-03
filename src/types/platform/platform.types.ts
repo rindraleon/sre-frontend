@@ -1,17 +1,16 @@
-import type { AppUser } from "../user";
-import type { Taxpayer } from "../taxpayer";
-import type { TaxType } from "../tax";
-import type { TaxObligation } from "../obligation";
-import type { Payment, PaymentDocument } from "../payment";
-import type { AppNotification } from "../notification";
-import type { ActivityLogEntry } from "../activity";
+import type { AppUser } from "@/types/user";
+import type { Taxpayer } from "@/types/taxpayer";
+import type { TaxType } from "@/types/tax";
+import type { TaxObligation } from "@/types/obligation";
+import type { Payment, PaymentDocument } from "@/types/payment";
+import type { AppNotification } from "@/types/notification";
+import type { ActivityLogEntry } from "@/types/activity";
 
 export interface AppSettings {
   institution: string;
   regions: string[];
 }
 
-/** In-memory projection of the API responses used by the pages. */
 export interface PlatformState {
   version: 1;
   isAdministratorInitialized: boolean;

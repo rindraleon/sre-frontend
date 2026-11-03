@@ -1,10 +1,28 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, ScanLine, ShieldAlert } from "lucide-react";
-import { PageHeader } from "@/components/ui";
-import { FormField } from "@/components/forms/form-field";
-import { verifyReceiptApi } from "@/services/api-payments";
-import { formatMoney, formatDate } from "@/utils/format";
+import {
+  Button,
+  CARD_CLASS,
+  CARD_HEADER_CLASS,
+  FIELD_ERROR_CLASS,
+  FIELD_INPUT_CLASS,
+  FORM_ACTIONS_CLASS,
+  FORM_STEP_CLASS,
+  FormField,
+  PAGE_CONTENT_CLASS,
+  PAYMENT_FORM_CLASS,
+  PAYMENT_FORM_GRID_CLASS,
+  PAYMENT_FORM_ORDER_CLASS,
+  PAYMENT_SUMMARY_STICKY_CLASS,
+  PageHeader,
+  SECURITY_ALERT_BANNER_CLASS,
+  SUMMARY_LINES_CLASS,
+  TEXT_HELP_CLASS,
+  buttonVariants,
+} from "@/components";
+import { verifyReceiptApi } from "@/services/payments";
+import { formatMoney, formatDate, cn } from "@/utils";
 
 interface VerifiedReceipt {
   valide: boolean;
@@ -19,7 +37,6 @@ interface VerifiedReceipt {
   statutPaiement?: string | null;
 }
 
-/** Vérification publique d'un reçu : numéro + code d'authentification. */
 export function VerifyReceiptPage() {
   const [numero, setNumero] = useState("");
   const [code, setCode] = useState("");
@@ -38,7 +55,8 @@ export function VerifyReceiptPage() {
     setIsChecking(true);
     try {
       setResult(await verifyReceiptApi(numero.trim(), code.trim()));
-    } catch {
+    } catch (cause) {
+      console.error("Vérification du reçu impossible.", cause);
       setError("La vérification n’a pas abouti. Vérifiez le numéro et le code, puis réessayez.");
     } finally {
       setIsChecking(false);
@@ -47,7 +65,7 @@ export function VerifyReceiptPage() {
 
   return (
     <div
-      className="page-content-sre"
+      className={PAGE_CONTENT_CLASS}
       style={{ maxWidth: 1120, margin: "0 auto", padding: "26px 20px 48px" }}
     >
       <PageHeader
@@ -55,14 +73,18 @@ export function VerifyReceiptPage() {
         description="Contrôlez l’authenticité d’un reçu émis par la plateforme à partir de son numéro et de son code de vérification."
         breadcrumb={["Accueil", "Vérifier un reçu"]}
         actions={
-          <Link className="button-sre button-sre--outline" to="/client/paiements">
+          <Link className={buttonVariants({ variant: "outline" })} to="/client/paiements">
             Mes paiements
           </Link>
         }
       />
-      <div className="payment-form-grid-sre">
-        <form className="card-sre payment-form-sre" onSubmit={submit} noValidate>
-          <div className="form-step-sre">
+      <div className={PAYMENT_FORM_GRID_CLASS}>
+        <form
+          className={cn(CARD_CLASS, PAYMENT_FORM_CLASS, PAYMENT_FORM_ORDER_CLASS)}
+          onSubmit={submit}
+          noValidate
+        >
+          <div className={FORM_STEP_CLASS}>
             <span>1</span>
             <div>
               <h2>Éléments du reçu</h2>
@@ -73,7 +95,7 @@ export function VerifyReceiptPage() {
             {(p) => (
               <input
                 {...p}
-                className="field-simple-sre"
+                className={FIELD_INPUT_CLASS}
                 autoComplete="off"
                 placeholder="Ex. SRE-REC-2026-4F1A2B3C4D5E"
                 value={numero}
@@ -85,7 +107,7 @@ export function VerifyReceiptPage() {
             {(p) => (
               <input
                 {...p}
-                className="field-simple-sre"
+                className={FIELD_INPUT_CLASS}
                 autoComplete="off"
                 placeholder="Ex. 16 caractères hexadécimaux"
                 value={code}
@@ -94,18 +116,18 @@ export function VerifyReceiptPage() {
             )}
           </FormField>
           {error && (
-            <p className="field-error-sre" role="alert">
+            <p className={FIELD_ERROR_CLASS} role="alert">
               {error}
             </p>
           )}
-          <div className="form-actions-sre">
-            <button type="submit" className="button-sre button-sre--primary" disabled={isChecking}>
+          <div className={cn(FORM_ACTIONS_CLASS)}>
+            <Button type="submit" variant="primary" disabled={isChecking}>
               <ScanLine size={15} /> {isChecking ? "Vérification…" : "Vérifier le reçu"}
-            </button>
+            </Button>
           </div>
         </form>
-        <aside className="card-sre payment-summary-sre" aria-live="polite">
-          <div className="card-sre__header">
+        <aside className={cn(CARD_CLASS, PAYMENT_SUMMARY_STICKY_CLASS)} aria-live="polite">
+          <div className={CARD_HEADER_CLASS}>
             <div>
               <h2>Résultat</h2>
               <p>Réponse du serveur</p>
@@ -113,11 +135,11 @@ export function VerifyReceiptPage() {
             <BadgeCheck size={18} />
           </div>
           {!result ? (
-            <p className="text-help-sre">
+            <p className={TEXT_HELP_CLASS}>
               Saisissez le numéro et le code pour afficher le statut d’authentification du reçu.
             </p>
           ) : result.valide ? (
-            <dl className="summary-lines-sre">
+            <dl className={SUMMARY_LINES_CLASS}>
               <div>
                 <dt>Authenticité</dt>
                 <dd>Reçu valide</dd>
@@ -152,7 +174,7 @@ export function VerifyReceiptPage() {
               </div>
             </dl>
           ) : (
-            <div className="security-alert-banner-sre">
+            <div className={SECURITY_ALERT_BANNER_CLASS}>
               <ShieldAlert size={16} />
               <div>
                 <strong>Reçu non reconnu</strong>
